@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BlockSec Email Generator</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f5f5f5;
+      color: #1a1a1a;
+      line-height: 1.5;
+    }
+    .container { max-width: 1200px; margin: 0 auto; padding: 24px; }
+    h1 {
+      font-size: 24px;
+      font-weight: 700;
+      margin-bottom: 4px;
+      color: #111;
+    }
+    .subtitle { color: #666; font-size: 14px; margin-bottom: 24px; }
+
+    /* Sections */
+    .section {
+      background: #fff;
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 20px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    }
+    .section-title {
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 16px;
+      color: #333;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .section-title .badge {
+      background: #FF7F32;
+      color: #fff;
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 10px;
+      font-weight: 500;
+    }
+
+    /* Form */
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+    .form-group { display: flex; flex-direction: column; gap: 4px; }
+    .form-group.full { grid-column: 1 / -1; }
+    label { font-size: 13px; font-weight: 500; color: #555; }
+    input, select, textarea {
+      padding: 10px 12px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      font-size: 14px;
+      font-family: inherit;
+      transition: border-color 0.2s;
+    }
+    input:focus, select:focus, textarea:focus {
+      outline: none;
+      border-color: #8DC8E8;
+      box-shadow: 0 0 0 3px rgba(141,200,232,0.15);
+    }
+    textarea { resize: vertical; min-height: 60px; }
+
+    /* Buttons */
+    .btn {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .btn-primary {
+      background: #FF7F32;
+      color: #fff;
+    }
+    .btn-primary:hover { background: #e66a1e; }
+    .btn-primary:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+    }
+    .btn-secondary {
+      background: #f0f0f0;
+      color: #333;
+      border: 1px solid #ddd;
+    }
+    .btn-secondary:hover { background: #e5e5e5; }
+    .btn-copy {
+      background: #101820;
+      color: #fff;
+      font-size: 12px;
+      padding: 6px 12px;
+    }
+    .btn-copy:hover { background: #2a3440; }
+    .btn-copy.copied {
+      background: #16a34a;
+    }
+    .btn-sm { padding: 6px 12px; font-size: 12px; }
+
+    /* Tabs */
+    .tabs {
+      display: flex;
+      gap: 0;
+      border-bottom: 2px solid #eee;
+      margin-bottom: 16px;
+    }
+    .tab {
+      padding: 8px 20px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -2px;
+      color: #888;
+      transition: all 0.2s;
+    }
+    .tab:hover { color: #555; }
+    .tab.active {
+      color: #FF7F32;
+      border-bottom-color: #FF7F32;
+    }
+
+    /* Editor */
+    .editor-panel { display: none; }
+    .editor-panel.active { display: block; }
+    .editor-row {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+    .editor-row label { min-width: 60px; flex-shrink: 0; }
+    .editor-row input { flex: 1; }
+    .body-editor {
+      width: 100%;
+      min-height: 200px;
+      font-family: 'SF Mono', Monaco, Consolas, monospace;
+      font-size: 13px;
+      line-height: 1.6;
+      padding: 12px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      resize: vertical;
+    }
+    .editor-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    /* Preview + Output */
+    .preview-split {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+    .preview-pane {
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    .preview-pane-header {
+      background: #f8f8f8;
+      padding: 8px 12px;
+      font-size: 12px;
+      font-weight: 600;
+      color: #666;
+      border-bottom: 1px solid #ddd;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .preview-iframe {
+      width: 100%;
+      height: 500px;
+      border: none;
+    }
+    .html-source {
+      width: 100%;
+      height: 500px;
+      overflow: auto;
+      padding: 12px;
+      font-family: 'SF Mono', Monaco, Consolas, monospace;
+      font-size: 11px;
+      line-height: 1.4;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+      background: #1e1e1e;
+      color: #d4d4d4;
+    }
+
+    /* Loading spinner */
+    .spinner {
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      border: 2px solid rgba(255,255,255,0.3);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.6s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Status */
+    .status-bar {
+      padding: 12px 16px;
+      border-radius: 8px;
+      font-size: 13px;
+      margin-top: 16px;
+      display: none;
+    }
+    .status-bar.info { display: block; background: #eff6ff; color: #1e40af; }
+    .status-bar.error { display: block; background: #fef2f2; color: #991b1b; }
+    .status-bar.success { display: block; background: #f0fdf4; color: #166534; }
+
+    /* Hidden */
+    .hidden { display: none !important; }
+
+    /* Title copy row */
+    .title-copy-row {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+    .title-copy-row input { flex: 1; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>BlockSec Email Generator</h1>
+    <p class="subtitle">AI-powered multi-language email content generation with HTML template assembly</p>
+
+    <!-- Section A: Input Form -->
+    <div class="section">
+      <div class="section-title">Input <span class="badge">Step 1</span></div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label for="template">Email Template</label>
+          <select id="template">
+            <option value="">Loading templates...</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="subject">Email Theme / Subject</label>
+          <input id="subject" type="text" placeholder="e.g., KYT product intro after crime report download">
+        </div>
+        <div class="form-group">
+          <label for="audience">Target Audience</label>
+          <input id="audience" type="text" placeholder="e.g., Crypto exchange compliance officers">
+        </div>
+        <div class="form-group">
+          <label for="trigger">Send Trigger / Timing</label>
+          <input id="trigger" type="text" placeholder="e.g., Downloaded 2026 Crypto Crime Report">
+        </div>
+        <div class="form-group full">
+          <label for="instructions">Additional Instructions (optional)</label>
+          <textarea id="instructions" rows="2" placeholder="e.g., Keep it casual, mention all 3 products, include CTA link to https://..."></textarea>
+        </div>
+      </div>
+      <div style="margin-top: 16px; display: flex; gap: 12px; align-items: center;">
+        <button id="generateBtn" class="btn btn-primary" onclick="handleGenerate()">
+          Generate 4 Languages
+        </button>
+        <div id="status" class="status-bar" style="margin-top: 0; flex: 1;"></div>
+      </div>
+    </div>
+
+    <!-- Section B: Content Editor -->
+    <div id="editorSection" class="section hidden">
+      <div class="section-title">Edit Content <span class="badge">Step 2</span></div>
+      <div class="tabs" id="editorTabs">
+        <div class="tab active" data-lang="en" onclick="switchEditorTab('en')">EN</div>
+        <div class="tab" data-lang="zh" onclick="switchEditorTab('zh')">ZH</div>
+        <div class="tab" data-lang="es" onclick="switchEditorTab('es')">ES</div>
+        <div class="tab" data-lang="ja" onclick="switchEditorTab('ja')">JA</div>
+      </div>
+      <div id="editor-en" class="editor-panel active">
+        <div class="editor-row">
+          <label>Title</label>
+          <input id="title-en" type="text" oninput="scheduleAssemble('en')">
+        </div>
+        <textarea id="body-en" class="body-editor" oninput="scheduleAssemble('en')"></textarea>
+        <div class="editor-actions">
+          <button class="btn btn-secondary btn-sm" onclick="handleRegenerate('en')">Regenerate EN</button>
+        </div>
+      </div>
+      <div id="editor-zh" class="editor-panel">
+        <div class="editor-row">
+          <label>Title</label>
+          <input id="title-zh" type="text" oninput="scheduleAssemble('zh')">
+        </div>
+        <textarea id="body-zh" class="body-editor" oninput="scheduleAssemble('zh')"></textarea>
+        <div class="editor-actions">
+          <button class="btn btn-secondary btn-sm" onclick="handleRegenerate('zh')">Regenerate ZH</button>
+        </div>
+      </div>
+      <div id="editor-es" class="editor-panel">
+        <div class="editor-row">
+          <label>Title</label>
+          <input id="title-es" type="text" oninput="scheduleAssemble('es')">
+        </div>
+        <textarea id="body-es" class="body-editor" oninput="scheduleAssemble('es')"></textarea>
+        <div class="editor-actions">
+          <button class="btn btn-secondary btn-sm" onclick="handleRegenerate('es')">Regenerate ES</button>
+        </div>
+      </div>
+      <div id="editor-ja" class="editor-panel">
+        <div class="editor-row">
+          <label>Title</label>
+          <input id="title-ja" type="text" oninput="scheduleAssemble('ja')">
+        </div>
+        <textarea id="body-ja" class="body-editor" oninput="scheduleAssemble('ja')"></textarea>
+        <div class="editor-actions">
+          <button class="btn btn-secondary btn-sm" onclick="handleRegenerate('ja')">Regenerate JA</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Section C: Preview + Output -->
+    <div id="previewSection" class="section hidden">
+      <div class="section-title">Preview & Output <span class="badge">Step 3</span></div>
+      <div class="tabs" id="previewTabs">
+        <div class="tab active" data-lang="en" onclick="switchPreviewTab('en')">EN</div>
+        <div class="tab" data-lang="zh" onclick="switchPreviewTab('zh')">ZH</div>
+        <div class="tab" data-lang="es" onclick="switchPreviewTab('es')">ES</div>
+        <div class="tab" data-lang="ja" onclick="switchPreviewTab('ja')">JA</div>
+      </div>
+
+      <!-- Title copy row -->
+      <div class="title-copy-row">
+        <input id="preview-title" type="text" readonly style="background: #f8f8f8;">
+        <button class="btn btn-copy" onclick="copyTitle()">Copy Title</button>
+      </div>
+
+      <div class="preview-split">
+        <div class="preview-pane">
+          <div class="preview-pane-header">
+            <span>Email Preview</span>
+          </div>
+          <iframe id="preview-iframe" class="preview-iframe"></iframe>
+        </div>
+        <div class="preview-pane">
+          <div class="preview-pane-header">
+            <span>HTML Source</span>
+            <button class="btn btn-copy" onclick="copyHtml()">Copy HTML</button>
+          </div>
+          <div id="html-source" class="html-source"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // State
+    let generatedContent = {}; // { en: {title, body}, zh: {...}, ... }
+    let assembledHtml = {};    // { en: "full html", zh: "...", ... }
+    let currentEditorLang = 'en';
+    let currentPreviewLang = 'en';
+    let assembleTimers = {};
+
+    // Init: load templates
+    async function loadTemplates() {
+      try {
+        const res = await fetch('/api/templates');
+        const data = await res.json();
+        const sel = document.getElementById('template');
+        sel.innerHTML = '';
+        for (const [id, meta] of Object.entries(data)) {
+          const opt = document.createElement('option');
+          opt.value = id;
+          opt.textContent = `${meta.name} (${meta.sender})`;
+          sel.appendChild(opt);
+        }
+      } catch (e) {
+        console.error('Failed to load templates:', e);
+      }
+    }
+    loadTemplates();
+
+    // Status helper
+    function setStatus(msg, type) {
+      const el = document.getElementById('status');
+      el.textContent = msg;
+      el.className = 'status-bar ' + type;
+    }
+    function clearStatus() {
+      const el = document.getElementById('status');
+      el.className = 'status-bar';
+      el.style.display = 'none';
+    }
+
+    // Generate
+    async function handleGenerate() {
+      const template_id = document.getElementById('template').value;
+      const subject = document.getElementById('subject').value.trim();
+      const audience = document.getElementById('audience').value.trim();
+      const trigger = document.getElementById('trigger').value.trim();
+      const instructions = document.getElementById('instructions').value.trim();
+
+      if (!subject || !audience || !trigger) {
+        setStatus('Please fill in subject, audience, and trigger fields.', 'error');
+        return;
+      }
+
+      const btn = document.getElementById('generateBtn');
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner"></span> Generating...';
+      setStatus('Generating email content with Claude AI...', 'info');
+
+      try {
+        const res = await fetch('/api/generate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ template_id, subject, audience, trigger, instructions }),
+        });
+        if (!res.ok) {
+          const err = await res.json();
+          throw new Error(err.detail || 'Generation failed');
+        }
+        generatedContent = await res.json();
+        populateEditors();
+        setStatus('Content generated successfully! Review and edit below.', 'success');
+
+        // Assemble all languages
+        for (const lang of ['en', 'zh', 'es', 'ja']) {
+          await assembleForLang(lang);
+        }
+
+        document.getElementById('editorSection').classList.remove('hidden');
+        document.getElementById('previewSection').classList.remove('hidden');
+        updatePreview();
+      } catch (e) {
+        setStatus('Error: ' + e.message, 'error');
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = 'Generate 4 Languages';
+      }
+    }
+
+    // Populate editor fields
+    function populateEditors() {
+      for (const lang of ['en', 'zh', 'es', 'ja']) {
+        const data = generatedContent[lang];
+        if (data) {
+          document.getElementById(`title-${lang}`).value = data.title || '';
+          document.getElementById(`body-${lang}`).value = data.body || '';
+        }
+      }
+    }
+
+    // Assemble HTML for a language
+    async function assembleForLang(lang) {
+      const template_id = document.getElementById('template').value;
+      const body_html = document.getElementById(`body-${lang}`).value;
+
+      try {
+        const res = await fetch('/api/assemble', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ template_id, body_html, language: lang }),
+        });
+        if (res.ok) {
+          const data = await res.json();
+          assembledHtml[lang] = data.html;
+          if (lang === currentPreviewLang) updatePreview();
+        }
+      } catch (e) {
+        console.error(`Assemble failed for ${lang}:`, e);
+      }
+    }
+
+    // Debounced assemble on edit
+    function scheduleAssemble(lang) {
+      // Update generatedContent in-memory
+      generatedContent[lang] = {
+        title: document.getElementById(`title-${lang}`).value,
+        body: document.getElementById(`body-${lang}`).value,
+      };
+      if (assembleTimers[lang]) clearTimeout(assembleTimers[lang]);
+      assembleTimers[lang] = setTimeout(() => assembleForLang(lang), 300);
+    }
+
+    // Regenerate single language
+    async function handleRegenerate(lang) {
+      const template_id = document.getElementById('template').value;
+      const subject = document.getElementById('subject').value.trim();
+      const audience = document.getElementById('audience').value.trim();
+      const trigger = document.getElementById('trigger').value.trim();
+      const instructions = document.getElementById('instructions').value.trim();
+
+      const btn = event.target;
+      const original = btn.textContent;
+      btn.disabled = true;
+      btn.textContent = 'Regenerating...';
+
+      try {
+        const res = await fetch('/api/regenerate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            template_id, subject, audience, trigger, instructions,
+            language: lang,
+            existing_content: generatedContent,
+          }),
+        });
+        if (!res.ok) {
+          const err = await res.json();
+          throw new Error(err.detail || 'Regeneration failed');
+        }
+        const result = await res.json();
+        if (result[lang]) {
+          generatedContent[lang] = result[lang];
+          document.getElementById(`title-${lang}`).value = result[lang].title || '';
+          document.getElementById(`body-${lang}`).value = result[lang].body || '';
+          await assembleForLang(lang);
+        }
+      } catch (e) {
+        setStatus('Regenerate error: ' + e.message, 'error');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = original;
+      }
+    }
+
+    // Tab switching
+    function switchEditorTab(lang) {
+      currentEditorLang = lang;
+      document.querySelectorAll('#editorTabs .tab').forEach(t => {
+        t.classList.toggle('active', t.dataset.lang === lang);
+      });
+      document.querySelectorAll('.editor-panel').forEach(p => {
+        p.classList.toggle('active', p.id === `editor-${lang}`);
+      });
+    }
+
+    function switchPreviewTab(lang) {
+      currentPreviewLang = lang;
+      document.querySelectorAll('#previewTabs .tab').forEach(t => {
+        t.classList.toggle('active', t.dataset.lang === lang);
+      });
+      updatePreview();
+    }
+
+    // Update preview pane
+    function updatePreview() {
+      const lang = currentPreviewLang;
+      const title = generatedContent[lang]?.title || '';
+      const html = assembledHtml[lang] || '';
+
+      document.getElementById('preview-title').value = title;
+
+      // Update iframe
+      const iframe = document.getElementById('preview-iframe');
+      const doc = iframe.contentDocument || iframe.contentWindow.document;
+      doc.open();
+      doc.write(html);
+      doc.close();
+
+      // Update source view
+      document.getElementById('html-source').textContent = html;
+    }
+
+    // Copy functions
+    async function copyTitle() {
+      const title = document.getElementById('preview-title').value;
+      await copyToClipboard(title, event.target);
+    }
+
+    async function copyHtml() {
+      const html = assembledHtml[currentPreviewLang] || '';
+      await copyToClipboard(html, event.target);
+    }
+
+    async function copyToClipboard(text, btn) {
+      try {
+        await navigator.clipboard.writeText(text);
+        const original = btn.textContent;
+        btn.textContent = 'Copied!';
+        btn.classList.add('copied');
+        setTimeout(() => {
+          btn.textContent = original;
+          btn.classList.remove('copied');
+        }, 2000);
+      } catch (e) {
+        // Fallback
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+      }
+    }
+  </script>
+</body>
+</html>

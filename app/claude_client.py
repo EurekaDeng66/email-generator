@@ -1,9 +1,21 @@
 """Claude API client for generating multi-language email content."""
 
 import json
+import os
 import re
-import anthropic
+from openai import OpenAI
 from .html_assembler import TEMPLATES
+
+_client = None
+
+def _get_client():
+    global _client
+    if _client is None:
+        _client = OpenAI(
+            base_url="https://openrouter.ai/api/v1",
+            api_key=os.getenv("OPENROUTER_API_KEY"),
+        )
+    return _client
 
 SYSTEM_PROMPT = """You are a B2B email copywriter for BlockSec, a blockchain security company.
 You write concise, professional, but warm sales/marketing emails for the crypto compliance industry.
@@ -96,15 +108,17 @@ Languages to generate: {', '.join(languages)}
 
 Generate the email content now. Output JSON only."""
 
-    client = anthropic.Anthropic()
-    response = client.messages.create(
-        model="claude-sonnet-4-20250514",
+    model = os.getenv("MODEL", "anthropic/claude-sonnet-4-5")
+    response = _get_client().chat.completions.create(
+        model=model,
         max_tokens=4096,
-        system=SYSTEM_PROMPT,
-        messages=[{"role": "user", "content": user_prompt}],
+        messages=[
+            {"role": "system", "content": SYSTEM_PROMPT},
+            {"role": "user", "content": user_prompt},
+        ],
     )
 
-    raw = response.content[0].text
+    raw = response.choices[0].message.content
     cleaned = _clean_json_response(raw)
     return json.loads(cleaned)
 
@@ -146,14 +160,16 @@ The other language versions (for reference/consistency):
 Output JSON with only the "{language}" key:
 {{"{language}": {{"title": "...", "body": "<p>...</p>"}}}}"""
 
-    client = anthropic.Anthropic()
-    response = client.messages.create(
-        model="claude-sonnet-4-20250514",
+    model = os.getenv("MODEL", "anthropic/claude-sonnet-4-5")
+    response = _get_client().chat.completions.create(
+        model=model,
         max_tokens=2048,
-        system=SYSTEM_PROMPT,
-        messages=[{"role": "user", "content": user_prompt}],
+        messages=[
+            {"role": "system", "content": SYSTEM_PROMPT},
+            {"role": "user", "content": user_prompt},
+        ],
     )
 
-    raw = response.content[0].text
+    raw = response.choices[0].message.content
     cleaned = _clean_json_response(raw)
     return json.loads(cleaned)

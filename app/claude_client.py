@@ -3,6 +3,7 @@
 import json
 import os
 import re
+import concurrent.futures
 from openai import OpenAI
 from .html_assembler import TEMPLATES
 
@@ -53,7 +54,7 @@ Two senders are used. Match the sign-off to the sender:
 
 **Ruby Xu (COO)** — ruby_sales / ruby_kyt templates
 - Tone: warm, direct, personal. Signs off: "Cheers,<br/>Ruby" / "All the best,<br/>Ruby" / "Best,<br/>Ruby"
-- ZH sign-off: "祝好，<br/>Ruby" / "Ruby 本人"
+- ZH sign-off: "祝好，<br/>Ruby Xu ｜ COO @BlockSec"
 - JA sign-off: "BlockSec COO<br/>Ruby"
 - ES sign-off: "Saludos,<br/>Ruby<br/>COO @BlockSec"
 
@@ -101,7 +102,7 @@ Phalcon 帮你轻松搞定加密资产合规——自动化 KYT/KYA 筛查，隔
 有任何问题随时邮件或加微信，也欢迎来 Telegram 社区 @BlockSecTeam 一起交流。
 相关资料：📄 [用户手册] | [API 文档]
 祝好，
-Ruby 本人
+Ruby Xu ｜ COO @BlockSec
 
 ### Welcome email — Ruby, ES
 Subject: Bienvenido a Phalcon Compliance: guía de inicio rápido
@@ -168,7 +169,7 @@ Subject: 【BlockSec 2026】Phalcon Network 现已上线——专为执法与监
 [立即加入网络]
 如果您认为这与您的工作方向契合，我们诚挚邀请您加入该网络。
 期待与您进一步沟通。
-Ruby 本人
+Ruby Xu ｜ COO @BlockSec
 
 ### 14 days inactive — Jenna, EN
 Subject: Still need compliance checks? Get clear risk signals in under a minute
@@ -204,6 +205,59 @@ def _clean_json_response(text: str) -> str:
     return text.strip()
 
 
+def _generate_one_language(
+    lang: str,
+    template_id: str,
+    subject: str,
+    audience: str,
+    trigger: str,
+    instructions: str,
+    cta_url: str,
+) -> tuple[str, dict]:
+    """Generate email content for a single language. Returns (lang, content_dict)."""
+    meta = TEMPLATES[template_id]
+    sender = meta["sender"]
+    has_unsub = meta["has_unsubscribe"]
+
+    cta_instruction = (
+        f"Primary CTA URL: {cta_url}\n"
+        f"Include a CTA link using this exact URL with appropriate button text in {lang}. "
+        f"Style it with the orange link style from the HTML rules."
+    ) if cta_url else "No specific CTA URL provided — include a relevant CTA if appropriate."
+
+    user_prompt = f"""Generate email content for the following:
+
+Template: {meta['name']}
+Sender: {sender}
+Email topic/direction (创作方向, NOT the literal subject — generate a unique native subject): {subject}
+Target audience: {audience}
+Trigger/timing context: {trigger}
+Has unsubscribe link: {"Yes (preserve {{{{unsubscribe_url}}}} in footer area)" if has_unsub else "No"}
+CTA: {cta_instruction}
+Additional instructions: {instructions or "None"}
+Language to generate: {lang}
+
+Output JSON with ONLY the "{lang}" key:
+{{"{lang}": {{"title": "...", "body": "<p>...</p>"}}}}"""
+
+    model = os.getenv("MODEL", "anthropic/claude-sonnet-4-5")
+    response = _get_client().chat.completions.create(
+        model=model,
+        max_tokens=1500,
+        messages=[
+            {"role": "system", "content": SYSTEM_PROMPT},
+            {"role": "user", "content": user_prompt},
+        ],
+    )
+
+    raw = response.choices[0].message.content
+    cleaned = _clean_json_response(raw)
+    data = json.loads(cleaned)
+    # Accept both {lang: {...}} and bare {...} responses
+    content = data.get(lang, data)
+    return lang, content
+
+
 def generate_emails(
     template_id: str,
     subject: str,
@@ -213,47 +267,24 @@ def generate_emails(
     languages: list[str] | None = None,
     cta_url: str = "",
 ) -> dict:
-    """Generate multi-language email content using Claude API."""
+    """Generate multi-language email content in parallel using Claude API."""
     if languages is None:
         languages = ["en", "zh", "es", "ja"]
 
-    meta = TEMPLATES[template_id]
-    sender = meta["sender"]
-    has_unsub = meta["has_unsubscribe"]
+    result = {}
+    with concurrent.futures.ThreadPoolExecutor(max_workers=len(languages)) as executor:
+        futures = {
+            executor.submit(
+                _generate_one_language,
+                lang, template_id, subject, audience, trigger, instructions, cta_url,
+            ): lang
+            for lang in languages
+        }
+        for future in concurrent.futures.as_completed(futures):
+            lang, content = future.result()
+            result[lang] = content
 
-    cta_instruction = (
-        f"Primary CTA URL: {cta_url}\n"
-        f"Include a CTA link using this exact URL. Generate appropriate CTA button text in each language (e.g., EN: 'Start Free Screening →', ZH: '开始免费筛查 →'). "
-        f"Style it with the orange link style from the HTML rules."
-    ) if cta_url else "No specific CTA URL provided — include a relevant CTA if appropriate."
-
-    user_prompt = f"""Generate email content for the following:
-
-Template: {meta['name']}
-Sender: {sender}
-Email topic/direction (创作方向, NOT the literal subject — generate a unique native subject for EACH language): {subject}
-Target audience: {audience}
-Trigger/timing context: {trigger}
-Has unsubscribe link: {"Yes (preserve {{{{unsubscribe_url}}}} in footer area)" if has_unsub else "No"}
-CTA: {cta_instruction}
-Additional instructions: {instructions or "None"}
-Languages to generate: {', '.join(languages)}
-
-Generate the email content now. Output JSON only."""
-
-    model = os.getenv("MODEL", "anthropic/claude-sonnet-4-5")
-    response = _get_client().chat.completions.create(
-        model=model,
-        max_tokens=4096,
-        messages=[
-            {"role": "system", "content": SYSTEM_PROMPT},
-            {"role": "user", "content": user_prompt},
-        ],
-    )
-
-    raw = response.choices[0].message.content
-    cleaned = _clean_json_response(raw)
-    return json.loads(cleaned)
+    return result
 
 
 def regenerate_single_language(

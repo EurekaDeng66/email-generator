@@ -798,6 +798,7 @@ const CTA_KEY   = 'blocksec_cta_templates';
 const FIELD_KEY = 'blocksec_field_options';
 const LIB_KEY   = 'blocksec_email_library';
 const UTM_KEY   = 'blocksec_utm_templates';
+const STORE_KEYS = [CTA_KEY, FIELD_KEY, LIB_KEY, UTM_KEY];
 
 // ─────────────────────────────────────────────
 // PIPELINE NAV (scroll-based, always visible)
@@ -860,6 +861,32 @@ function setStatus(msg, type = 'info') {
 function clearStatus() { document.getElementById('statusBar').className = 'status-bar'; }
 
 // ─────────────────────────────────────────────
+// ─────────────────────────────────────────────
+// SERVER SYNC (write-through to SQLite on Railway)
+// ─────────────────────────────────────────────
+async function initServerSync() {
+  for (const key of STORE_KEYS) {
+    try {
+      const resp = await fetch(`/api/store/${key}`);
+      if (!resp.ok) continue;
+      const { value } = await resp.json();
+      if (value !== null && value !== undefined) {
+        localStorage.setItem(key, JSON.stringify(value));
+      }
+    } catch {}
+  }
+}
+
+function serverSave(key) {
+  const data = localStorage.getItem(key);
+  if (!data) return;
+  fetch(`/api/store/${key}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ value: JSON.parse(data) }),
+  }).catch(() => {});
+}
+
 // FIELD OPTIONS (saveable dropdowns)
 // ─────────────────────────────────────────────
 const DEFAULT_OPTS = {
@@ -890,7 +917,7 @@ function loadFieldOpts() {
     return s ? Object.assign({}, DEFAULT_OPTS, JSON.parse(s)) : JSON.parse(JSON.stringify(DEFAULT_OPTS));
   } catch { return JSON.parse(JSON.stringify(DEFAULT_OPTS)); }
 }
-function saveFieldOpts(opts) { localStorage.setItem(FIELD_KEY, JSON.stringify(opts)); }
+function saveFieldOpts(opts) { localStorage.setItem(FIELD_KEY, JSON.stringify(opts)); serverSave(FIELD_KEY); }
 
 // Combo field: maps combo key → input element id
 const COMBO_INPUT = {
@@ -1047,11 +1074,13 @@ function saveCTATemplate() {
   if (idx >= 0) { if (!confirm(`替换 "${name}"？`)) return; tpls[idx].url = url; }
   else tpls.push({ name, url });
   localStorage.setItem(CTA_KEY, JSON.stringify(tpls));
+  serverSave(CTA_KEY);
   document.getElementById('cta_save_name').value = '';
   renderCTATemplates();
 }
 function deleteCTATemplate(name) {
   localStorage.setItem(CTA_KEY, JSON.stringify(loadCTATemplates().filter(t => t.name !== name)));
+  serverSave(CTA_KEY);
   renderCTATemplates();
 }
 function applyCTATemplate(url) { document.getElementById('cta_url').value = url; }
@@ -1383,6 +1412,7 @@ function saveToLibrary() {
   if (idx >= 0) { if (!confirm(`Replace "${name}"?`)) return; lib.splice(idx, 1); }
   lib.unshift(entry);
   localStorage.setItem(LIB_KEY, JSON.stringify(lib));
+  serverSave(LIB_KEY);
   document.getElementById('lib-save-name').value = '';
   setStatus(`Template "${name}" saved!`, 'success');
   renderLibrary();
@@ -1391,6 +1421,7 @@ function saveToLibrary() {
 function deleteFromLibrary(id) {
   if (!confirm('Delete this template?')) return;
   localStorage.setItem(LIB_KEY, JSON.stringify(loadLibrary().filter(e => e.id !== id)));
+  serverSave(LIB_KEY);
   renderLibrary();
 }
 
@@ -1847,6 +1878,7 @@ function saveUtmTemplate() {
   if (idx >= 0) { if (!confirm(`替换 "${name}"？`)) return; list.splice(idx, 1); }
   list.unshift(tpl);
   localStorage.setItem(UTM_KEY, JSON.stringify(list));
+  serverSave(UTM_KEY);
   ['utm-tpl-name','utm-tpl-base','utm-tpl-source','utm-tpl-medium','utm-tpl-campaign','utm-tpl-content','utm-tpl-preview'].forEach(id => document.getElementById(id).value = '');
   setStatus(`UTM 模版 "${name}" 已保存`, 'success');
   renderUtmTemplates();
@@ -1855,6 +1887,7 @@ function saveUtmTemplate() {
 function deleteUtmTemplate(id) {
   if (!confirm('确认删除该 UTM 模版？')) return;
   localStorage.setItem(UTM_KEY, JSON.stringify(loadUtmTemplates().filter(t => t.id !== id)));
+  serverSave(UTM_KEY);
   renderUtmTemplates();
 }
 
@@ -1909,6 +1942,8 @@ function renderUtmTemplates() {
 // INIT
 // ─────────────────────────────────────────────
 (async () => {
+  // Sync server data into localStorage before rendering
+  await initServerSync();
   renderPipelineNav();
   restoreSavedDestinations();
   renderCTATemplates();

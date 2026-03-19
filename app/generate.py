@@ -2,7 +2,7 @@
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
-from .claude_client import generate_emails, regenerate_single_language
+from .claude_client import generate_emails, regenerate_single_language, polish_cta_label
 from .html_assembler import TEMPLATES
 
 router = APIRouter(prefix="/api")
@@ -14,6 +14,8 @@ class GenerateRequest(BaseModel):
     audience: str
     trigger: str
     instructions: str = ""
+    cta_url: str = ""
+    languages: list[str] | None = None
 
 
 class RegenerateRequest(BaseModel):
@@ -24,6 +26,7 @@ class RegenerateRequest(BaseModel):
     language: str
     existing_content: dict
     instructions: str = ""
+    cta_url: str = ""
 
 
 @router.get("/templates")
@@ -47,6 +50,8 @@ def generate(req: GenerateRequest):
             audience=req.audience,
             trigger=req.trigger,
             instructions=req.instructions,
+            cta_url=req.cta_url,
+            languages=req.languages,
         )
         return result
     except Exception as e:
@@ -69,7 +74,24 @@ def regenerate(req: RegenerateRequest):
             language=req.language,
             existing_content=req.existing_content,
             instructions=req.instructions,
+            cta_url=req.cta_url,
         )
         return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+class PolishCtaRequest(BaseModel):
+    label: str
+
+
+@router.post("/polish_cta")
+def polish_cta(req: PolishCtaRequest):
+    """Polish a CTA button label using AI."""
+    if not req.label.strip():
+        raise HTTPException(status_code=400, detail="Label is empty")
+    try:
+        polished = polish_cta_label(req.label.strip())
+        return {"polished": polished}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

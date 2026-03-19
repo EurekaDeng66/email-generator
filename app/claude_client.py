@@ -29,44 +29,169 @@ Output ONLY valid JSON (no markdown fences, no extra text). Structure:
   "ja": {"title": "メール件名", "body": "<p>...</p><p>...</p>"}
 }
 
+## Title/Subject Rules
+- Each language MUST have a UNIQUE, natively-written email subject line
+- Do NOT copy the English subject verbatim into other languages — translate and adapt naturally
+- The "Email topic/direction" in the user prompt describes the THEME, not the literal subject line to use
+- Chinese: use natural business Chinese (可用【】brackets for emphasis)
+- Japanese: use 【BlockSec】prefix convention for formal emails
+- Spanish: use natural Spanish phrasing
+- English: concise, action-oriented
+
 ## HTML Rules for Email Body
 - Use ONLY inline-styled HTML compatible with email clients
 - Paragraphs: <p style="margin:0 0 0.9em 0;">text</p>
 - Bold: <strong>text</strong>
-- Links: <a href="URL" target="_blank" style="color:#ff8700; text-decoration:underline; font-weight:600;">text</a>
-- Regular links (resources, community): <a href="URL" target="_blank" style="color:#2563EB; text-decoration:none;">text</a>
+- CTA links (primary action): <a href="URL" target="_blank" style="color:#ff8700; text-decoration:underline; font-weight:600;">text →</a>
+- Regular links (resources, docs, community): <a href="URL" target="_blank" style="color:#2563EB; text-decoration:none;">text</a>
 - Line breaks: <br/>
 - NO <div>, NO CSS classes, NO external styles, NO <style> blocks
 - CTA buttons should be simple text links with the orange style, NOT button elements
 
+## Senders & Sign-offs
+Two senders are used. Match the sign-off to the sender:
+
+**Ruby Xu (COO)** — ruby_sales / ruby_kyt templates
+- Tone: warm, direct, personal. Signs off: "Cheers,<br/>Ruby" / "All the best,<br/>Ruby" / "Best,<br/>Ruby"
+- ZH sign-off: "祝好，<br/>Ruby" / "Ruby 本人"
+- JA sign-off: "BlockSec COO<br/>Ruby"
+- ES sign-off: "Saludos,<br/>Ruby<br/>COO @BlockSec"
+
+**Jenna Cheng (Product Manager)** — jenna_marketing template
+- Tone: helpful, product-focused, lighter. Signs off: "Best,<br/>Jenna" / "Thanks,<br/>Jenna"
+- ZH sign-off: "Jenna" (简短)
+- JA sign-off: "BlockSec PM<br/>Jenna"
+- ES sign-off: "Un saludo,<br/>Jenna"
+
+## Products & Messaging
+- **Phalcon Compliance**: real-time KYT & AML compliance platform. Key value: detect illicit transactions, automate KYA/KYT screening, meet regulatory requirements, 20+ chains. Free users get 3 free scans/month.
+- **MetaSleuth**: on-chain investigation tool for analysts and law enforcement. Traces complex fund flows, maps transaction networks.
+- **Phalcon Network**: public intelligence network for law enforcement, investigators, regulators. Real-time fund movement monitoring, cross-chain laundering route tracking.
+- Community: Telegram @BlockSecTeam
+- Docs: User Guides | API Docs
+
 ## Content Rules
 - Keep emails 3-6 short paragraphs
-- End with a casual sign-off matching the sender (e.g., "All the best,<br/>Ruby" or "Best,<br/>Jenna")
-- Do NOT include the signature card (name/title/contact info block) — that comes from the template
-- For Chinese (zh): write in natural mainland Chinese, not translated-sounding. 可以用 emoji 但要克制
-- For Japanese (ja): use appropriate keigo/polite business Japanese (です/ます体)
-- For Spanish (es): use formal usted form
-- English (en): professional but approachable, not overly formal
-- Preserve any template variables literally: {{expiry_date}}, {{renew_url}}, {{unsubscribe_url}}, {{Name}}, {{name}}
-- Include relevant UTM parameters in links: utm_source=product_email&utm_content={context}
+- End with the sign-off matching the sender. Do NOT include the signature card (name/title/contact info block) — that comes from the template
+- For Chinese (zh): write in natural mainland Chinese, not translated-sounding. 可以用 emoji 但要克制（最多2个）
+- For Japanese (ja): use appropriate keigo/polite business Japanese (です/ます体). Honorifics for recipients.
+- For Spanish (es): use formal usted form. ¡Hola! / Saludos / Un cordial saludo.
+- English (en): professional but approachable, not overly formal. First-person, conversational.
+- Preserve template variables literally: {{expiry_date}}, {{renew_url}}, {{unsubscribe_url}}, {{Name}}, {{name}}, {{risk_type}}, {{cta}}
 
-## Reference Examples (maintain this tone and style)
+## Reference Examples
 
-### Example 1: Welcome email (Ruby, EN)
+### Welcome email — Ruby, EN
+Subject: Welcome to Phalcon Compliance — Quick Start
 Great to see you join!
 Phalcon Compliance is your intelligent crypto AML platform. We help you keep illicit funds away, automate KYA/KYT screening, and stay compliant with confidence.
-To get started, screen one address or transaction you already care about. You have 3 free risk screenings per month.
-Run a Compliance Check →
+To get started, screen one address or transaction you already care about. You have **3 free compliance checks this month**. Make them count — each one could be the scan that catches a risk before it costs you.
+[Run a Compliance Check →]
+Any questions? Feel free to contact me directly or join our Telegram community @BlockSecTeam for real-time support and updates.
+Resources: User Guides | API Docs
+Cheers,
+Ruby / COO @BlockSec
 
-### Example 2: Welcome email (Ruby, ZH)
+### Welcome email — Ruby, ZH
 欢迎加入 Phalcon Compliance 👋
 Phalcon 帮你轻松搞定加密资产合规——自动化 KYT/KYA 筛查，隔离非法资金，让监管审核不再头疼。
-我们为每位新朋友提供每月3次免费筛查，可以挑一个真实案例试试。
-👉 开始免费筛查
+无论你是审查钱包风险、监控资金流动，还是审核出入金地址，都能一站搞定。
+我们为每位新朋友提供每月3次免费筛查，可以挑一个真实案例试试，比如入金审查或合规检查，看看能否帮你的日常合规更高效。
+👉 [开始免费筛查]
+有任何问题随时邮件或加微信，也欢迎来 Telegram 社区 @BlockSecTeam 一起交流。
+相关资料：📄 [用户手册] | [API 文档]
+祝好，
+Ruby 本人
 
-### Example 3: 72h inactive (Ruby, EN)
+### Welcome email — Ruby, ES
+Subject: Bienvenido a Phalcon Compliance: guía de inicio rápido
+¡Nos alegra tenerle con nosotros!
+Phalcon Compliance es su plataforma inteligente de AML para criptoactivos. Le ayudamos a mantener alejados los fondos ilícitos, automatizar los controles KYA/KYT y gestionar el cumplimiento con mayor seguridad.
+Para empezar, analice una dirección o transacción que ya sea relevante para su equipo. Este mes tiene **3 verificaciones de compliance gratuitas**.
+[Analizar ahora →]
+¿Tiene alguna pregunta? Puede ponerse en contacto conmigo directamente. También puede unirse a nuestra comunidad de Telegram, @BlockSecTeam.
+Saludos,
+Ruby / COO @BlockSec
+
+### Welcome email — Ruby, JA
+Subject: 【BlockSec】オンチェーン・コンプライアンス・アカウント有効化のお知らせ
+PhalconComplianceへようこそ 🎉
+BlockSecのRubyです。アカウントの有効化が完了しました。
+Phalcon Complianceは、暗号資産のコンプライアンスを自動化するソリューションです。**KYT/KYAスクリーニング**により、不正資金の遮断、リスク評価、規制対応を効率化します。
+**まずは無料でお試しください：** 新規ユーザーの皆様には、**毎月3回まで無料スクリーニング**をご用意しています。入金審査などの実際の業務フローでその精度をぜひご確認ください。
+[無料で始める]
+ご不明な点がありましたら、本メールへの返信またはTelegram / WhatsAppにてお気軽にお問い合わせください。
+BlockSec COO
+Ruby
+
+### 48h no first scan — Ruby, EN
+Subject: Need help setting up on Phalcon Compliance?
+Hi there,
+Your Phalcon Compliance account is ready — you just haven't run your first screening yet.
+You have 3 free screenings available this month. Pick one address or transaction you care about and check it now. It takes about 30 seconds.
+[Screen Now →]
+On-chain risk can change quickly. In seconds, you'll know whether it's linked to known risks — and why.
+If you need help getting started, just reply — happy to help. Or join our Telegram Community: @BlockSecTeam
+All the best,
+Ruby / COO @BlockSec
+
+### 72h after first scan — Ruby, EN
+Subject: Check again — risk may have changed
+Hi,
 I noticed you recently completed your first screening on Phalcon Compliance.
 On-chain risk can change over time. If you're checking addresses, transactions, or counterparties repeatedly, ongoing monitoring can help you stay updated without re-screening manually.
+[Explore monitoring →]
+Reply here or ping me on Telegram if you'd like the simplest setup.
+Best,
+Ruby / COO @BlockSec
+
+### Crime report download — KYT promo (Ruby, EN)
+Subject: A few tools that might be useful for your team
+Hi there,
+Hope you find our BlockSec 2026 Crypto Crime Report useful. Beyond the report, we have a few KYT solutions that might be relevant:
+**Phalcon Compliance** — a real-time KYT and AML compliance platform that helps crypto businesses detect illicit transactions, assess risk, and meet regulatory requirements.
+[Start for Free →]
+**MetaSleuth** — an on-chain investigation tool for analysts and law enforcement to trace complex fund flows and map transaction networks.
+[Try MetaSleuth →]
+If any of this resonates, feel free to reach out.
+All the best,
+Ruby
+
+### Crime report download — Network promo (Ruby, ZH)
+Subject: 【BlockSec 2026】Phalcon Network 现已上线——专为执法与监管机构打造
+您好，
+希望《BlockSec 2026 加密犯罪报告》对您的工作有所裨益。除报告外，我有一项与您工作可能高度相关的信息想与您分享——我们近期正式推出了 Phalcon Network，这是一个面向执法机构、调查人员和监管机构的公众情报网络，旨在帮助各方在非法资金转移消失之前及时响应和行动。
+加入 Phalcon Network，您可以：
+· 标记与诈骗、黑客攻击、金融犯罪相关的非法资金来源
+· 实时监控资金动向，追踪跨链洗钱路径
+· 在资金被取走前通知相关平台，从而实现更快速的协调干预
+[立即加入网络]
+如果您认为这与您的工作方向契合，我们诚挚邀请您加入该网络。
+期待与您进一步沟通。
+Ruby 本人
+
+### 14 days inactive — Jenna, EN
+Subject: Still need compliance checks? Get clear risk signals in under a minute
+Hi,
+It's been over 2 weeks since your last scan on Phalcon Compliance.
+Need to check a wallet or transaction? You can run a new screen in under a minute and instantly review the risk signals and evidence.
+🔍 [Run a Free Scan Now →]
+Not sure what to scan? Try:
+• An inbound deposit address
+• A counterparty wallet
+• A transaction hash under review
+Your 3 free screens refresh every month — they're ready whenever you are.
+Best,
+Jenna / Product Manager | BlockSec
+
+### Paid user renewal — Jenna, EN
+Subject: Checking in: Phalcon Compliance & your feedback
+Hope you're having a great week 😊
+Just wanted to see how you're finding Phalcon Compliance so far. Any favorite features or areas where we could improve?
+A quick heads-up: your plan expires on **{{expiry_date}}**. You can **[Renew here]** to keep everything running smoothly.
+Also, if your compliance needs have evolved (new chains, deeper labeling, etc.), just let me know.
+Best,
+Jenna / Product Manager | BlockSec
 """
 
 
@@ -86,6 +211,7 @@ def generate_emails(
     trigger: str,
     instructions: str = "",
     languages: list[str] | None = None,
+    cta_url: str = "",
 ) -> dict:
     """Generate multi-language email content using Claude API."""
     if languages is None:
@@ -95,14 +221,21 @@ def generate_emails(
     sender = meta["sender"]
     has_unsub = meta["has_unsubscribe"]
 
+    cta_instruction = (
+        f"Primary CTA URL: {cta_url}\n"
+        f"Include a CTA link using this exact URL. Generate appropriate CTA button text in each language (e.g., EN: 'Start Free Screening →', ZH: '开始免费筛查 →'). "
+        f"Style it with the orange link style from the HTML rules."
+    ) if cta_url else "No specific CTA URL provided — include a relevant CTA if appropriate."
+
     user_prompt = f"""Generate email content for the following:
 
 Template: {meta['name']}
 Sender: {sender}
-Email theme/subject: {subject}
+Email topic/direction (创作方向, NOT the literal subject — generate a unique native subject for EACH language): {subject}
 Target audience: {audience}
 Trigger/timing context: {trigger}
 Has unsubscribe link: {"Yes (preserve {{{{unsubscribe_url}}}} in footer area)" if has_unsub else "No"}
+CTA: {cta_instruction}
 Additional instructions: {instructions or "None"}
 Languages to generate: {', '.join(languages)}
 
@@ -131,6 +264,7 @@ def regenerate_single_language(
     language: str,
     existing_content: dict,
     instructions: str = "",
+    cta_url: str = "",
 ) -> dict:
     """Regenerate content for a single language, using others as context."""
     meta = TEMPLATES[template_id]
@@ -145,13 +279,20 @@ def regenerate_single_language(
             )
     context_str = "\n\n".join(context_parts)
 
+    cta_instruction = (
+        f"Primary CTA URL: {cta_url}\n"
+        f"Include a CTA link using this exact URL with appropriate button text in {language}. "
+        f"Style it with the orange link style."
+    ) if cta_url else "No specific CTA URL."
+
     user_prompt = f"""Regenerate ONLY the {language} version of this email.
 
 Template: {meta['name']}
 Sender: {sender}
-Email theme/subject: {subject}
+Email topic/direction (创作方向, NOT the literal subject — generate a unique native subject for EACH language): {subject}
 Target audience: {audience}
 Trigger/timing: {trigger}
+CTA: {cta_instruction}
 Additional instructions: {instructions or "None"}
 
 The other language versions (for reference/consistency):
@@ -173,3 +314,23 @@ Output JSON with only the "{language}" key:
     raw = response.choices[0].message.content
     cleaned = _clean_json_response(raw)
     return json.loads(cleaned)
+
+
+def polish_cta_label(label: str) -> str:
+    """Polish a CTA button label — make it concise, action-oriented, and marketing-ready."""
+    model = os.getenv("MODEL", "anthropic/claude-sonnet-4-5")
+    response = _get_client().chat.completions.create(
+        model=model,
+        max_tokens=100,
+        messages=[
+            {"role": "system", "content": (
+                "You are a B2B SaaS email copywriter. "
+                "The user gives you a draft CTA button label. "
+                "Return ONLY the polished label text — concise, action-oriented, "
+                "compelling for crypto/compliance audience. "
+                "Keep it under 6 words. No quotes, no explanation."
+            )},
+            {"role": "user", "content": label},
+        ],
+    )
+    return response.choices[0].message.content.strip().strip('"\'')

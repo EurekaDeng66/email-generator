@@ -4,608 +4,1712 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>BlockSec Email Generator</title>
+  <link href="https://cdn.quilljs.com/1.3.7/quill.snow.css" rel="stylesheet">
+  <script src="https://cdn.quilljs.com/1.3.7/quill.min.js"></script>
   <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background: #f5f5f5;
-      color: #1a1a1a;
-      line-height: 1.5;
-    }
-    .container { max-width: 1200px; margin: 0 auto; padding: 24px; }
-    h1 {
-      font-size: 24px;
-      font-weight: 700;
-      margin-bottom: 4px;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', sans-serif;
+      background: #F8F6F3;
       color: #111;
-    }
-    .subtitle { color: #666; font-size: 14px; margin-bottom: 24px; }
-
-    /* Sections */
-    .section {
-      background: #fff;
-      border-radius: 12px;
-      padding: 24px;
-      margin-bottom: 20px;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.08);
-    }
-    .section-title {
-      font-size: 16px;
-      font-weight: 600;
-      margin-bottom: 16px;
-      color: #333;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-    .section-title .badge {
-      background: #FF7F32;
-      color: #fff;
-      font-size: 11px;
-      padding: 2px 8px;
-      border-radius: 10px;
-      font-weight: 500;
+      padding-top: 72px;
     }
 
-    /* Form */
-    .form-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 16px;
+    /* ── Pipeline Nav ── */
+    .pipeline-nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      background: #fff; border-bottom: 1px solid #e5e5e5;
+      height: 72px; display: flex; align-items: center;
+      padding: 0 28px; gap: 20px;
     }
-    .form-group { display: flex; flex-direction: column; gap: 4px; }
+    .pipeline-brand {
+      font-size: 15px; font-weight: 700; color: #111;
+      letter-spacing: -0.3px; white-space: nowrap; flex-shrink: 0;
+    }
+    .pipeline-brand span { color: #FF7F32; }
+    .pipeline-steps {
+      display: flex; align-items: center; flex: 1; justify-content: center;
+    }
+    .pipeline-step {
+      display: flex; align-items: center; gap: 8px;
+      padding: 5px 10px; border-radius: 8px; transition: background 0.15s;
+      user-select: none;
+    }
+    .pipeline-step.clickable { cursor: pointer; }
+    .pipeline-step.clickable:hover { background: #f5f5f5; }
+    .step-circle {
+      width: 26px; height: 26px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 11px; font-weight: 700; flex-shrink: 0; transition: all 0.2s;
+    }
+    .pipeline-step.locked .step-circle { background: #ebebeb; color: #bbb; }
+    .pipeline-step.active .step-circle { background: #FF7F32; color: #fff; }
+    .pipeline-step.done .step-circle { background: #16a34a; color: #fff; }
+    .step-label { font-size: 12px; font-weight: 500; color: #aaa; white-space: nowrap; }
+    .pipeline-step.active .step-label { color: #FF7F32; font-weight: 600; }
+    .pipeline-step.done .step-label { color: #16a34a; }
+    .pipe-connector { width: 28px; height: 1px; background: #ddd; flex-shrink: 0; }
+    .pipe-connector.done { background: #16a34a; }
+
+    /* ── Container ── */
+    .container { max-width: 920px; margin: 0 auto; padding: 32px 24px 80px; }
+
+    /* ── Status bar ── */
+    .status-bar {
+      display: none; padding: 10px 16px; border-radius: 8px;
+      font-size: 13px; margin-bottom: 18px;
+    }
+    .status-bar.show { display: block; }
+    .status-bar.info { background: #eff6ff; color: #1e40af; }
+    .status-bar.error { background: #fef2f2; color: #991b1b; }
+    .status-bar.success { background: #f0fdf4; color: #166534; }
+
+    /* ── Step panel ── */
+    .step-panel {
+      scroll-margin-top: 88px;
+      padding-top: 40px;
+    }
+    .step-panel + .step-panel { border-top: 2px dashed #e8e8e8; }
+    .step-header { margin-bottom: 26px; }
+    .step-header h2 { font-size: 22px; font-weight: 700; color: #111; letter-spacing: -0.4px; }
+    .step-header p { font-size: 13px; color: #666; margin-top: 5px; line-height: 1.5; }
+
+    /* ── Placeholder card ── */
+    .placeholder-card {
+      background: #fff; border: 2px dashed #e0e0e0; border-radius: 12px;
+      padding: 40px 24px; text-align: center; color: #aaa;
+      font-size: 13px; line-height: 1.6;
+    }
+    .placeholder-card .ph-icon { font-size: 28px; margin-bottom: 12px; }
+    .placeholder-card strong { color: #888; }
+
+    /* ── Card ── */
+    .card { background: #fff; border-radius: 12px; border: 1px solid #e5e5e5; padding: 24px; margin-bottom: 16px; }
+    .card-title { font-size: 11px; font-weight: 700; color: #999; text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 16px; }
+
+    /* ── Form ── */
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .form-group { display: flex; flex-direction: column; gap: 6px; }
     .form-group.full { grid-column: 1 / -1; }
-    label { font-size: 13px; font-weight: 500; color: #555; }
-    input, select, textarea {
-      padding: 10px 12px;
-      border: 1px solid #ddd;
-      border-radius: 8px;
-      font-size: 14px;
-      font-family: inherit;
-      transition: border-color 0.2s;
+    label { font-size: 11px; font-weight: 700; color: #555; text-transform: uppercase; letter-spacing: 0.5px; }
+    .req { color: #e53e3e; font-weight: 700; margin-left: 2px; }
+    input[type="text"], select, textarea {
+      width: 100%; border: 1.5px solid #e0e0e0; border-radius: 8px;
+      padding: 9px 12px; font-size: 13px; color: #111; background: #fff;
+      transition: border-color 0.15s; font-family: inherit;
     }
-    input:focus, select:focus, textarea:focus {
-      outline: none;
-      border-color: #8DC8E8;
-      box-shadow: 0 0 0 3px rgba(141,200,232,0.15);
-    }
-    textarea { resize: vertical; min-height: 60px; }
+    input[type="text"]:focus, select:focus, textarea:focus { outline: none; border-color: #FF7F32; }
+    textarea { resize: vertical; min-height: 70px; }
+    input[readonly] { background: #f8f8f8; color: #666; cursor: default; }
 
-    /* Buttons */
+    /* ── Combo field (saveable input + dropdown) ── */
+    .combo-field { position: relative; }
+    .combo-row { display: flex; gap: 6px; align-items: center; }
+    .combo-row input { flex: 1; }
+    .btn-combo-toggle {
+      flex-shrink: 0; width: 34px; height: 34px; border: 1.5px solid #e0e0e0;
+      border-radius: 7px; background: #fff; cursor: pointer; font-size: 11px;
+      color: #aaa; display: flex; align-items: center; justify-content: center;
+      transition: all 0.15s;
+    }
+    .btn-combo-toggle:hover { border-color: #FF7F32; color: #FF7F32; background: #fff8f4; }
+    .btn-combo-toggle.open { border-color: #FF7F32; color: #FF7F32; background: #fff8f4; }
+    .btn-save-opt {
+      flex-shrink: 0; width: 32px; height: 34px; border: 1.5px solid #e0e0e0;
+      border-radius: 7px; background: #fff; cursor: pointer; font-size: 15px;
+      color: #aaa; display: flex; align-items: center; justify-content: center;
+      transition: all 0.15s;
+    }
+    .btn-save-opt:hover { border-color: #FF7F32; color: #FF7F32; background: #fff8f4; }
+    .combo-dropdown {
+      position: absolute; top: calc(100% + 4px); left: 0; right: 0;
+      background: #fff; border: 1.5px solid #e0e0e0; border-radius: 10px;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.1); z-index: 50;
+      max-height: 220px; overflow-y: auto; display: none;
+    }
+    .combo-dropdown.show { display: block; }
+    .combo-opt {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 8px 12px; font-size: 12px; color: #444; cursor: pointer;
+      transition: background 0.1s;
+    }
+    .combo-opt:first-child { border-radius: 9px 9px 0 0; }
+    .combo-opt:last-child  { border-radius: 0 0 9px 9px; }
+    .combo-opt:hover { background: #fff8f4; color: #FF7F32; }
+    .combo-opt-text { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .combo-opt-del {
+      flex-shrink: 0; margin-left: 8px; color: #ccc; font-size: 10px;
+      padding: 2px 5px; border-radius: 4px; cursor: pointer; transition: all 0.1s;
+    }
+    .combo-opt-del:hover { color: #e53e3e; background: #fef2f2; }
+    .combo-empty { padding: 14px 12px; font-size: 11px; color: #bbb; text-align: center; line-height: 1.5; }
+    .sf-input-row { display: flex; gap: 6px; align-items: center; }
+    .sf-input-row input { flex: 1; }
+
+    /* ── CTA ── */
+    .cta-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .cta-saved-row { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 4px; min-height: 4px; }
+    .cta-chip {
+      font-size: 11px; padding: 3px 9px; background: #f5f5f5;
+      border: 1px solid #e0e0e0; border-radius: 5px; cursor: pointer; color: #555;
+      transition: all 0.15s; display: flex; align-items: center; gap: 5px;
+    }
+    .cta-chip:hover { background: #fff3e8; border-color: #FF7F32; color: #FF7F32; }
+    .cta-chip-del { font-size: 9px; color: #ccc; cursor: pointer; }
+    .cta-chip-del:hover { color: #e53e3e; }
+    .cta-url-row { display: flex; gap: 8px; align-items: center; }
+    .cta-url-row input { flex: 1; }
+    .cta-save-row { display: flex; gap: 6px; align-items: center; flex-shrink: 0; }
+    .cta-save-row input { width: 140px; }
+
+    /* ── Buttons ── */
     .btn {
-      padding: 10px 20px;
-      border: none;
-      border-radius: 8px;
-      font-size: 14px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.2s;
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 9px 18px; border-radius: 8px; font-size: 13px; font-weight: 600;
+      cursor: pointer; transition: all 0.15s; border: none; font-family: inherit;
     }
-    .btn-primary {
-      background: #FF7F32;
-      color: #fff;
-    }
-    .btn-primary:hover { background: #e66a1e; }
-    .btn-primary:disabled {
-      background: #ccc;
-      cursor: not-allowed;
-    }
-    .btn-secondary {
-      background: #f0f0f0;
-      color: #333;
-      border: 1px solid #ddd;
-    }
-    .btn-secondary:hover { background: #e5e5e5; }
-    .btn-copy {
-      background: #101820;
-      color: #fff;
-      font-size: 12px;
-      padding: 6px 12px;
-    }
-    .btn-copy:hover { background: #2a3440; }
-    .btn-copy.copied {
-      background: #16a34a;
-    }
-    .btn-sm { padding: 6px 12px; font-size: 12px; }
-
-    /* Tabs */
-    .tabs {
-      display: flex;
-      gap: 0;
-      border-bottom: 2px solid #eee;
-      margin-bottom: 16px;
-    }
-    .tab {
-      padding: 8px 20px;
-      font-size: 14px;
-      font-weight: 500;
-      cursor: pointer;
-      border-bottom: 2px solid transparent;
-      margin-bottom: -2px;
-      color: #888;
-      transition: all 0.2s;
-    }
-    .tab:hover { color: #555; }
-    .tab.active {
-      color: #FF7F32;
-      border-bottom-color: #FF7F32;
-    }
-
-    /* Editor */
-    .editor-panel { display: none; }
-    .editor-panel.active { display: block; }
-    .editor-row {
-      display: flex;
-      gap: 12px;
-      align-items: center;
-      margin-bottom: 12px;
-    }
-    .editor-row label { min-width: 60px; flex-shrink: 0; }
-    .editor-row input { flex: 1; }
-    .body-editor {
-      width: 100%;
-      min-height: 200px;
-      font-family: 'SF Mono', Monaco, Consolas, monospace;
-      font-size: 13px;
-      line-height: 1.6;
-      padding: 12px;
-      border: 1px solid #ddd;
-      border-radius: 8px;
-      resize: vertical;
-    }
-    .editor-actions {
-      display: flex;
-      gap: 8px;
-      margin-top: 8px;
-    }
-
-    /* Preview + Output */
-    .preview-split {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 16px;
-    }
-    .preview-pane {
-      border: 1px solid #ddd;
-      border-radius: 8px;
-      overflow: hidden;
-    }
-    .preview-pane-header {
-      background: #f8f8f8;
-      padding: 8px 12px;
-      font-size: 12px;
-      font-weight: 600;
-      color: #666;
-      border-bottom: 1px solid #ddd;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-    .preview-iframe {
-      width: 100%;
-      height: 500px;
-      border: none;
-    }
-    .html-source {
-      width: 100%;
-      height: 500px;
-      overflow: auto;
-      padding: 12px;
-      font-family: 'SF Mono', Monaco, Consolas, monospace;
-      font-size: 11px;
-      line-height: 1.4;
-      white-space: pre-wrap;
-      word-wrap: break-word;
-      background: #1e1e1e;
-      color: #d4d4d4;
-    }
-
-    /* Loading spinner */
+    .btn-primary { background: #FF7F32; color: #fff; }
+    .btn-primary:hover { background: #e86e22; }
+    .btn-primary:disabled { background: #f5c9a8; cursor: not-allowed; }
+    .btn-secondary { background: #fff; border: 1.5px solid #e0e0e0; color: #444; }
+    .btn-secondary:hover { border-color: #aaa; }
+    .btn-confirm { background: #f0fdf4; border: 1.5px solid #86efac; color: #15803d; }
+    .btn-confirm:hover { border-color: #16a34a; }
+    .btn-confirm.confirmed { background: #16a34a; border-color: #16a34a; color: #fff; }
+    .btn-danger { background: #fff; border: 1.5px solid #fca5a5; color: #dc2626; }
+    .btn-danger:hover { background: #fef2f2; }
+    .btn-lg { padding: 12px 28px; font-size: 14px; }
+    .btn-sm { padding: 5px 11px; font-size: 11px; }
     .spinner {
-      display: inline-block;
-      width: 16px;
-      height: 16px;
-      border: 2px solid rgba(255,255,255,0.3);
-      border-top-color: #fff;
-      border-radius: 50%;
-      animation: spin 0.6s linear infinite;
+      display: inline-block; width: 13px; height: 13px;
+      border: 2px solid rgba(255,255,255,0.35); border-top-color: #fff;
+      border-radius: 50%; animation: spin 0.7s linear infinite;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
+    .spin { animation: spin 0.7s linear infinite; display: inline-block; }
 
-    /* Status */
-    .status-bar {
-      padding: 12px 16px;
-      border-radius: 8px;
-      font-size: 13px;
-      margin-top: 16px;
-      display: none;
+    /* ── Step nav bottom ── */
+    .step-nav { display: flex; justify-content: space-between; align-items: center; margin-top: 24px; }
+    .step-nav.end { justify-content: flex-end; }
+
+    /* ── Lang tabs ── */
+    .lang-tabs { display: flex; gap: 2px; border-bottom: 2px solid #f0f0f0; margin-bottom: 22px; }
+    .lang-tab {
+      padding: 8px 16px; font-size: 13px; font-weight: 600; color: #999;
+      cursor: pointer; border-radius: 8px 8px 0 0; transition: all 0.15s;
+      border-bottom: 2px solid transparent; margin-bottom: -2px;
+      display: flex; align-items: center; gap: 6px;
     }
-    .status-bar.info { display: block; background: #eff6ff; color: #1e40af; }
-    .status-bar.error { display: block; background: #fef2f2; color: #991b1b; }
-    .status-bar.success { display: block; background: #f0fdf4; color: #166534; }
+    .lang-tab:hover { color: #555; }
+    .lang-tab.active { color: #FF7F32; border-bottom-color: #FF7F32; }
+    .lang-tab .check { display: none; width: 15px; height: 15px; background: #16a34a; border-radius: 50%; font-size: 8px; color: #fff; align-items: center; justify-content: center; }
+    .lang-tab.confirmed .check { display: flex; }
+    .lang-tab.active.confirmed { color: #16a34a; border-bottom-color: #16a34a; }
 
-    /* Hidden */
+    /* ── Review panel ── */
+    .review-panel { display: flex; flex-direction: column; gap: 14px; }
+    .review-subject-row { display: flex; align-items: center; gap: 10px; }
+    .review-subject-row label { flex-shrink: 0; }
+    .review-subject-row input { flex: 1; }
+    .quill-wrap { border-radius: 8px; overflow: hidden; }
+    .revision-row { display: flex; gap: 8px; align-items: flex-start; }
+    .revision-row textarea { flex: 1; min-height: 52px; }
+    .btn-regen {
+      flex-shrink: 0; width: 36px; height: 36px; border-radius: 8px;
+      background: #f5f5f5; border: 1.5px solid #e0e0e0; cursor: pointer;
+      font-size: 17px; transition: all 0.15s; display: flex; align-items: center; justify-content: center;
+    }
+    .btn-regen:hover { background: #fff3e8; border-color: #FF7F32; }
+    .confirm-row { display: flex; align-items: center; justify-content: space-between; padding-top: 2px; }
+    .lang-status { font-size: 12px; color: #999; }
+
+    /* ── Quill overrides ── */
+    .ql-container.ql-snow { border-color: #e0e0e0; border-radius: 0 0 8px 8px; font-family: inherit; }
+    .ql-toolbar.ql-snow { border-color: #e0e0e0; border-radius: 8px 8px 0 0; background: #fafafa; }
+    .ql-editor { min-height: 200px; font-size: 13.5px; line-height: 1.75; font-family: inherit; }
+    .ql-editor p { margin: 0 0 0.9em 0; }
+
+    /* ── Inline output panel (inside Step 2 per-language) ── */
+    .output-panel {
+      margin-top: 14px; padding: 16px; background: #f0fdf4;
+      border-radius: 8px; border: 1px solid #bbf7d0;
+    }
+    .output-label {
+      font-size: 11px; font-weight: 700; color: #166534;
+      text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px;
+    }
+    /* Preview view toggle (web / mobile) */
+    .preview-view-bar {
+      display: flex; align-items: center; gap: 6px; margin-top: 10px; margin-bottom: 6px;
+    }
+    .view-toggle {
+      padding: 4px 12px; font-size: 11px; font-weight: 600; border: 1.5px solid #e0e0e0;
+      border-radius: 6px; background: #fff; color: #888; cursor: pointer; transition: all 0.15s;
+    }
+    .view-toggle.active { border-color: #FF7F32; color: #FF7F32; background: #fff8f4; }
+    .view-toggle:hover { border-color: #FF7F32; color: #FF7F32; }
+    .preview-frame-wrap { display: flex; justify-content: center; }
+    .preview-frame-wrap iframe { transition: width 0.25s ease; }
+
+    /* ── Library drawer ── */
+    .drawer-overlay {
+      position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.3); z-index: 200;
+    }
+    .drawer-panel {
+      position: fixed; top: 0; right: -420px; width: 400px; height: 100vh;
+      background: #fff; z-index: 201; box-shadow: -4px 0 20px rgba(0,0,0,0.1);
+      transition: right 0.25s ease; display: flex; flex-direction: column;
+    }
+    .drawer-panel.open { right: 0; }
+    .drawer-header {
+      padding: 20px 24px; border-bottom: 1px solid #e5e5e5;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .drawer-header h3 { font-size: 16px; font-weight: 700; margin: 0; }
+    .drawer-body { flex: 1; overflow-y: auto; padding: 20px 24px; }
+    .btn-lib-toggle {
+      font-size: 13px; padding: 6px 14px; border: 1.5px solid #e0e0e0; border-radius: 8px;
+      background: #fff; cursor: pointer; color: #555; font-weight: 600;
+      transition: all 0.15s; white-space: nowrap;
+    }
+    .btn-lib-toggle:hover { border-color: #FF7F32; color: #FF7F32; background: #fff8f4; }
+    .btn-utm-toggle {
+      font-size: 13px; padding: 6px 14px; border: 1.5px solid #e0e0e0; border-radius: 8px;
+      background: #fff; cursor: pointer; color: #555; font-weight: 600;
+      transition: all 0.15s; white-space: nowrap;
+    }
+    .btn-utm-toggle:hover { border-color: #FF7F32; color: #FF7F32; background: #fff8f4; }
+
+    /* ── Library (Step 4) ── */
+    .lib-save-row { display: flex; gap: 10px; align-items: center; }
+    .lib-save-row input { flex: 1; }
+    .section-label { font-size: 11px; font-weight: 700; color: #aaa; text-transform: uppercase; letter-spacing: 0.6px; margin: 20px 0 12px; }
+    .tpl-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 12px; margin-bottom: 8px; }
+    .tpl-card { background: #fff; border: 1.5px solid #e5e5e5; border-radius: 10px; padding: 14px; transition: all 0.18s; }
+    .tpl-card:hover { border-color: #FF7F32; box-shadow: 0 2px 10px rgba(255,127,50,0.1); }
+    .tpl-card-name { font-size: 13px; font-weight: 700; color: #111; margin-bottom: 4px; line-height: 1.3; }
+    .tpl-card-meta { font-size: 11px; color: #aaa; margin-bottom: 8px; }
+    .tpl-tags { display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 10px; }
+    .tag { font-size: 10px; padding: 1px 7px; border-radius: 4px; font-weight: 600; }
+    .tag-tmpl { background: #f0fdf4; color: #166534; }
+    .tag-lang { background: #eff6ff; color: #1e40af; }
+    .tag-sys { background: #fef3c7; color: #92400e; }
+    .tpl-actions { display: flex; gap: 6px; }
+
+    /* ── Misc ── */
     .hidden { display: none !important; }
-
-    /* Title copy row */
-    .title-copy-row {
-      display: flex;
-      gap: 8px;
-      align-items: center;
-      margin-bottom: 12px;
-    }
-    .title-copy-row input { flex: 1; }
+    .text-muted { color: #aaa; font-size: 11px; }
+    hr.divider { border: none; border-top: 1px solid #f0f0f0; margin: 20px 0; }
   </style>
 </head>
 <body>
-  <div class="container">
-    <h1>BlockSec Email Generator</h1>
-    <p class="subtitle">AI-powered multi-language email content generation with HTML template assembly</p>
 
-    <!-- Section A: Input Form -->
-    <div class="section">
-      <div class="section-title">Input <span class="badge">Step 1</span></div>
+<!-- ── Pipeline Nav ── -->
+<nav class="pipeline-nav">
+  <div class="pipeline-brand">BlockSec <span>Email</span></div>
+  <div class="pipeline-steps" id="pipelineSteps"></div>
+  <div style="display:flex;gap:8px;align-items:center;">
+    <button class="btn-utm-toggle" onclick="toggleUtmDrawer()">🔗 UTM 管理</button>
+    <button class="btn-lib-toggle" onclick="toggleLibraryDrawer()">📚 模版库</button>
+  </div>
+</nav>
+
+<div class="container">
+  <div id="statusBar" class="status-bar"></div>
+
+  <!-- ══════════════════════════════════════
+       STEP 1: 创建邮件营销事件
+  ══════════════════════════════════════ -->
+  <div class="step-panel" id="step-1" data-step="1">
+    <div class="step-header">
+      <h2>创建邮件营销事件</h2>
+      <p>设置发送邮件的用户群、触发时机、邮件主题，及 CTA 按钮名称与跳转页面链接</p>
+    </div>
+
+    <!-- Email config -->
+    <div class="card">
+      <div class="card-title">邮件内容方向</div>
       <div class="form-grid">
+
         <div class="form-group">
-          <label for="template">Email Template</label>
+          <label>邮件模版<span class="req">*</span></label>
           <select id="template">
-            <option value="">Loading templates...</option>
+            <option value="">加载模版中…</option>
           </select>
         </div>
+
         <div class="form-group">
-          <label for="subject">Email Theme / Subject</label>
-          <input id="subject" type="text" placeholder="e.g., KYT product intro after crime report download">
+          <label>邮件主题 / 方向<span class="req">*</span></label>
+          <input type="text" id="subject" placeholder="例如：下载犯罪报告后推广 KYT 产品">
         </div>
+
         <div class="form-group">
-          <label for="audience">Target Audience</label>
-          <input id="audience" type="text" placeholder="e.g., Crypto exchange compliance officers">
+          <label>目标受众 <span class="text-muted">(选填)</span></label>
+          <div class="combo-field" data-combo="audience">
+            <div class="combo-row">
+              <input type="text" id="audience" placeholder="例如：加密交易所合规人员" oninput="filterCombo('audience')" autocomplete="off">
+              <button class="btn-combo-toggle" onclick="toggleCombo('audience')" title="展开已保存选项">▾</button>
+              <button class="btn-save-opt" onclick="saveComboOpt('audience')" title="保存到下拉选项">＋</button>
+            </div>
+            <div class="combo-dropdown" id="combo-audience"></div>
+          </div>
         </div>
+
         <div class="form-group">
-          <label for="trigger">Send Trigger / Timing</label>
-          <input id="trigger" type="text" placeholder="e.g., Downloaded 2026 Crypto Crime Report">
+          <label>发送时机 <span class="text-muted">(选填)</span></label>
+          <div class="combo-field" data-combo="trigger">
+            <div class="combo-row">
+              <input type="text" id="trigger" placeholder="例如：下载 2026 加密犯罪报告后" oninput="filterCombo('trigger')" autocomplete="off">
+              <button class="btn-combo-toggle" onclick="toggleCombo('trigger')" title="展开已保存选项">▾</button>
+              <button class="btn-save-opt" onclick="saveComboOpt('trigger')" title="保存到下拉选项">＋</button>
+            </div>
+            <div class="combo-dropdown" id="combo-trigger"></div>
+          </div>
         </div>
+
         <div class="form-group full">
-          <label for="instructions">Additional Instructions (optional)</label>
-          <textarea id="instructions" rows="2" placeholder="e.g., Keep it casual, mention all 3 products, include CTA link to https://..."></textarea>
+          <label>补充指令 <span class="text-muted">(选填)</span></label>
+          <textarea id="instructions" placeholder="例如：语气轻松一些，提到 3 个核心优势，末尾加 FAQ 链接"></textarea>
         </div>
-      </div>
-      <div style="margin-top: 16px; display: flex; gap: 12px; align-items: center;">
-        <button id="generateBtn" class="btn btn-primary" onclick="handleGenerate()">
-          Generate 4 Languages
-        </button>
-        <div id="status" class="status-bar" style="margin-top: 0; flex: 1;"></div>
+
       </div>
     </div>
 
-    <!-- Section B: Content Editor -->
-    <div id="editorSection" class="section hidden">
-      <div class="section-title">Edit Content <span class="badge">Step 2</span></div>
-      <div class="tabs" id="editorTabs">
-        <div class="tab active" data-lang="en" onclick="switchEditorTab('en')">EN</div>
-        <div class="tab" data-lang="zh" onclick="switchEditorTab('zh')">ZH</div>
-        <div class="tab" data-lang="es" onclick="switchEditorTab('es')">ES</div>
-        <div class="tab" data-lang="ja" onclick="switchEditorTab('ja')">JA</div>
-      </div>
-      <div id="editor-en" class="editor-panel active">
-        <div class="editor-row">
-          <label>Title</label>
-          <input id="title-en" type="text" oninput="scheduleAssemble('en')">
+    <!-- CTA Builder -->
+    <div class="card">
+      <div class="card-title">CTA 按钮配置 <span class="text-muted" style="text-transform:none;letter-spacing:0;font-weight:400">(选填)</span></div>
+
+      <div id="cta_saved_list" class="cta-saved-row"></div>
+
+      <div class="cta-grid" style="margin-bottom:14px;">
+        <div class="form-group">
+          <label>目标页面</label>
+          <select id="cta_base" onchange="onCtaBaseChange()">
+            <option value="">— 不设置 CTA —</option>
+            <option value="https://app.blocksec.com/phalcon/compliance">Phalcon Compliance App</option>
+            <option value="https://blocksec.com/phalcon/network">Phalcon Network</option>
+            <option value="https://metasleuth.io/">MetaSleuth</option>
+            <option value="https://blocksec.com">BlockSec Website</option>
+            <option value="__custom__">自定义 URL…</option>
+          </select>
         </div>
-        <textarea id="body-en" class="body-editor" oninput="scheduleAssemble('en')"></textarea>
-        <div class="editor-actions">
-          <button class="btn btn-secondary btn-sm" onclick="handleRegenerate('en')">Regenerate EN</button>
-        </div>
-      </div>
-      <div id="editor-zh" class="editor-panel">
-        <div class="editor-row">
-          <label>Title</label>
-          <input id="title-zh" type="text" oninput="scheduleAssemble('zh')">
-        </div>
-        <textarea id="body-zh" class="body-editor" oninput="scheduleAssemble('zh')"></textarea>
-        <div class="editor-actions">
-          <button class="btn btn-secondary btn-sm" onclick="handleRegenerate('zh')">Regenerate ZH</button>
-        </div>
-      </div>
-      <div id="editor-es" class="editor-panel">
-        <div class="editor-row">
-          <label>Title</label>
-          <input id="title-es" type="text" oninput="scheduleAssemble('es')">
-        </div>
-        <textarea id="body-es" class="body-editor" oninput="scheduleAssemble('es')"></textarea>
-        <div class="editor-actions">
-          <button class="btn btn-secondary btn-sm" onclick="handleRegenerate('es')">Regenerate ES</button>
+
+        <div class="form-group">
+          <label>UTM 来源</label>
+          <div class="combo-field" data-combo="utm_source">
+            <div class="combo-row">
+              <input type="text" id="cta_utm_source" value="product_email" oninput="assembleCTAUrl();filterCombo('utm_source')" autocomplete="off">
+              <button class="btn-combo-toggle" onclick="toggleCombo('utm_source')" title="展开已保存选项">▾</button>
+              <button class="btn-save-opt" onclick="saveComboOpt('utm_source')" title="保存到下拉选项">＋</button>
+            </div>
+            <div class="combo-dropdown" id="combo-utm_source"></div>
+          </div>
         </div>
       </div>
-      <div id="editor-ja" class="editor-panel">
-        <div class="editor-row">
-          <label>Title</label>
-          <input id="title-ja" type="text" oninput="scheduleAssemble('ja')">
+
+      <!-- Custom URL (hidden by default) -->
+      <div id="cta_custom_wrap" class="form-group hidden" style="margin-bottom:14px;">
+        <label>自定义 URL</label>
+        <div class="sf-input-row">
+          <input type="text" id="cta_custom_url" placeholder="https://…" oninput="assembleCTAUrl()">
+          <button class="btn btn-secondary btn-sm" onclick="saveCustomDest()" style="white-space:nowrap;flex-shrink:0;">保存 URL</button>
         </div>
-        <textarea id="body-ja" class="body-editor" oninput="scheduleAssemble('ja')"></textarea>
-        <div class="editor-actions">
-          <button class="btn btn-secondary btn-sm" onclick="handleRegenerate('ja')">Regenerate JA</button>
+      </div>
+
+      <div class="form-group" style="margin-bottom:14px;">
+        <label>UTM 内容标识</label>
+        <div class="combo-field" data-combo="utm_content">
+          <div class="combo-row">
+            <input type="text" id="cta_utm_content" placeholder="例如：welcome_email" oninput="assembleCTAUrl();filterCombo('utm_content')" autocomplete="off">
+            <button class="btn-combo-toggle" onclick="toggleCombo('utm_content')" title="展开已保存选项">▾</button>
+            <button class="btn-save-opt" onclick="saveComboOpt('utm_content')" title="保存到下拉选项">＋</button>
+          </div>
+          <div class="combo-dropdown" id="combo-utm_content"></div>
+        </div>
+      </div>
+
+      <div class="form-group" style="margin-bottom:14px;">
+        <label>CTA 按钮名称 <span class="text-muted">(AI 将自动翻译为各语言)</span></label>
+        <div class="sf-input-row">
+          <input type="text" id="cta_label" placeholder="例如：开始免费筛查、免费试用、了解更多">
+          <button class="btn btn-secondary btn-sm" onclick="polishCtaLabel()" id="ctaPolishBtn" style="white-space:nowrap;flex-shrink:0;">✦ AI 润色</button>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>组装后的 CTA 链接</label>
+        <div class="cta-url-row">
+          <input type="text" id="cta_url" readonly placeholder="请先选择目标页面，链接将自动组装"
+            style="text-overflow:ellipsis;" title="">
+          <div class="cta-save-row">
+            <input type="text" id="cta_save_name" placeholder="模版名称">
+            <button class="btn btn-secondary btn-sm" onclick="saveCTATemplate()">保存</button>
+          </div>
         </div>
       </div>
     </div>
 
-    <!-- Section C: Preview + Output -->
-    <div id="previewSection" class="section hidden">
-      <div class="section-title">Preview & Output <span class="badge">Step 3</span></div>
-      <div class="tabs" id="previewTabs">
-        <div class="tab active" data-lang="en" onclick="switchPreviewTab('en')">EN</div>
-        <div class="tab" data-lang="zh" onclick="switchPreviewTab('zh')">ZH</div>
-        <div class="tab" data-lang="es" onclick="switchPreviewTab('es')">ES</div>
-        <div class="tab" data-lang="ja" onclick="switchPreviewTab('ja')">JA</div>
+    <div style="margin-top:20px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
+      <div style="display:flex;gap:18px;align-items:center;">
+        <span style="font-size:11px;font-weight:700;color:#555;text-transform:uppercase;letter-spacing:0.5px;">生成语言</span>
+        <label style="display:flex;align-items:center;gap:5px;font-size:13px;cursor:pointer;">
+          <input type="checkbox" id="lang-check-en" value="en" checked onchange="updateGenerateBtn()"> English
+        </label>
+        <label style="display:flex;align-items:center;gap:5px;font-size:13px;cursor:pointer;">
+          <input type="checkbox" id="lang-check-zh" value="zh" checked onchange="updateGenerateBtn()"> 中文
+        </label>
+        <label style="display:flex;align-items:center;gap:5px;font-size:13px;cursor:pointer;">
+          <input type="checkbox" id="lang-check-es" value="es" checked onchange="updateGenerateBtn()"> Español
+        </label>
+        <label style="display:flex;align-items:center;gap:5px;font-size:13px;cursor:pointer;">
+          <input type="checkbox" id="lang-check-ja" value="ja" checked onchange="updateGenerateBtn()"> 日本語
+        </label>
       </div>
-
-      <!-- Title copy row -->
-      <div class="title-copy-row">
-        <input id="preview-title" type="text" readonly style="background: #f8f8f8;">
-        <button class="btn btn-copy" onclick="copyTitle()">Copy Title</button>
-      </div>
-
-      <div class="preview-split">
-        <div class="preview-pane">
-          <div class="preview-pane-header">
-            <span>Email Preview</span>
-          </div>
-          <iframe id="preview-iframe" class="preview-iframe"></iframe>
-        </div>
-        <div class="preview-pane">
-          <div class="preview-pane-header">
-            <span>HTML Source</span>
-            <button class="btn btn-copy" onclick="copyHtml()">Copy HTML</button>
-          </div>
-          <div id="html-source" class="html-source"></div>
-        </div>
-      </div>
+      <button class="btn btn-primary btn-lg" id="generateBtn" onclick="handleGenerate()">
+        ✦ 生成 4 种语言
+      </button>
     </div>
   </div>
 
-  <script>
-    // State
-    let generatedContent = {}; // { en: {title, body}, zh: {...}, ... }
-    let assembledHtml = {};    // { en: "full html", zh: "...", ... }
-    let currentEditorLang = 'en';
-    let currentPreviewLang = 'en';
-    let assembleTimers = {};
+  <!-- ══════════════════════════════════════
+       STEP 2: 内容审阅与润色
+  ══════════════════════════════════════ -->
+  <div class="step-panel" id="step-2" data-step="2">
+    <div class="step-header">
+      <h2>内容审阅 / HTML 输出</h2>
+      <p>审阅 AI 生成的初稿，确认后即可复制邮件标题和完整 HTML</p>
+    </div>
 
-    // Init: load templates
-    async function loadTemplates() {
-      try {
-        const res = await fetch('/api/templates');
-        const data = await res.json();
-        const sel = document.getElementById('template');
-        sel.innerHTML = '';
-        for (const [id, meta] of Object.entries(data)) {
-          const opt = document.createElement('option');
-          opt.value = id;
-          opt.textContent = `${meta.name} (${meta.sender})`;
-          sel.appendChild(opt);
-        }
-      } catch (e) {
-        console.error('Failed to load templates:', e);
+    <!-- Placeholder: shown before generation -->
+    <div class="placeholder-card" id="step2-placeholder">
+      <div class="ph-icon">✦</div>
+      <strong>在 Step 1 填写邮件信息并点击 Generate</strong><br>
+      AI 生成的 4 语言初稿将在此处显示，供你审阅和修改
+    </div>
+
+    <!-- Editor: shown after generation -->
+    <div id="step2-editor" class="hidden">
+
+    <div class="card">
+      <div class="lang-tabs" id="reviewTabs">
+        <div class="lang-tab active" data-lang="en" onclick="switchReviewTab('en')">EN <span class="check">✓</span></div>
+        <div class="lang-tab" data-lang="zh" onclick="switchReviewTab('zh')">ZH <span class="check">✓</span></div>
+        <div class="lang-tab" data-lang="es" onclick="switchReviewTab('es')">ES <span class="check">✓</span></div>
+        <div class="lang-tab" data-lang="ja" onclick="switchReviewTab('ja')">JA <span class="check">✓</span></div>
+      </div>
+
+      <!-- EN -->
+      <div class="review-panel" id="review-en">
+        <div class="review-subject-row">
+          <label>Subject</label>
+          <input type="text" id="title-en" placeholder="Email subject line">
+        </div>
+        <div class="quill-wrap"><div id="quill-en"></div></div>
+        <div class="revision-row">
+          <textarea id="revision-en" placeholder="修改意见，例如：语气更友好，强调免费额度，末尾加一句问候…"></textarea>
+          <button class="btn-regen" id="regen-en" onclick="handleRegenerate('en')" title="Regenerate this language">↻</button>
+        </div>
+        <div class="confirm-row">
+          <span class="lang-status" id="status-en">⬜ 待确认</span>
+          <button class="btn btn-confirm" id="confirm-en" onclick="toggleConfirm('en')">✓ 确认内容</button>
+        </div>
+        <div class="output-panel hidden" id="output-en">
+          <div class="output-label">✅ HTML 输出</div>
+          <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px;">
+            <input type="text" id="output-title-en" readonly style="flex:1;background:#fff;">
+            <button class="btn btn-secondary btn-sm" onclick="copyOutputTitle('en',this)">复制标题</button>
+          </div>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <button class="btn btn-primary btn-sm" onclick="copyOutputHtml('en',this)">复制 HTML</button>
+            <button class="btn btn-secondary btn-sm" onclick="toggleInlinePreview('en',this)">预览邮件 ▾</button>
+            <button class="btn btn-secondary btn-sm" onclick="toggleLibraryDrawer()">保存为模版</button>
+          </div>
+          <div class="hidden" id="preview-wrap-en">
+            <div class="preview-view-bar">
+              <button class="view-toggle active" onclick="setPreviewView('en','web',this)">🖥 Web</button>
+              <button class="view-toggle" onclick="setPreviewView('en','mobile',this)">📱 Mobile</button>
+            </div>
+            <div class="preview-frame-wrap">
+              <iframe id="inline-iframe-en" style="width:100%;height:420px;border:1px solid #e0e0e0;border-radius:8px;background:#fff;"></iframe>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ZH -->
+      <div class="review-panel hidden" id="review-zh">
+        <div class="review-subject-row">
+          <label>Subject</label>
+          <input type="text" id="title-zh" placeholder="邮件标题">
+        </div>
+        <div class="quill-wrap"><div id="quill-zh"></div></div>
+        <div class="revision-row">
+          <textarea id="revision-zh" placeholder="修改意见，例如：语气更活泼，加入产品亮点…"></textarea>
+          <button class="btn-regen" id="regen-zh" onclick="handleRegenerate('zh')" title="Regenerate">↻</button>
+        </div>
+        <div class="confirm-row">
+          <span class="lang-status" id="status-zh">⬜ 待确认</span>
+          <button class="btn btn-confirm" id="confirm-zh" onclick="toggleConfirm('zh')">✓ 确认内容</button>
+        </div>
+        <div class="output-panel hidden" id="output-zh">
+          <div class="output-label">✅ HTML 输出</div>
+          <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px;">
+            <input type="text" id="output-title-zh" readonly style="flex:1;background:#fff;">
+            <button class="btn btn-secondary btn-sm" onclick="copyOutputTitle('zh',this)">复制标题</button>
+          </div>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <button class="btn btn-primary btn-sm" onclick="copyOutputHtml('zh',this)">复制 HTML</button>
+            <button class="btn btn-secondary btn-sm" onclick="toggleInlinePreview('zh',this)">预览邮件 ▾</button>
+            <button class="btn btn-secondary btn-sm" onclick="toggleLibraryDrawer()">保存为模版</button>
+          </div>
+          <div class="hidden" id="preview-wrap-zh">
+            <div class="preview-view-bar">
+              <button class="view-toggle active" onclick="setPreviewView('zh','web',this)">🖥 Web</button>
+              <button class="view-toggle" onclick="setPreviewView('zh','mobile',this)">📱 Mobile</button>
+            </div>
+            <div class="preview-frame-wrap">
+              <iframe id="inline-iframe-zh" style="width:100%;height:420px;border:1px solid #e0e0e0;border-radius:8px;background:#fff;"></iframe>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ES -->
+      <div class="review-panel hidden" id="review-es">
+        <div class="review-subject-row">
+          <label>Subject</label>
+          <input type="text" id="title-es" placeholder="Asunto del correo">
+        </div>
+        <div class="quill-wrap"><div id="quill-es"></div></div>
+        <div class="revision-row">
+          <textarea id="revision-es" placeholder="Instrucciones de revisión…"></textarea>
+          <button class="btn-regen" id="regen-es" onclick="handleRegenerate('es')" title="Regenerate">↻</button>
+        </div>
+        <div class="confirm-row">
+          <span class="lang-status" id="status-es">⬜ Pendiente</span>
+          <button class="btn btn-confirm" id="confirm-es" onclick="toggleConfirm('es')">✓ Confirmar</button>
+        </div>
+        <div class="output-panel hidden" id="output-es">
+          <div class="output-label">✅ HTML 输出</div>
+          <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px;">
+            <input type="text" id="output-title-es" readonly style="flex:1;background:#fff;">
+            <button class="btn btn-secondary btn-sm" onclick="copyOutputTitle('es',this)">复制标题</button>
+          </div>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <button class="btn btn-primary btn-sm" onclick="copyOutputHtml('es',this)">复制 HTML</button>
+            <button class="btn btn-secondary btn-sm" onclick="toggleInlinePreview('es',this)">预览邮件 ▾</button>
+            <button class="btn btn-secondary btn-sm" onclick="toggleLibraryDrawer()">保存为模版</button>
+          </div>
+          <div class="hidden" id="preview-wrap-es">
+            <div class="preview-view-bar">
+              <button class="view-toggle active" onclick="setPreviewView('es','web',this)">🖥 Web</button>
+              <button class="view-toggle" onclick="setPreviewView('es','mobile',this)">📱 Mobile</button>
+            </div>
+            <div class="preview-frame-wrap">
+              <iframe id="inline-iframe-es" style="width:100%;height:420px;border:1px solid #e0e0e0;border-radius:8px;background:#fff;"></iframe>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- JA -->
+      <div class="review-panel hidden" id="review-ja">
+        <div class="review-subject-row">
+          <label>Subject</label>
+          <input type="text" id="title-ja" placeholder="メール件名">
+        </div>
+        <div class="quill-wrap"><div id="quill-ja"></div></div>
+        <div class="revision-row">
+          <textarea id="revision-ja" placeholder="修正のご意見…"></textarea>
+          <button class="btn-regen" id="regen-ja" onclick="handleRegenerate('ja')" title="Regenerate">↻</button>
+        </div>
+        <div class="confirm-row">
+          <span class="lang-status" id="status-ja">⬜ 未確認</span>
+          <button class="btn btn-confirm" id="confirm-ja" onclick="toggleConfirm('ja')">✓ 確認</button>
+        </div>
+        <div class="output-panel hidden" id="output-ja">
+          <div class="output-label">✅ HTML 输出</div>
+          <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px;">
+            <input type="text" id="output-title-ja" readonly style="flex:1;background:#fff;">
+            <button class="btn btn-secondary btn-sm" onclick="copyOutputTitle('ja',this)">复制标题</button>
+          </div>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <button class="btn btn-primary btn-sm" onclick="copyOutputHtml('ja',this)">复制 HTML</button>
+            <button class="btn btn-secondary btn-sm" onclick="toggleInlinePreview('ja',this)">预览邮件 ▾</button>
+            <button class="btn btn-secondary btn-sm" onclick="toggleLibraryDrawer()">保存为模版</button>
+          </div>
+          <div class="hidden" id="preview-wrap-ja">
+            <div class="preview-view-bar">
+              <button class="view-toggle active" onclick="setPreviewView('ja','web',this)">🖥 Web</button>
+              <button class="view-toggle" onclick="setPreviewView('ja','mobile',this)">📱 Mobile</button>
+            </div>
+            <div class="preview-frame-wrap">
+              <iframe id="inline-iframe-ja" style="width:100%;height:420px;border:1px solid #e0e0e0;border-radius:8px;background:#fff;"></iframe>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    </div><!-- end #step2-editor -->
+
+  </div>
+
+
+</div><!-- /.container -->
+
+<!-- ── Library Drawer ── -->
+<div class="drawer-overlay hidden" id="drawerOverlay" onclick="toggleLibraryDrawer()"></div>
+<div class="drawer-panel" id="drawerPanel">
+  <div class="drawer-header">
+    <h3>📚 邮件模版库</h3>
+    <button onclick="toggleLibraryDrawer()" style="border:none;background:none;font-size:20px;cursor:pointer;color:#999;line-height:1;">✕</button>
+  </div>
+  <div class="drawer-body">
+    <div class="card">
+      <div class="card-title">保存当前邮件</div>
+      <div class="lib-save-row">
+        <input type="text" id="lib-save-name" placeholder="给这封邮件起个名字">
+        <button class="btn btn-primary btn-sm" onclick="saveToLibrary()">保存</button>
+      </div>
+      <p class="text-muted" style="margin-top:6px;">保存内容：邮件类型、主题、各语言正文及完整 HTML</p>
+    </div>
+
+    <div class="section-label">我的模版</div>
+    <div class="tpl-grid" id="userTplGrid"></div>
+
+    <div class="section-label">系统预置</div>
+    <div class="tpl-grid" id="presetTplGrid"></div>
+
+    <div style="margin-top:16px;">
+      <button class="btn btn-primary btn-sm" onclick="startNew();toggleLibraryDrawer();">✦ 创建新邮件</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── UTM Management Drawer ── -->
+<div class="drawer-overlay hidden" id="utmOverlay" onclick="toggleUtmDrawer()"></div>
+<div class="drawer-panel" id="utmPanel">
+  <div class="drawer-header">
+    <h3>🔗 UTM 参数管理</h3>
+    <button onclick="toggleUtmDrawer()" style="border:none;background:none;font-size:20px;cursor:pointer;color:#999;line-height:1;">✕</button>
+  </div>
+  <div class="drawer-body">
+    <div class="card">
+      <div class="card-title">新建 UTM 模版</div>
+      <div class="form-group" style="margin-bottom:10px;">
+        <label>模版名称</label>
+        <input type="text" id="utm-tpl-name" placeholder="例如：Welcome 邮件 UTM">
+      </div>
+      <div class="form-group" style="margin-bottom:10px;">
+        <label>目标页面 URL</label>
+        <input type="text" id="utm-tpl-base" placeholder="https://app.blocksec.com/phalcon/compliance">
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
+        <div class="form-group">
+          <label>utm_source</label>
+          <input type="text" id="utm-tpl-source" placeholder="product_email">
+        </div>
+        <div class="form-group">
+          <label>utm_medium</label>
+          <input type="text" id="utm-tpl-medium" placeholder="email">
+        </div>
+        <div class="form-group">
+          <label>utm_campaign</label>
+          <input type="text" id="utm-tpl-campaign" placeholder="welcome_2026">
+        </div>
+        <div class="form-group">
+          <label>utm_content</label>
+          <input type="text" id="utm-tpl-content" placeholder="cta_button">
+        </div>
+      </div>
+      <div class="form-group" style="margin-bottom:12px;">
+        <label>预览</label>
+        <input type="text" id="utm-tpl-preview" readonly style="background:#f8f8f8;font-size:11px;color:#666;">
+      </div>
+      <button class="btn btn-primary btn-sm" onclick="saveUtmTemplate()">保存 UTM 模版</button>
+    </div>
+    <div class="section-label">已保存的 UTM 模版</div>
+    <div id="utmTplList"></div>
+  </div>
+</div>
+
+<script>
+// ─────────────────────────────────────────────
+// STATE
+// ─────────────────────────────────────────────
+const LANGS = ['en', 'zh', 'es', 'ja'];
+let activeNavStep = 1;    // which step is highlighted in nav
+let stepDoneState = {};   // {1: bool, 2: bool}
+let generatedContent = {};
+let assembledHtml = {};
+let confirmedLangs = new Set();
+let quillEditors = {};
+let currentEditorLang = 'en';
+let selectedLangs = [...LANGS]; // languages selected for generation
+
+const CTA_KEY   = 'blocksec_cta_templates';
+const FIELD_KEY = 'blocksec_field_options';
+const LIB_KEY   = 'blocksec_email_library';
+const UTM_KEY   = 'blocksec_utm_templates';
+
+// ─────────────────────────────────────────────
+// PIPELINE NAV (scroll-based, always visible)
+// ─────────────────────────────────────────────
+const STEP_LABELS = ['创建邮件营销事件', '内容审阅 / HTML 输出'];
+
+function renderPipelineNav() {
+  const el = document.getElementById('pipelineSteps');
+  let h = '';
+  for (let i = 1; i <= 2; i++) {
+    const done   = stepDoneState[i];
+    const active = i === activeNavStep;
+    const cls    = done ? 'done' : active ? 'active' : '';
+    h += `<div class="pipeline-step clickable ${cls}" onclick="scrollToStep(${i})">
+      <div class="step-circle">${done ? '✓' : i}</div>
+      <div class="step-label">${STEP_LABELS[i-1]}</div>
+    </div>`;
+    if (i < 2) h += `<div class="pipe-connector ${done ? 'done' : ''}"></div>`;
+  }
+  el.innerHTML = h;
+}
+
+function scrollToStep(n) {
+  document.getElementById(`step-${n}`).scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function highlightNavStep(n) {
+  activeNavStep = n;
+  renderPipelineNav();
+}
+
+function markStepDone(n, done = true) {
+  stepDoneState[n] = done;
+  renderPipelineNav();
+}
+
+// IntersectionObserver: update nav highlight as user scrolls
+function initScrollObserver() {
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        highlightNavStep(parseInt(e.target.dataset.step));
       }
-    }
-    loadTemplates();
+    });
+  }, { threshold: 0.25 });
+  [1,2].forEach(n => {
+    const el = document.getElementById(`step-${n}`);
+    if (el) observer.observe(el);
+  });
+}
 
-    // Status helper
-    function setStatus(msg, type) {
-      const el = document.getElementById('status');
-      el.textContent = msg;
-      el.className = 'status-bar ' + type;
-    }
-    function clearStatus() {
-      const el = document.getElementById('status');
-      el.className = 'status-bar';
-      el.style.display = 'none';
-    }
+// ─────────────────────────────────────────────
+// STATUS BAR
+// ─────────────────────────────────────────────
+function setStatus(msg, type = 'info') {
+  const el = document.getElementById('statusBar');
+  el.textContent = msg;
+  el.className = `status-bar show ${type}`;
+}
+function clearStatus() { document.getElementById('statusBar').className = 'status-bar'; }
 
-    // Generate
-    async function handleGenerate() {
-      const template_id = document.getElementById('template').value;
-      const subject = document.getElementById('subject').value.trim();
-      const audience = document.getElementById('audience').value.trim();
-      const trigger = document.getElementById('trigger').value.trim();
-      const instructions = document.getElementById('instructions').value.trim();
+// ─────────────────────────────────────────────
+// FIELD OPTIONS (saveable dropdowns)
+// ─────────────────────────────────────────────
+const DEFAULT_OPTS = {
+  audience: [
+    'New Phalcon Compliance free users',
+    'Crypto exchange compliance officers',
+    'Crime report downloaders (crypto businesses)',
+    'Law enforcement & regulators',
+    'Inactive Phalcon Compliance users (2+ weeks)',
+    'Phalcon Compliance paid users',
+  ],
+  trigger: [
+    'Account activation (welcome)',
+    '48h after sign-up, no first scan',
+    '72h after first scan',
+    'Downloaded BlockSec 2026 Crypto Crime Report',
+    '14+ days since last scan',
+    'Plan expiry approaching',
+  ],
+  utm_source:  ['product_email'],
+  utm_content: ['welcome','48h_no_scan','72h_post_scan','crime_report_kyt','crime_report_network','14d_inactive','paid_renewal'],
+  cta_destinations: [],
+};
 
-      if (!subject || !audience || !trigger) {
-        setStatus('Please fill in subject, audience, and trigger fields.', 'error');
-        return;
+function loadFieldOpts() {
+  try {
+    const s = localStorage.getItem(FIELD_KEY);
+    return s ? Object.assign({}, DEFAULT_OPTS, JSON.parse(s)) : JSON.parse(JSON.stringify(DEFAULT_OPTS));
+  } catch { return JSON.parse(JSON.stringify(DEFAULT_OPTS)); }
+}
+function saveFieldOpts(opts) { localStorage.setItem(FIELD_KEY, JSON.stringify(opts)); }
+
+// Combo field: maps combo key → input element id
+const COMBO_INPUT = {
+  audience: 'audience', trigger: 'trigger',
+  utm_source: 'cta_utm_source', utm_content: 'cta_utm_content',
+};
+
+function comboInputEl(key)  { return document.getElementById(COMBO_INPUT[key]); }
+function comboDropdownEl(key){ return document.getElementById(`combo-${key}`); }
+
+function toggleCombo(key) {
+  const dd = comboDropdownEl(key);
+  const isOpen = dd.classList.contains('show');
+  closeAllCombos();
+  if (!isOpen) { renderComboDropdown(key); dd.classList.add('show'); }
+  // toggle button highlight
+  dd.closest('.combo-field').querySelector('.btn-combo-toggle').classList.toggle('open', !isOpen);
+}
+
+function filterCombo(key) {
+  const dd = comboDropdownEl(key);
+  if (!dd.classList.contains('show')) return;
+  renderComboDropdown(key);
+}
+
+function renderComboDropdown(key) {
+  const allOpts = loadFieldOpts()[key] || [];
+  const query   = (comboInputEl(key).value || '').toLowerCase();
+  const filtered = query ? allOpts.filter(v => v.toLowerCase().includes(query)) : allOpts;
+  const dd = comboDropdownEl(key);
+  if (!filtered.length) {
+    dd.innerHTML = '<div class="combo-empty">暂无已保存选项<br>输入内容后点 ＋ 保存</div>';
+    return;
+  }
+  dd.innerHTML = filtered.map(v =>
+    `<div class="combo-opt" onclick="pickCombo('${key}',this)" data-val="${esc(v)}">
+      <span class="combo-opt-text">${esc(v)}</span>
+      <span class="combo-opt-del" onclick="event.stopPropagation();deleteComboOpt('${key}','${escAttr(v)}')">✕</span>
+    </div>`
+  ).join('');
+}
+
+function pickCombo(key, el) {
+  const val = el.dataset.val;
+  comboInputEl(key).value = val;
+  closeAllCombos();
+  // fire dependent handlers
+  if (key === 'utm_source' || key === 'utm_content') assembleCTAUrl();
+}
+
+function saveComboOpt(key) {
+  const val = (comboInputEl(key).value || '').trim();
+  if (!val) return;
+  const opts = loadFieldOpts();
+  if (!opts[key]) opts[key] = [];
+  if (!opts[key].includes(val)) {
+    opts[key].push(val);
+    saveFieldOpts(opts);
+  }
+  closeAllCombos();
+  // brief visual feedback
+  const btn = comboInputEl(key).closest('.combo-row').querySelector('.btn-save-opt');
+  btn.textContent = '✓'; btn.style.color = '#16a34a'; btn.style.borderColor = '#86efac';
+  setTimeout(() => { btn.textContent = '＋'; btn.style.color = ''; btn.style.borderColor = ''; }, 1200);
+}
+
+function deleteComboOpt(key, val) {
+  const opts = loadFieldOpts();
+  if (opts[key]) {
+    opts[key] = opts[key].filter(v => v !== val);
+    saveFieldOpts(opts);
+    renderComboDropdown(key);
+  }
+}
+
+function closeAllCombos() {
+  document.querySelectorAll('.combo-dropdown.show').forEach(d => d.classList.remove('show'));
+  document.querySelectorAll('.btn-combo-toggle.open').forEach(b => b.classList.remove('open'));
+}
+
+// Close combos on outside click
+document.addEventListener('click', e => {
+  if (!e.target.closest('.combo-field')) closeAllCombos();
+});
+
+// ─────────────────────────────────────────────
+// CTA BUILDER
+// ─────────────────────────────────────────────
+function restoreSavedDestinations() {
+  const opts = loadFieldOpts();
+  const dests = opts.cta_destinations || [];
+  const sel = document.getElementById('cta_base');
+  dests.forEach(url => {
+    const exists = [...sel.options].some(o => o.value === url);
+    if (!exists) {
+      const label = url.replace(/^https?:\/\//, '').substring(0, 45);
+      const opt = new Option(label, url);
+      sel.insertBefore(opt, sel.options[sel.options.length - 1]); // before "自定义 URL…"
+    }
+  });
+}
+
+function onCtaBaseChange() {
+  const base = document.getElementById('cta_base').value;
+  document.getElementById('cta_custom_wrap').classList.toggle('hidden', base !== '__custom__');
+  if (base !== '__custom__') document.getElementById('cta_custom_url').value = '';
+  assembleCTAUrl();
+}
+
+function assembleCTAUrl() {
+  const base      = document.getElementById('cta_base').value;
+  const src       = (document.getElementById('cta_utm_source').value || '').trim();
+  const content   = (document.getElementById('cta_utm_content').value || '').trim();
+  const customUrl = (document.getElementById('cta_custom_url').value || '').trim();
+  let url = base === '__custom__' ? customUrl : base;
+  if (!url) { document.getElementById('cta_url').value = ''; return; }
+  const params = [];
+  if (src)     params.push(`utm_source=${encodeURIComponent(src)}`);
+  if (content) params.push(`utm_content=${encodeURIComponent(content)}`);
+  if (params.length) url += (url.includes('?') ? '&' : '?') + params.join('&');
+  const urlEl = document.getElementById('cta_url');
+  urlEl.value = url;
+  urlEl.title = url;
+}
+
+function saveCustomDest() {
+  const url = (document.getElementById('cta_custom_url').value || '').trim();
+  if (!url) return;
+  const opts = loadFieldOpts();
+  if (!opts.cta_destinations) opts.cta_destinations = [];
+  if (!opts.cta_destinations.includes(url)) {
+    opts.cta_destinations.push(url);
+    saveFieldOpts(opts);
+    const sel = document.getElementById('cta_base');
+    const exists = [...sel.options].some(o => o.value === url);
+    if (!exists) {
+      const label = url.replace(/^https?:\/\//, '').substring(0, 45);
+      const opt = new Option(label, url);
+      sel.insertBefore(opt, sel.options[sel.options.length - 1]);
+      sel.value = url;
+    }
+    assembleCTAUrl();
+  }
+}
+
+function loadCTATemplates() { try { return JSON.parse(localStorage.getItem(CTA_KEY) || '[]'); } catch { return []; } }
+
+function saveCTATemplate() {
+  const url  = (document.getElementById('cta_url').value || '').trim();
+  const name = (document.getElementById('cta_save_name').value || '').trim();
+  if (!url || !name) { alert('请填写 URL 和模版名称'); return; }
+  const tpls = loadCTATemplates();
+  const idx  = tpls.findIndex(t => t.name === name);
+  if (idx >= 0) { if (!confirm(`替换 "${name}"？`)) return; tpls[idx].url = url; }
+  else tpls.push({ name, url });
+  localStorage.setItem(CTA_KEY, JSON.stringify(tpls));
+  document.getElementById('cta_save_name').value = '';
+  renderCTATemplates();
+}
+function deleteCTATemplate(name) {
+  localStorage.setItem(CTA_KEY, JSON.stringify(loadCTATemplates().filter(t => t.name !== name)));
+  renderCTATemplates();
+}
+function applyCTATemplate(url) { document.getElementById('cta_url').value = url; }
+function renderCTATemplates() {
+  const tpls = loadCTATemplates();
+  document.getElementById('cta_saved_list').innerHTML = tpls.map(t =>
+    `<span class="cta-chip" onclick="applyCTATemplate('${escAttr(t.url)}')">${esc(t.name)}<span class="cta-chip-del" onclick="event.stopPropagation();deleteCTATemplate('${escAttr(t.name)}')">✕</span></span>`
+  ).join('');
+}
+
+// ─────────────────────────────────────────────
+// CTA LABEL — AI POLISH
+// ─────────────────────────────────────────────
+async function polishCtaLabel() {
+  const inp = document.getElementById('cta_label');
+  const raw = inp.value.trim();
+  if (!raw) { setStatus('请先输入 CTA 按钮名称再润色', 'error'); return; }
+  const btn = document.getElementById('ctaPolishBtn');
+  btn.disabled = true; btn.textContent = '✦ 润色中…';
+  try {
+    const resp = await fetch('/api/polish_cta', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ label: raw }),
+    });
+    if (!resp.ok) throw new Error((await resp.json()).detail || resp.statusText);
+    const data = await resp.json();
+    inp.value = data.polished || raw;
+    clearStatus();
+  } catch (e) {
+    setStatus(`润色失败: ${e.message}`, 'error');
+  } finally {
+    btn.disabled = false; btn.textContent = '✦ AI 润色';
+  }
+}
+
+// ─────────────────────────────────────────────
+// TEMPLATE LOADING
+// ─────────────────────────────────────────────
+async function loadTemplates() {
+  try {
+    const data = await (await fetch('/api/templates')).json();
+    document.getElementById('template').innerHTML =
+      '<option value="">— Select template —</option>' +
+      Object.entries(data).map(([id, m]) => `<option value="${id}">${m.name} (${m.sender})</option>`).join('');
+  } catch {
+    document.getElementById('template').innerHTML = '<option value="">模版加载失败</option>';
+  }
+}
+
+// ─────────────────────────────────────────────
+// STEP 1 → GENERATE
+// ─────────────────────────────────────────────
+function getSelectedLangs() {
+  return LANGS.filter(l => document.getElementById(`lang-check-${l}`).checked);
+}
+
+function updateGenerateBtn() {
+  selectedLangs = getSelectedLangs();
+  const btn = document.getElementById('generateBtn');
+  btn.textContent = `✦ 生成 ${selectedLangs.length} 种语言`;
+}
+
+async function handleGenerate() {
+  const templateId   = document.getElementById('template').value;
+  const subject      = document.getElementById('subject').value.trim();
+  const audience     = document.getElementById('audience').value.trim();
+  const trigger      = document.getElementById('trigger').value.trim();
+  const ctaUrl       = document.getElementById('cta_url').value.trim();
+  const ctaLabel     = document.getElementById('cta_label').value.trim();
+  let   instructions = document.getElementById('instructions').value.trim();
+  if (ctaLabel && ctaUrl) {
+    const note = `CTA button label: "${ctaLabel}" — translate this label naturally into each language for the CTA link text.`;
+    instructions = instructions ? `${instructions}\n${note}` : note;
+  }
+
+  if (!templateId) { setStatus('请选择邮件模版', 'error'); return; }
+  if (!subject)    { setStatus('请输入邮件主题', 'error'); return; }
+
+  selectedLangs = getSelectedLangs();
+  if (selectedLangs.length === 0) { setStatus('请至少选择一种语言', 'error'); return; }
+
+  const btn = document.getElementById('generateBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> 生成中…';
+  setStatus(`正在生成 ${selectedLangs.length} 种语言的邮件内容…`, 'info');
+
+  try {
+    const resp = await fetch('/api/generate', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ template_id: templateId, subject, audience, trigger, instructions, cta_url: ctaUrl, languages: selectedLangs }),
+    });
+    if (!resp.ok) { const e = await resp.json(); throw new Error(e.detail || resp.statusText); }
+    generatedContent = await resp.json();
+    confirmedLangs = new Set();
+    assembledHtml = {};
+    // Hide all output panels
+    LANGS.forEach(l => document.getElementById(`output-${l}`).classList.add('hidden'));
+    clearStatus();
+    // Show Step 2 editor, hide placeholder
+    document.getElementById('step2-placeholder').classList.add('hidden');
+    document.getElementById('step2-editor').classList.remove('hidden');
+    populateQuillEditors();
+    markStepDone(1);
+    scrollToStep(2);
+  } catch (e) {
+    setStatus(`Error: ${e.message}`, 'error');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = `✦ 生成 ${selectedLangs.length} 种语言`;
+  }
+}
+
+// ─────────────────────────────────────────────
+// STEP 2 — QUILL EDITORS
+// ─────────────────────────────────────────────
+const QUILL_TOOLBAR = [
+  ['bold', 'italic', 'underline'],
+  ['link'],
+  [{ list: 'ordered' }, { list: 'bullet' }],
+  ['blockquote'],
+  ['clean'],
+];
+
+function initQuillEditors() {
+  LANGS.forEach(lang => {
+    quillEditors[lang] = new Quill(`#quill-${lang}`, {
+      theme: 'snow',
+      modules: { toolbar: QUILL_TOOLBAR },
+    });
+  });
+}
+
+function populateQuillEditors() {
+  LANGS.forEach(lang => {
+    const data = generatedContent[lang];
+    if (!data) return;
+    const titleEl = document.getElementById(`title-${lang}`);
+    if (titleEl) titleEl.value = data.title || '';
+    if (quillEditors[lang] && data.body) {
+      quillEditors[lang].clipboard.dangerouslyPasteHTML(data.body);
+    }
+    setLangConfirmed(lang, false);
+  });
+  // Show/hide language tabs based on selectedLangs
+  updateReviewTabVisibility();
+}
+
+function switchReviewTab(lang) {
+  currentEditorLang = lang;
+  document.querySelectorAll('#reviewTabs .lang-tab').forEach(t =>
+    t.classList.toggle('active', t.dataset.lang === lang));
+  LANGS.forEach(l =>
+    document.getElementById(`review-${l}`).classList.toggle('hidden', l !== lang));
+}
+
+function updateReviewTabVisibility() {
+  const activeLangs = selectedLangs.length > 0 ? selectedLangs : LANGS;
+  document.querySelectorAll('#reviewTabs .lang-tab').forEach(t => {
+    const lang = t.dataset.lang;
+    t.style.display = activeLangs.includes(lang) ? '' : 'none';
+  });
+  // Switch to first available lang
+  const first = activeLangs[0] || 'en';
+  switchReviewTab(first);
+}
+
+async function handleRegenerate(lang) {
+  const templateId = document.getElementById('template').value;
+  const subject    = document.getElementById('subject').value.trim();
+  const audience   = document.getElementById('audience').value.trim();
+  const trigger    = document.getElementById('trigger').value.trim();
+  const ctaUrl     = document.getElementById('cta_url').value.trim();
+  const ctaLabel   = document.getElementById('cta_label').value.trim();
+  let   instructions = (document.getElementById(`revision-${lang}`).value || '').trim();
+  if (ctaLabel && ctaUrl) {
+    const note = `CTA button label: "${ctaLabel}" — translate this label naturally into ${lang} for the CTA link text.`;
+    instructions = instructions ? `${instructions}\n${note}` : note;
+  }
+
+  // Snapshot current content from Quill for context
+  const existing = {};
+  LANGS.forEach(l => {
+    existing[l] = {
+      title: document.getElementById(`title-${l}`).value,
+      body:  quillEditors[l] ? quillEditors[l].root.innerHTML : (generatedContent[l] ? generatedContent[l].body : ''),
+    };
+  });
+
+  const btn = document.getElementById(`regen-${lang}`);
+  btn.classList.add('spin'); btn.disabled = true;
+
+  try {
+    const resp = await fetch('/api/regenerate', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        template_id: templateId, subject, audience, trigger,
+        language: lang, existing_content: existing,
+        instructions, cta_url: ctaUrl,
+      }),
+    });
+    if (!resp.ok) { const e = await resp.json(); throw new Error(e.detail); }
+    const result  = await resp.json();
+    const newData = result[lang];
+    if (newData) {
+      generatedContent[lang] = newData;
+      document.getElementById(`title-${lang}`).value = newData.title || '';
+      if (quillEditors[lang] && newData.body) {
+        quillEditors[lang].clipboard.dangerouslyPasteHTML(newData.body);
       }
+      document.getElementById(`revision-${lang}`).value = '';
+      setLangConfirmed(lang, false);
+      // Hide output panel since content changed
+      document.getElementById(`output-${lang}`).classList.add('hidden');
+    }
+  } catch (e) {
+    setStatus(`Regenerate failed: ${e.message}`, 'error');
+  } finally {
+    btn.classList.remove('spin'); btn.disabled = false;
+  }
+}
 
-      const btn = document.getElementById('generateBtn');
-      btn.disabled = true;
-      btn.innerHTML = '<span class="spinner"></span> Generating...';
-      setStatus('Generating email content with Claude AI...', 'info');
+async function toggleConfirm(lang) {
+  if (confirmedLangs.has(lang)) {
+    setLangConfirmed(lang, false);
+    document.getElementById(`output-${lang}`).classList.add('hidden');
+  } else {
+    if (quillEditors[lang]) {
+      if (!generatedContent[lang]) generatedContent[lang] = {};
+      generatedContent[lang].body  = quillEditors[lang].root.innerHTML;
+      generatedContent[lang].title = document.getElementById(`title-${lang}`).value;
+    }
+    setLangConfirmed(lang, true);
+    // Auto-assemble and show inline output
+    const confirmBtn = document.getElementById(`confirm-${lang}`);
+    confirmBtn.disabled = true;
+    await assembleForLang(lang);
+    confirmBtn.disabled = false;
+    showInlineOutput(lang);
+  }
+}
 
-      try {
-        const res = await fetch('/api/generate', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ template_id, subject, audience, trigger, instructions }),
+function setLangConfirmed(lang, yes) {
+  if (yes) confirmedLangs.add(lang); else confirmedLangs.delete(lang);
+  const tab   = document.querySelector(`#reviewTabs .lang-tab[data-lang="${lang}"]`);
+  const stat  = document.getElementById(`status-${lang}`);
+  const btn   = document.getElementById(`confirm-${lang}`);
+  if (tab)  tab.classList.toggle('confirmed', yes);
+  if (stat) stat.textContent = yes ? '✅ 已确认' : '⬜ 待确认';
+  if (btn)  { btn.classList.toggle('confirmed', yes); btn.textContent = yes ? '✓ 已确认（再次点击取消）' : '✓ 确认内容'; }
+}
+
+async function assembleForLang(lang) {
+  const templateId = document.getElementById('template').value;
+  const data = generatedContent[lang];
+  if (!data || !data.body) return;
+  try {
+    const resp = await fetch('/api/assemble', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ template_id: templateId, body_html: data.body, language: lang }),
+    });
+    if (resp.ok) { const json = await resp.json(); assembledHtml[lang] = json.html; }
+  } catch {}
+}
+
+function showInlineOutput(lang) {
+  const panel = document.getElementById(`output-${lang}`);
+  panel.classList.remove('hidden');
+  document.getElementById(`output-title-${lang}`).value = generatedContent[lang]?.title || '';
+}
+
+async function copyOutputTitle(lang, btn) {
+  await copyText(document.getElementById(`output-title-${lang}`).value, btn);
+}
+
+async function copyOutputHtml(lang, btn) {
+  await copyText(assembledHtml[lang] || '', btn);
+}
+
+function toggleInlinePreview(lang, btn) {
+  const wrap = document.getElementById(`preview-wrap-${lang}`);
+  const isHidden = wrap.classList.contains('hidden');
+  wrap.classList.toggle('hidden');
+  if (btn) btn.textContent = isHidden ? '收起预览 ▴' : '预览邮件 ▾';
+  if (isHidden && assembledHtml[lang]) {
+    const iframe = document.getElementById(`inline-iframe-${lang}`);
+    const doc = iframe.contentDocument || iframe.contentWindow.document;
+    doc.open(); doc.write(assembledHtml[lang]); doc.close();
+    // Inject CTA hover tooltips after content loads
+    iframe.onload = () => injectCtaTooltips(lang);
+    setTimeout(() => injectCtaTooltips(lang), 200);
+  }
+}
+
+async function copyText(text, btn) {
+  try { await navigator.clipboard.writeText(text); }
+  catch { const ta = Object.assign(document.createElement('textarea'), {value:text}); document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove(); }
+  if (btn) { const orig = btn.textContent; btn.textContent = '✓ 已复制!'; btn.style.color='#16a34a'; setTimeout(()=>{ btn.textContent=orig; btn.style.color=''; }, 2000); }
+}
+
+// ─────────────────────────────────────────────
+// LIBRARY DRAWER
+// ─────────────────────────────────────────────
+function toggleLibraryDrawer() {
+  document.getElementById('drawerPanel').classList.toggle('open');
+  document.getElementById('drawerOverlay').classList.toggle('hidden');
+}
+
+// ─────────────────────────────────────────────
+// TEMPLATE LIBRARY (drawer)
+// ─────────────────────────────────────────────
+function loadLibrary() { try { return JSON.parse(localStorage.getItem(LIB_KEY) || '[]'); } catch { return []; } }
+
+function saveToLibrary() {
+  const name = (document.getElementById('lib-save-name').value || '').trim();
+  if (!name) { alert('Please enter a template name.'); return; }
+  const lib = loadLibrary();
+  const idx = lib.findIndex(e => e.name === name);
+  const entry = {
+    id: Date.now().toString(), name,
+    template_id: document.getElementById('template').value,
+    subject:  document.getElementById('subject').value.trim(),
+    audience: document.getElementById('audience').value.trim(),
+    trigger:  document.getElementById('trigger').value.trim(),
+    content:  JSON.parse(JSON.stringify(generatedContent)),
+    assembled_html: JSON.parse(JSON.stringify(assembledHtml)),
+    langs: [...confirmedLangs],
+    saved_at: new Date().toLocaleDateString('zh-CN'),
+  };
+  if (idx >= 0) { if (!confirm(`Replace "${name}"?`)) return; lib.splice(idx, 1); }
+  lib.unshift(entry);
+  localStorage.setItem(LIB_KEY, JSON.stringify(lib));
+  document.getElementById('lib-save-name').value = '';
+  setStatus(`Template "${name}" saved!`, 'success');
+  renderLibrary();
+}
+
+function deleteFromLibrary(id) {
+  if (!confirm('Delete this template?')) return;
+  localStorage.setItem(LIB_KEY, JSON.stringify(loadLibrary().filter(e => e.id !== id)));
+  renderLibrary();
+}
+
+function loadFromLibrary(id) {
+  const entry = loadLibrary().find(e => e.id === id);
+  if (entry) loadData(entry);
+}
+
+function loadData(data) {
+  document.getElementById('subject').value   = data.subject  || '';
+  document.getElementById('audience').value  = data.audience || '';
+  document.getElementById('trigger').value   = data.trigger  || '';
+  document.getElementById('instructions').value = '';
+  const sel = document.getElementById('template');
+  if (data.template_id && sel.querySelector(`option[value="${data.template_id}"]`))
+    sel.value = data.template_id;
+  generatedContent = JSON.parse(JSON.stringify(data.content || {}));
+  assembledHtml    = JSON.parse(JSON.stringify(data.assembled_html || {}));
+  confirmedLangs   = new Set(data.langs || Object.keys(data.content || {}));
+  // Update language checkboxes to match loaded data
+  selectedLangs = Object.keys(data.content || {}).filter(l => data.content[l] && (data.content[l].title || data.content[l].body));
+  if (selectedLangs.length === 0) selectedLangs = [...LANGS];
+  LANGS.forEach(l => {
+    const cb = document.getElementById(`lang-check-${l}`);
+    if (cb) cb.checked = selectedLangs.includes(l);
+  });
+  updateGenerateBtn();
+  // Show Step 2 editor
+  document.getElementById('step2-placeholder').classList.add('hidden');
+  document.getElementById('step2-editor').classList.remove('hidden');
+  // Hide all output panels first
+  LANGS.forEach(l => document.getElementById(`output-${l}`).classList.add('hidden'));
+  populateQuillEditors();
+  (data.langs || []).forEach(l => {
+    setLangConfirmed(l, true);
+    if (assembledHtml[l]) showInlineOutput(l);
+  });
+  // Close drawer if open
+  document.getElementById('drawerPanel').classList.remove('open');
+  document.getElementById('drawerOverlay').classList.add('hidden');
+  scrollToStep(2);
+}
+
+function renderLibrary() { renderUserTpls(); renderPresetTpls(); }
+
+const TMPL_LABELS = { ruby_sales: 'Ruby Sales', ruby_kyt: 'Ruby KYT', jenna_marketing: 'Jenna Marketing' };
+
+function renderUserTpls() {
+  const lib  = loadLibrary();
+  const grid = document.getElementById('userTplGrid');
+  if (!lib.length) {
+    grid.innerHTML = '<p class="text-muted" style="padding:4px 0;">暂无模版。在上方输入名称保存当前邮件。</p>';
+    return;
+  }
+  grid.innerHTML = lib.map(e => `
+    <div class="tpl-card">
+      <div class="tpl-card-name">${esc(e.name)}</div>
+      <div class="tpl-card-meta">${e.saved_at || ''}</div>
+      <div class="tpl-tags">
+        <span class="tag tag-tmpl">${TMPL_LABELS[e.template_id] || e.template_id}</span>
+        ${(e.langs||[]).map(l=>`<span class="tag tag-lang">${l.toUpperCase()}</span>`).join('')}
+      </div>
+      <div class="tpl-actions">
+        <button class="btn btn-secondary btn-sm" onclick="loadFromLibrary('${e.id}')">加载编辑</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteFromLibrary('${e.id}')">删除</button>
+      </div>
+    </div>`).join('');
+}
+
+function renderPresetTpls() {
+  document.getElementById('presetTplGrid').innerHTML =
+    Object.entries(PRESET_EMAILS).map(([id, p]) => `
+    <div class="tpl-card">
+      <div class="tpl-card-name">${esc(p.name)}</div>
+      <div class="tpl-card-meta">系统预置</div>
+      <div class="tpl-tags">
+        <span class="tag tag-sys">系统</span>
+        <span class="tag tag-tmpl">${TMPL_LABELS[p.template_id] || p.template_id}</span>
+        ${Object.keys(p.content).map(l=>`<span class="tag tag-lang">${l.toUpperCase()}</span>`).join('')}
+      </div>
+      <div class="tpl-actions">
+        <button class="btn btn-secondary btn-sm" onclick="loadPreset('${id}')">加载编辑</button>
+      </div>
+    </div>`).join('');
+}
+
+function loadPreset(id) {
+  const p = PRESET_EMAILS[id];
+  if (!p) return;
+  const data = {
+    template_id: p.template_id, subject: p.subject,
+    audience: p.audience, trigger: p.trigger,
+    content: {}, assembled_html: {}, langs: Object.keys(p.content),
+  };
+  LANGS.forEach(l => { data.content[l] = p.content[l] || { title: '', body: '' }; });
+  loadData(data);
+}
+
+function startNew() {
+  generatedContent = {}; assembledHtml = {}; confirmedLangs = new Set();
+  stepDoneState = {};
+  LANGS.forEach(l => {
+    if (quillEditors[l]) quillEditors[l].setText('');
+    document.getElementById(`title-${l}`).value = '';
+    document.getElementById(`revision-${l}`).value = '';
+    setLangConfirmed(l, false);
+    document.getElementById(`output-${l}`).classList.add('hidden');
+    document.getElementById(`preview-wrap-${l}`).classList.add('hidden');
+  });
+  ['subject','audience','trigger','instructions','cta_url'].forEach(id => {
+    const el = document.getElementById(id); if (el) el.value = '';
+  });
+  // Reset language checkboxes
+  LANGS.forEach(l => { document.getElementById(`lang-check-${l}`).checked = true; });
+  selectedLangs = [...LANGS];
+  updateGenerateBtn();
+  // Reset placeholders
+  document.getElementById('step2-placeholder').classList.remove('hidden');
+  document.getElementById('step2-editor').classList.add('hidden');
+  renderPipelineNav();
+  scrollToStep(1);
+}
+
+// ─────────────────────────────────────────────
+// UTILITIES
+// ─────────────────────────────────────────────
+function esc(s)     { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function escAttr(s) { return String(s).replace(/'/g,'&#39;').replace(/"/g,'&quot;'); }
+
+// ─────────────────────────────────────────────
+// PRESET EMAIL DATA
+// ─────────────────────────────────────────────
+const P = 'style="margin:0 0 0.9em 0;"';
+const PRESET_EMAILS = {
+  'welcome': {
+    name: 'Welcome — New User', template_id: 'ruby_sales',
+    subject: 'Welcome to Phalcon Compliance — Quick Start',
+    audience: 'New Phalcon Compliance free users', trigger: 'Account activation (welcome)',
+    content: {
+      en: { title: 'Welcome to Phalcon Compliance — Quick Start', body: `<p ${P}>Great to see you join!</p><p ${P}>Phalcon Compliance is your intelligent crypto AML platform. We help you keep illicit funds away, automate KYA/KYT screening, and stay compliant with confidence.</p><p ${P}>To get started, screen one address or transaction you already care about. You have <strong>3 free compliance checks this month</strong>. Make them count — each one could be the scan that catches a risk before it costs you.</p><p ${P}><a href="https://app.blocksec.com/phalcon/compliance?utm_source=product_email&utm_content=welcome" target="_blank" style="color:#ff8700;text-decoration:underline;font-weight:600;">Run a Compliance Check →</a></p><p ${P}>Any questions? Feel free to contact me directly or join our Telegram community <a href="https://t.me/BlockSecTeam" target="_blank" style="color:#2563EB;text-decoration:none;">@BlockSecTeam</a> for real-time support and updates.</p><p ${P}>Resources: <a href="#" style="color:#2563EB;text-decoration:none;">User Guides</a> | <a href="#" style="color:#2563EB;text-decoration:none;">API Docs</a></p><p ${P}>Cheers,<br/>Ruby</p>` },
+      zh: { title: '欢迎加入 Phalcon Compliance — 快速上手', body: `<p ${P}>欢迎加入 Phalcon Compliance 👋</p><p ${P}>Phalcon 帮你轻松搞定加密资产合规——自动化 KYT/KYA 筛查，隔离非法资金，让监管审核不再头疼。</p><p ${P}>无论你是审查钱包风险、监控资金流动，还是审核出入金地址，都能一站搞定。</p><p ${P}>我们为每位新朋友提供每月3次免费筛查，可以挑一个真实案例试试，比如入金审查或合规检查，看看能否帮你的日常合规更高效。</p><p ${P}><a href="https://app.blocksec.com/phalcon/compliance?utm_source=product_email&utm_content=welcome" target="_blank" style="color:#ff8700;text-decoration:underline;font-weight:600;">👉 开始免费筛查 →</a></p><p ${P}>有任何问题随时邮件，也欢迎来 Telegram 社区 <a href="https://t.me/BlockSecTeam" target="_blank" style="color:#2563EB;text-decoration:none;">@BlockSecTeam</a> 一起交流。</p><p ${P}>相关资料：📄 <a href="#" style="color:#2563EB;text-decoration:none;">用户手册</a> | <a href="#" style="color:#2563EB;text-decoration:none;">API 文档</a></p><p ${P}>祝好，<br/>Ruby 本人</p>` },
+      es: { title: 'Bienvenido a Phalcon Compliance: guía de inicio rápido', body: `<p ${P}>¡Nos alegra tenerle con nosotros!</p><p ${P}>Phalcon Compliance es su plataforma inteligente de AML para criptoactivos. Le ayudamos a mantener alejados los fondos ilícitos, automatizar los controles KYA/KYT y gestionar el cumplimiento con mayor seguridad.</p><p ${P}>Para empezar, analice una dirección o transacción que ya sea relevante para su equipo. Este mes tiene <strong>3 verificaciones de compliance gratuitas</strong>.</p><p ${P}><a href="https://app.blocksec.com/phalcon/compliance?utm_source=product_email&utm_content=welcome" target="_blank" style="color:#ff8700;text-decoration:underline;font-weight:600;">Analizar ahora →</a></p><p ${P}>¿Tiene alguna pregunta? Puede ponerse en contacto conmigo directamente. También puede unirse a nuestra comunidad de Telegram, <a href="https://t.me/BlockSecTeam" target="_blank" style="color:#2563EB;text-decoration:none;">@BlockSecTeam</a>.</p><p ${P}>Saludos,<br/>Ruby<br/>COO @BlockSec</p>` },
+      ja: { title: '【BlockSec】オンチェーン・コンプライアンス・アカウント有効化のお知らせ', body: `<p ${P}>PhalconComplianceへようこそ 🎉</p><p ${P}>BlockSecのRubyです。アカウントの有効化が完了しました。</p><p ${P}>Phalcon Complianceは、暗号資産のコンプライアンスを自動化するソリューションです。<strong>KYT/KYAスクリーニング</strong>により、不正資金の遮断、リスク評価、規制対応を効率化します。</p><p ${P}><strong>まずは無料でお試しください：</strong> 新規ユーザーの皆様には、<strong>毎月3回まで無料スクリーニング</strong>をご用意しています。入金審査などの実際の業務フローでその精度をぜひご確認ください。</p><p ${P}><a href="https://app.blocksec.com/phalcon/compliance?utm_source=product_email&utm_content=welcome" target="_blank" style="color:#ff8700;text-decoration:underline;font-weight:600;">無料で始める →</a></p><p ${P}>ご不明な点がありましたら、本メールへの返信またはTelegram / WhatsAppにてお気軽にお問い合わせください。</p><p ${P}>BlockSec COO<br/>Ruby</p>` }
+    }
+  },
+  '48h_no_scan': {
+    name: '48h — No First Scan', template_id: 'ruby_sales',
+    subject: 'Need help setting up on Phalcon Compliance?',
+    audience: 'New Phalcon Compliance free users', trigger: '48h after sign-up, no first scan',
+    content: {
+      en: { title: 'Need help setting up on Phalcon Compliance?', body: `<p ${P}>Hi there,</p><p ${P}>Your Phalcon Compliance account is ready — you just haven't run your first screening yet.</p><p ${P}>You have 3 free screenings available this month. Pick one address or transaction you care about and check it now. It takes about 30 seconds.</p><p ${P}><a href="https://app.blocksec.com/phalcon/compliance?utm_source=product_email&utm_content=48h_no_scan" target="_blank" style="color:#ff8700;text-decoration:underline;font-weight:600;">Screen Now →</a></p><p ${P}>On-chain risk can change quickly. In seconds, you'll know whether it's linked to known risks — and why.</p><p ${P}>If you need help getting started, just reply — happy to help. Or join our Telegram: <a href="https://t.me/BlockSecTeam" target="_blank" style="color:#2563EB;text-decoration:none;">@BlockSecTeam</a></p><p ${P}>All the best,<br/>Ruby</p>` }
+    }
+  },
+  '72h_post_scan': {
+    name: '72h — After First Scan', template_id: 'ruby_sales',
+    subject: 'Check again — risk may have changed',
+    audience: 'New Phalcon Compliance free users', trigger: '72h after first scan',
+    content: {
+      en: { title: 'Check again — risk may have changed', body: `<p ${P}>Hi,</p><p ${P}>I noticed you recently completed your first screening on Phalcon Compliance.</p><p ${P}>On-chain risk can change over time. If you're checking addresses, transactions, or counterparties repeatedly, ongoing monitoring can help you stay updated without re-screening manually.</p><p ${P}><a href="https://app.blocksec.com/phalcon/compliance?utm_source=product_email&utm_content=72h_post_scan" target="_blank" style="color:#ff8700;text-decoration:underline;font-weight:600;">Explore monitoring →</a></p><p ${P}>Reply here or ping me on Telegram if you'd like the simplest setup.</p><p ${P}>Best,<br/>Ruby</p>` }
+    }
+  },
+  'crime_report_kyt': {
+    name: 'Crime Report — KYT Promo', template_id: 'ruby_kyt',
+    subject: 'A few tools that might be useful for your team',
+    audience: 'Crime report downloaders (crypto businesses)', trigger: 'Downloaded BlockSec 2026 Crypto Crime Report',
+    content: {
+      en: { title: 'A few tools that might be useful for your team', body: `<p ${P}>Hi there,</p><p ${P}>Hope you find our BlockSec 2026 Crypto Crime Report useful. Beyond the report, we have a few KYT solutions that might be relevant:</p><p ${P}><strong>Phalcon Compliance</strong> — a real-time KYT and AML compliance platform that helps crypto businesses detect illicit transactions, assess risk, and meet regulatory requirements.<br/><a href="https://app.blocksec.com/phalcon/compliance?utm_source=product_email&utm_content=crime_report_kyt" target="_blank" style="color:#ff8700;text-decoration:underline;font-weight:600;">Start for Free →</a></p><p ${P}><strong>MetaSleuth</strong> — an on-chain investigation tool for analysts and law enforcement to trace complex fund flows and map transaction networks.<br/><a href="https://metasleuth.io/?utm_source=product_email&utm_content=crime_report_kyt" target="_blank" style="color:#ff8700;text-decoration:underline;font-weight:600;">Try MetaSleuth →</a></p><p ${P}>If any of this resonates, feel free to reach out.</p><p ${P}>All the best,<br/>Ruby</p>` }
+    }
+  },
+  'crime_report_network': {
+    name: 'Crime Report — Network (ZH)', template_id: 'ruby_kyt',
+    subject: 'Phalcon Network — 专为执法与监管机构',
+    audience: 'Law enforcement & regulators', trigger: 'Downloaded BlockSec 2026 Crypto Crime Report',
+    content: {
+      zh: { title: '【BlockSec 2026】Phalcon Network 现已上线——专为执法与监管机构打造', body: `<p ${P}>您好，</p><p ${P}>希望《BlockSec 2026 加密犯罪报告》对您的工作有所裨益。除报告外，我有一项与您工作可能高度相关的信息想与您分享——我们近期正式推出了 Phalcon Network，这是一个面向执法机构、调查人员和监管机构的公众情报网络，旨在帮助各方在非法资金转移消失之前及时响应和行动。</p><p ${P}>加入 Phalcon Network，您可以：<br/>· 标记与诈骗、黑客攻击、金融犯罪相关的非法资金来源<br/>· 实时监控资金动向，追踪跨链洗钱路径<br/>· 在资金被取走前通知相关平台，从而实现更快速的协调干预</p><p ${P}><a href="https://blocksec.com/phalcon/network?utm_source=product_email&utm_content=crime_report_network" target="_blank" style="color:#ff8700;text-decoration:underline;font-weight:600;">立即加入网络 →</a></p><p ${P}>如果您认为这与您的工作方向契合，我们诚挚邀请您加入该网络。</p><p ${P}>期待与您进一步沟通。</p><p ${P}>Ruby 本人</p>` }
+    }
+  },
+  '14d_inactive': {
+    name: '14d Inactive — Re-engage', template_id: 'jenna_marketing',
+    subject: 'Still need compliance checks? Get clear risk signals in under a minute',
+    audience: 'Inactive Phalcon Compliance users (2+ weeks)', trigger: '14+ days since last scan',
+    content: {
+      en: { title: 'Still need compliance checks? Get clear risk signals in under a minute', body: `<p ${P}>Hi,</p><p ${P}>It's been over 2 weeks since your last scan on Phalcon Compliance.</p><p ${P}>Need to check a wallet or transaction? You can run a new screen in under a minute and instantly review the risk signals and evidence.</p><p ${P}><a href="https://app.blocksec.com/phalcon/compliance?utm_source=product_email&utm_content=14d_inactive" target="_blank" style="color:#ff8700;text-decoration:underline;font-weight:600;">🔍 Run a Free Scan Now →</a></p><p ${P}>Not sure what to scan? Try:<br/>• An inbound deposit address<br/>• A counterparty wallet<br/>• A transaction hash under review</p><p ${P}>Your 3 free screens refresh every month — they're ready whenever you are.</p><p ${P}>Best,<br/>Jenna</p>` }
+    }
+  },
+  'paid_renewal': {
+    name: 'Paid User — Renewal', template_id: 'jenna_marketing',
+    subject: 'Checking in: Phalcon Compliance & your feedback',
+    audience: 'Phalcon Compliance paid users', trigger: 'Plan expiry approaching',
+    content: {
+      en: { title: 'Checking in: Phalcon Compliance & your feedback', body: `<p ${P}>Hope you're having a great week 😊</p><p ${P}>Just wanted to see how you're finding Phalcon Compliance so far. Any favorite features or areas where we could improve?</p><p ${P}>A quick heads-up: your plan expires on <strong>{{expiry_date}}</strong>. You can <a href="{{renew_url}}" target="_blank" style="color:#ff8700;text-decoration:underline;font-weight:600;">Renew here →</a> to keep everything running smoothly.</p><p ${P}>Also, if your compliance needs have evolved (new chains, deeper labeling, etc.), just let me know.</p><p ${P}>Best,<br/>Jenna</p>` }
+    }
+  }
+};
+
+// ─────────────────────────────────────────────
+// PREVIEW VIEW TOGGLE (Web / Mobile)
+// ─────────────────────────────────────────────
+function setPreviewView(lang, mode, btn) {
+  const wrap = document.getElementById(`preview-wrap-${lang}`);
+  wrap.querySelectorAll('.view-toggle').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  const iframe = document.getElementById(`inline-iframe-${lang}`);
+  if (mode === 'mobile') {
+    iframe.style.width = '375px';
+    iframe.style.height = '667px';
+  } else {
+    iframe.style.width = '100%';
+    iframe.style.height = '420px';
+  }
+}
+
+// ─────────────────────────────────────────────
+// CTA HOVER TOOLTIP (show UTM link on hover)
+// ─────────────────────────────────────────────
+function injectCtaTooltips(lang) {
+  const iframe = document.getElementById(`inline-iframe-${lang}`);
+  const doc = iframe.contentDocument || iframe.contentWindow.document;
+  if (!doc) return;
+  const links = doc.querySelectorAll('a[href]');
+  links.forEach(a => {
+    const href = a.getAttribute('href');
+    if (!href || href === '#') return;
+    a.style.position = 'relative';
+    a.addEventListener('mouseenter', function() {
+      let tip = doc.getElementById('_cta_tooltip');
+      if (!tip) {
+        tip = doc.createElement('div');
+        tip.id = '_cta_tooltip';
+        Object.assign(tip.style, {
+          position:'fixed', bottom:'12px', left:'12px', right:'12px',
+          background:'rgba(0,0,0,0.85)', color:'#fff', padding:'8px 12px',
+          borderRadius:'6px', fontSize:'11px', fontFamily:'monospace',
+          zIndex:'99999', wordBreak:'break-all', lineHeight:'1.4',
+          pointerEvents:'none', transition:'opacity 0.15s', opacity:'0'
         });
-        if (!res.ok) {
-          const err = await res.json();
-          throw new Error(err.detail || 'Generation failed');
-        }
-        generatedContent = await res.json();
-        populateEditors();
-        setStatus('Content generated successfully! Review and edit below.', 'success');
-
-        // Assemble all languages
-        for (const lang of ['en', 'zh', 'es', 'ja']) {
-          await assembleForLang(lang);
-        }
-
-        document.getElementById('editorSection').classList.remove('hidden');
-        document.getElementById('previewSection').classList.remove('hidden');
-        updatePreview();
-      } catch (e) {
-        setStatus('Error: ' + e.message, 'error');
-      } finally {
-        btn.disabled = false;
-        btn.innerHTML = 'Generate 4 Languages';
+        doc.body.appendChild(tip);
       }
-    }
+      tip.textContent = href;
+      tip.style.opacity = '1';
+    });
+    a.addEventListener('mouseleave', function() {
+      const tip = doc.getElementById('_cta_tooltip');
+      if (tip) tip.style.opacity = '0';
+    });
+  });
+}
 
-    // Populate editor fields
-    function populateEditors() {
-      for (const lang of ['en', 'zh', 'es', 'ja']) {
-        const data = generatedContent[lang];
-        if (data) {
-          document.getElementById(`title-${lang}`).value = data.title || '';
-          document.getElementById(`body-${lang}`).value = data.body || '';
-        }
-      }
-    }
+// ─────────────────────────────────────────────
+// UTM MANAGEMENT DRAWER
+// ─────────────────────────────────────────────
+function toggleUtmDrawer() {
+  document.getElementById('utmPanel').classList.toggle('open');
+  document.getElementById('utmOverlay').classList.toggle('hidden');
+}
 
-    // Assemble HTML for a language
-    async function assembleForLang(lang) {
-      const template_id = document.getElementById('template').value;
-      const body_html = document.getElementById(`body-${lang}`).value;
+function loadUtmTemplates() { try { return JSON.parse(localStorage.getItem(UTM_KEY) || '[]'); } catch { return []; } }
 
-      try {
-        const res = await fetch('/api/assemble', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ template_id, body_html, language: lang }),
-        });
-        if (res.ok) {
-          const data = await res.json();
-          assembledHtml[lang] = data.html;
-          if (lang === currentPreviewLang) updatePreview();
-        }
-      } catch (e) {
-        console.error(`Assemble failed for ${lang}:`, e);
-      }
-    }
+function assembleUtmPreview() {
+  const base = (document.getElementById('utm-tpl-base').value || '').trim();
+  const src = (document.getElementById('utm-tpl-source').value || '').trim();
+  const med = (document.getElementById('utm-tpl-medium').value || '').trim();
+  const cam = (document.getElementById('utm-tpl-campaign').value || '').trim();
+  const cnt = (document.getElementById('utm-tpl-content').value || '').trim();
+  if (!base) { document.getElementById('utm-tpl-preview').value = ''; return; }
+  const params = [];
+  if (src) params.push(`utm_source=${encodeURIComponent(src)}`);
+  if (med) params.push(`utm_medium=${encodeURIComponent(med)}`);
+  if (cam) params.push(`utm_campaign=${encodeURIComponent(cam)}`);
+  if (cnt) params.push(`utm_content=${encodeURIComponent(cnt)}`);
+  document.getElementById('utm-tpl-preview').value = base + (params.length ? (base.includes('?') ? '&' : '?') + params.join('&') : '');
+}
 
-    // Debounced assemble on edit
-    function scheduleAssemble(lang) {
-      // Update generatedContent in-memory
-      generatedContent[lang] = {
-        title: document.getElementById(`title-${lang}`).value,
-        body: document.getElementById(`body-${lang}`).value,
-      };
-      if (assembleTimers[lang]) clearTimeout(assembleTimers[lang]);
-      assembleTimers[lang] = setTimeout(() => assembleForLang(lang), 300);
-    }
+function saveUtmTemplate() {
+  const name = (document.getElementById('utm-tpl-name').value || '').trim();
+  if (!name) { alert('请输入模版名称'); return; }
+  const tpl = {
+    id: Date.now().toString(), name,
+    base: (document.getElementById('utm-tpl-base').value || '').trim(),
+    source: (document.getElementById('utm-tpl-source').value || '').trim(),
+    medium: (document.getElementById('utm-tpl-medium').value || '').trim(),
+    campaign: (document.getElementById('utm-tpl-campaign').value || '').trim(),
+    content: (document.getElementById('utm-tpl-content').value || '').trim(),
+  };
+  const list = loadUtmTemplates();
+  const idx = list.findIndex(t => t.name === name);
+  if (idx >= 0) { if (!confirm(`替换 "${name}"？`)) return; list.splice(idx, 1); }
+  list.unshift(tpl);
+  localStorage.setItem(UTM_KEY, JSON.stringify(list));
+  ['utm-tpl-name','utm-tpl-base','utm-tpl-source','utm-tpl-medium','utm-tpl-campaign','utm-tpl-content','utm-tpl-preview'].forEach(id => document.getElementById(id).value = '');
+  setStatus(`UTM 模版 "${name}" 已保存`, 'success');
+  renderUtmTemplates();
+}
 
-    // Regenerate single language
-    async function handleRegenerate(lang) {
-      const template_id = document.getElementById('template').value;
-      const subject = document.getElementById('subject').value.trim();
-      const audience = document.getElementById('audience').value.trim();
-      const trigger = document.getElementById('trigger').value.trim();
-      const instructions = document.getElementById('instructions').value.trim();
+function deleteUtmTemplate(id) {
+  if (!confirm('确认删除该 UTM 模版？')) return;
+  localStorage.setItem(UTM_KEY, JSON.stringify(loadUtmTemplates().filter(t => t.id !== id)));
+  renderUtmTemplates();
+}
 
-      const btn = event.target;
-      const original = btn.textContent;
-      btn.disabled = true;
-      btn.textContent = 'Regenerating...';
+function applyUtmTemplate(id) {
+  const tpl = loadUtmTemplates().find(t => t.id === id);
+  if (!tpl) return;
+  // Fill Step 1 CTA fields
+  const selBase = document.getElementById('cta_base');
+  const matchOpt = [...selBase.options].find(o => o.value === tpl.base);
+  if (matchOpt) {
+    selBase.value = tpl.base;
+    document.getElementById('cta_custom_wrap').classList.add('hidden');
+  } else if (tpl.base) {
+    selBase.value = '__custom__';
+    document.getElementById('cta_custom_wrap').classList.remove('hidden');
+    document.getElementById('cta_custom_url').value = tpl.base;
+  }
+  if (tpl.source) document.getElementById('cta_utm_source').value = tpl.source;
+  if (tpl.content) document.getElementById('cta_utm_content').value = tpl.content;
+  assembleCTAUrl();
+  toggleUtmDrawer();
+  setStatus(`已应用 UTM 模版：${tpl.name}`, 'success');
+}
 
-      try {
-        const res = await fetch('/api/regenerate', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            template_id, subject, audience, trigger, instructions,
-            language: lang,
-            existing_content: generatedContent,
-          }),
-        });
-        if (!res.ok) {
-          const err = await res.json();
-          throw new Error(err.detail || 'Regeneration failed');
-        }
-        const result = await res.json();
-        if (result[lang]) {
-          generatedContent[lang] = result[lang];
-          document.getElementById(`title-${lang}`).value = result[lang].title || '';
-          document.getElementById(`body-${lang}`).value = result[lang].body || '';
-          await assembleForLang(lang);
-        }
-      } catch (e) {
-        setStatus('Regenerate error: ' + e.message, 'error');
-      } finally {
-        btn.disabled = false;
-        btn.textContent = original;
-      }
-    }
+function renderUtmTemplates() {
+  const list = loadUtmTemplates();
+  const el = document.getElementById('utmTplList');
+  if (!list.length) {
+    el.innerHTML = '<p class="text-muted" style="padding:4px 0;">暂无 UTM 模版。在上方创建一个。</p>';
+    return;
+  }
+  el.innerHTML = list.map(t => {
+    const params = [];
+    if (t.source)   params.push(`source=${t.source}`);
+    if (t.medium)   params.push(`medium=${t.medium}`);
+    if (t.campaign) params.push(`campaign=${t.campaign}`);
+    if (t.content)  params.push(`content=${t.content}`);
+    const paramStr = params.join(' · ') || '(无参数)';
+    return `<div class="tpl-card" style="margin-bottom:10px;">
+      <div class="tpl-card-name">${esc(t.name)}</div>
+      <div class="tpl-card-meta" style="word-break:break-all;">${esc(t.base || '(无 URL)')}</div>
+      <div style="font-size:10px;color:#888;margin-bottom:8px;">${esc(paramStr)}</div>
+      <div class="tpl-actions">
+        <button class="btn btn-secondary btn-sm" onclick="applyUtmTemplate('${t.id}')">应用到 Step 1</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteUtmTemplate('${t.id}')">删除</button>
+      </div>
+    </div>`;
+  }).join('');
+}
 
-    // Tab switching
-    function switchEditorTab(lang) {
-      currentEditorLang = lang;
-      document.querySelectorAll('#editorTabs .tab').forEach(t => {
-        t.classList.toggle('active', t.dataset.lang === lang);
-      });
-      document.querySelectorAll('.editor-panel').forEach(p => {
-        p.classList.toggle('active', p.id === `editor-${lang}`);
-      });
-    }
-
-    function switchPreviewTab(lang) {
-      currentPreviewLang = lang;
-      document.querySelectorAll('#previewTabs .tab').forEach(t => {
-        t.classList.toggle('active', t.dataset.lang === lang);
-      });
-      updatePreview();
-    }
-
-    // Update preview pane
-    function updatePreview() {
-      const lang = currentPreviewLang;
-      const title = generatedContent[lang]?.title || '';
-      const html = assembledHtml[lang] || '';
-
-      document.getElementById('preview-title').value = title;
-
-      // Update iframe
-      const iframe = document.getElementById('preview-iframe');
-      const doc = iframe.contentDocument || iframe.contentWindow.document;
-      doc.open();
-      doc.write(html);
-      doc.close();
-
-      // Update source view
-      document.getElementById('html-source').textContent = html;
-    }
-
-    // Copy functions
-    async function copyTitle() {
-      const title = document.getElementById('preview-title').value;
-      await copyToClipboard(title, event.target);
-    }
-
-    async function copyHtml() {
-      const html = assembledHtml[currentPreviewLang] || '';
-      await copyToClipboard(html, event.target);
-    }
-
-    async function copyToClipboard(text, btn) {
-      try {
-        await navigator.clipboard.writeText(text);
-        const original = btn.textContent;
-        btn.textContent = 'Copied!';
-        btn.classList.add('copied');
-        setTimeout(() => {
-          btn.textContent = original;
-          btn.classList.remove('copied');
-        }, 2000);
-      } catch (e) {
-        // Fallback
-        const ta = document.createElement('textarea');
-        ta.value = text;
-        document.body.appendChild(ta);
-        ta.select();
-        document.execCommand('copy');
-        document.body.removeChild(ta);
-      }
-    }
-  </script>
+// ─────────────────────────────────────────────
+// INIT
+// ─────────────────────────────────────────────
+(async () => {
+  renderPipelineNav();
+  restoreSavedDestinations();
+  renderCTATemplates();
+  renderLibrary();
+  renderUtmTemplates();
+  await loadTemplates();
+  initQuillEditors();
+  initScrollObserver();
+  // Live preview for UTM template builder
+  ['utm-tpl-base','utm-tpl-source','utm-tpl-medium','utm-tpl-campaign','utm-tpl-content'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('input', assembleUtmPreview);
+  });
+})();
+</script>
 </body>
 </html>

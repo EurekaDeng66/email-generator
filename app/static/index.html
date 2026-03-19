@@ -300,10 +300,19 @@
     }
     .btn-ai-field:hover { border-color: #FF7F32; background: #fff8f4; }
     .btn-ai-field:disabled { color: #ccc; border-color: #eee; cursor: not-allowed; }
-    .confirm-row { display: flex; align-items: center; justify-content: flex-end; padding-top: 2px; }
+    .confirm-row { display: flex; align-items: center; justify-content: space-between; padding-top: 2px; }
     .btn-html-dirty { background: #FF7F32; color: #fff; border: none; }
     .btn-html-dirty:hover { background: #e86e22; }
     .btn-html-clean { background: #f0fdf4; border: 1.5px solid #bbf7d0; color: #166534; cursor: not-allowed; }
+    .btn-reviewed {
+      padding: 5px 12px; border-radius: 6px; font-size: 12px; cursor: pointer;
+      border: 1.5px solid #d1d5db; color: #9ca3af; background: transparent; font-family: inherit;
+      transition: all 0.15s;
+    }
+    .btn-reviewed:hover { border-color: #16a34a; color: #16a34a; }
+    .btn-reviewed.is-reviewed { border-color: #bbf7d0; background: #f0fdf4; color: #16a34a; }
+    .tab-check { display: none; font-size: 10px; color: #16a34a; margin-left: 1px; }
+    .lang-tab.reviewed .tab-check { display: inline; }
 
     /* ── Quill overrides ── */
     .ql-container.ql-snow { border-color: #e0e0e0; border-radius: 0 0 8px 8px; font-family: inherit; }
@@ -647,10 +656,10 @@
     <div class="card">
       <div style="display:flex;align-items:center;justify-content:space-between;border-bottom:2px solid #f0f0f0;margin-bottom:22px;">
         <div class="lang-tabs" id="reviewTabs" style="border:none;margin:0;">
-          <div class="lang-tab active" data-lang="zh" onclick="switchReviewTab('zh')">中文 <span class="tab-badge"></span></div>
-          <div class="lang-tab" data-lang="en" onclick="switchReviewTab('en')">英文 <span class="tab-badge"></span></div>
-          <div class="lang-tab" data-lang="es" onclick="switchReviewTab('es')">西班牙语 <span class="tab-badge"></span></div>
-          <div class="lang-tab" data-lang="ja" onclick="switchReviewTab('ja')">日语 <span class="tab-badge"></span></div>
+          <div class="lang-tab active" data-lang="zh" onclick="switchReviewTab('zh')">中文 <span class="tab-badge"></span><span class="tab-check">✓</span></div>
+          <div class="lang-tab" data-lang="en" onclick="switchReviewTab('en')">英文 <span class="tab-badge"></span><span class="tab-check">✓</span></div>
+          <div class="lang-tab" data-lang="es" onclick="switchReviewTab('es')">西班牙语 <span class="tab-badge"></span><span class="tab-check">✓</span></div>
+          <div class="lang-tab" data-lang="ja" onclick="switchReviewTab('ja')">日语 <span class="tab-badge"></span><span class="tab-check">✓</span></div>
         </div>
         <button class="btn btn-secondary btn-sm" id="batchRegenBtn" onclick="handleBatchRegen()" style="flex-shrink:0;margin-left:12px;">↻ 批量重新生成</button>
       </div>
@@ -671,6 +680,7 @@
           <button class="btn-regen" id="regen-en" onclick="handleRegenerate('en')" title="重新生成标题+正文">↻</button>
         </div>
         <div class="confirm-row">
+          <button class="btn-reviewed" id="reviewed-btn-en" onclick="toggleReviewed('en')">○ 标记已审阅</button>
           <button class="btn btn-html-dirty" id="html-btn-en" onclick="generateHtml('en')">⬆ 生成 HTML</button>
         </div>
         <div class="output-panel hidden" id="output-en">
@@ -712,6 +722,7 @@
           <button class="btn-regen" id="regen-zh" onclick="handleRegenerate('zh')" title="重新生成标题+正文">↻</button>
         </div>
         <div class="confirm-row">
+          <button class="btn-reviewed" id="reviewed-btn-zh" onclick="toggleReviewed('zh')">○ 标记已审阅</button>
           <button class="btn btn-html-dirty" id="html-btn-zh" onclick="generateHtml('zh')">⬆ 生成 HTML</button>
         </div>
         <div class="output-panel hidden" id="output-zh">
@@ -753,6 +764,7 @@
           <button class="btn-regen" id="regen-es" onclick="handleRegenerate('es')" title="重新生成标题+正文">↻</button>
         </div>
         <div class="confirm-row">
+          <button class="btn-reviewed" id="reviewed-btn-es" onclick="toggleReviewed('es')">○ 标记已审阅</button>
           <button class="btn btn-html-dirty" id="html-btn-es" onclick="generateHtml('es')">⬆ 生成 HTML</button>
         </div>
         <div class="output-panel hidden" id="output-es">
@@ -794,6 +806,7 @@
           <button class="btn-regen" id="regen-ja" onclick="handleRegenerate('ja')" title="重新生成标题+正文">↻</button>
         </div>
         <div class="confirm-row">
+          <button class="btn-reviewed" id="reviewed-btn-ja" onclick="toggleReviewed('ja')">○ 标记已审阅</button>
           <button class="btn btn-html-dirty" id="html-btn-ja" onclick="generateHtml('ja')">⬆ 生成 HTML</button>
         </div>
         <div class="output-panel hidden" id="output-ja">
@@ -968,6 +981,7 @@ let stepDoneState = {};   // {1: bool, 2: bool}
 let generatedContent = {};
 let assembledHtml = {};
 let htmlReadyLangs = new Set();  // langs whose assembled HTML matches current content
+let reviewedLangs  = new Set();  // langs explicitly marked as reviewed by user
 let dirtyLangs     = new Set();  // langs with unsaved edits since last HTML gen
 let quillEditors = {};
 let currentEditorLang = 'en';
@@ -1491,7 +1505,7 @@ async function handleGenerate() {
     });
     if (!resp.ok) { const e = await resp.json(); throw new Error(e.detail || resp.statusText); }
     generatedContent = await resp.json();
-    htmlReadyLangs = new Set(); dirtyLangs = new Set();
+    htmlReadyLangs = new Set(); dirtyLangs = new Set(); reviewedLangs = new Set(); LANGS.forEach(_updateReviewedMark);
     assembledHtml = {};
     // Hide all output panels
     LANGS.forEach(l => document.getElementById(`output-${l}`).classList.add('hidden'));
@@ -1748,10 +1762,34 @@ async function handleBatchRegen() {
   btn.textContent = '↻ 批量重新生成';
 }
 
+// ── Reviewed-state tracking ───────────────────────────────────────
+function toggleReviewed(lang) {
+  if (reviewedLangs.has(lang)) {
+    reviewedLangs.delete(lang);
+  } else {
+    reviewedLangs.add(lang);
+  }
+  _updateReviewedMark(lang);
+}
+
+function _updateReviewedMark(lang) {
+  const btn = document.getElementById(`reviewed-btn-${lang}`);
+  const tab = document.querySelector(`#reviewTabs .lang-tab[data-lang="${lang}"]`);
+  const isReviewed = reviewedLangs.has(lang);
+  if (btn) {
+    btn.textContent = isReviewed ? '✓ 已审阅' : '○ 标记已审阅';
+    btn.classList.toggle('is-reviewed', isReviewed);
+  }
+  if (tab) tab.classList.toggle('reviewed', isReviewed);
+}
+
 // ── Dirty-state tracking ──────────────────────────────────────────
 function markDirty(lang) {
   htmlReadyLangs.delete(lang);
   dirtyLangs.add(lang);
+  // AI regen = content changed → clear reviewed
+  reviewedLangs.delete(lang);
+  _updateReviewedMark(lang);
   _updateHtmlBtn(lang);
 }
 
@@ -1906,7 +1944,7 @@ function loadData(data) {
   generatedContent = JSON.parse(JSON.stringify(data.content || {}));
   assembledHtml    = JSON.parse(JSON.stringify(data.assembled_html || {}));
   // htmlReadyLangs / dirtyLangs set later via markClean/markDirty per lang
-  htmlReadyLangs = new Set(); dirtyLangs = new Set();
+  htmlReadyLangs = new Set(); dirtyLangs = new Set(); reviewedLangs = new Set(); LANGS.forEach(_updateReviewedMark);
   // Update language checkboxes to match loaded data
   selectedLangs = Object.keys(data.content || {}).filter(l => data.content[l] && (data.content[l].title || data.content[l].body));
   if (selectedLangs.length === 0) selectedLangs = [...LANGS];
@@ -1989,7 +2027,7 @@ function loadPreset(id) {
 
 function startNew() {
   generatedContent = {}; assembledHtml = {};
-  htmlReadyLangs = new Set(); dirtyLangs = new Set();
+  htmlReadyLangs = new Set(); dirtyLangs = new Set(); reviewedLangs = new Set(); LANGS.forEach(_updateReviewedMark);
   stepDoneState = {};
   // Hide fields section, reset intent input
   document.getElementById('fields-section').classList.remove('show');

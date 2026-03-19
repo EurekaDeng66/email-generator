@@ -545,10 +545,10 @@
 
     <div class="card">
       <div class="lang-tabs" id="reviewTabs">
-        <div class="lang-tab active" data-lang="en" onclick="switchReviewTab('en')">EN <span class="check">✓</span></div>
-        <div class="lang-tab" data-lang="zh" onclick="switchReviewTab('zh')">ZH <span class="check">✓</span></div>
-        <div class="lang-tab" data-lang="es" onclick="switchReviewTab('es')">ES <span class="check">✓</span></div>
-        <div class="lang-tab" data-lang="ja" onclick="switchReviewTab('ja')">JA <span class="check">✓</span></div>
+        <div class="lang-tab active" data-lang="zh" onclick="switchReviewTab('zh')">中文 <span class="check">✓</span></div>
+        <div class="lang-tab" data-lang="en" onclick="switchReviewTab('en')">英文 <span class="check">✓</span></div>
+        <div class="lang-tab" data-lang="es" onclick="switchReviewTab('es')">西班牙语 <span class="check">✓</span></div>
+        <div class="lang-tab" data-lang="ja" onclick="switchReviewTab('ja')">日语 <span class="check">✓</span></div>
       </div>
 
       <!-- EN -->
@@ -845,7 +845,8 @@
 // ─────────────────────────────────────────────
 // STATE
 // ─────────────────────────────────────────────
-const LANGS = ['en', 'zh', 'es', 'ja'];
+const LANGS = ['zh', 'en', 'es', 'ja'];
+const LANG_LABELS = { zh: '中文', en: '英文', es: '西班牙语', ja: '日语' };
 let activeNavStep = 1;    // which step is highlighted in nav
 let stepDoneState = {};   // {1: bool, 2: bool}
 let generatedContent = {};
@@ -932,7 +933,18 @@ async function initServerSync() {
       if (!resp.ok) continue;
       const { value } = await resp.json();
       if (value !== null && value !== undefined) {
+        // Server has data → use it (shared source of truth)
         localStorage.setItem(key, JSON.stringify(value));
+      } else {
+        // Server has no data → push localStorage up (one-time migration)
+        const local = localStorage.getItem(key);
+        if (local) {
+          fetch(`/api/store/${key}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ value: JSON.parse(local) }),
+          }).catch(() => {});
+        }
       }
     } catch {}
   }
@@ -1735,7 +1747,7 @@ async function loadReviewTemplate(idx) {
   // Render lang tabs
   const tabsEl = document.getElementById('reviewLangTabs');
   tabsEl.innerHTML = availLangs.map(l =>
-    `<div class="lang-tab${l === availLangs[0] ? ' active' : ''}" data-lang="${l}" onclick="switchReviewLang('${l}')">${l.toUpperCase()}</div>`
+    `<div class="lang-tab${l === availLangs[0] ? ' active' : ''}" data-lang="${l}" onclick="switchReviewLang('${l}')">${LANG_LABELS[l] || l.toUpperCase()}</div>`
   ).join('');
 
   // Reset view size

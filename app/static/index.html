@@ -173,9 +173,6 @@
     .btn-primary:disabled { background: #f5c9a8; cursor: not-allowed; }
     .btn-secondary { background: #fff; border: 1.5px solid #e0e0e0; color: #444; }
     .btn-secondary:hover { border-color: #aaa; }
-    .btn-confirm { background: #f0fdf4; border: 1.5px solid #86efac; color: #15803d; }
-    .btn-confirm:hover { border-color: #16a34a; }
-    .btn-confirm.confirmed { background: #16a34a; border-color: #16a34a; color: #fff; }
     .btn-danger { background: #fff; border: 1.5px solid #fca5a5; color: #dc2626; }
     .btn-danger:hover { background: #fef2f2; }
     .btn-lg { padding: 12px 28px; font-size: 14px; }
@@ -202,9 +199,11 @@
     }
     .lang-tab:hover { color: #555; }
     .lang-tab.active { color: #FF7F32; border-bottom-color: #FF7F32; }
-    .lang-tab .check { display: none; width: 15px; height: 15px; background: #16a34a; border-radius: 50%; font-size: 8px; color: #fff; align-items: center; justify-content: center; }
-    .lang-tab.confirmed .check { display: flex; }
-    .lang-tab.active.confirmed { color: #16a34a; border-bottom-color: #16a34a; }
+    .lang-tab .tab-badge { display: none; width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+    .lang-tab.html-ready .tab-badge { display: block; background: #16a34a; }
+    .lang-tab.dirty      .tab-badge { display: block; background: #FF7F32; }
+    .lang-tab.active.html-ready { color: #16a34a; border-bottom-color: #16a34a; }
+    .lang-tab.active.dirty      { color: #FF7F32; border-bottom-color: #FF7F32; }
 
     /* ── Review panel ── */
     .review-panel { display: flex; flex-direction: column; gap: 14px; }
@@ -228,8 +227,10 @@
     }
     .btn-ai-field:hover { border-color: #FF7F32; background: #fff8f4; }
     .btn-ai-field:disabled { color: #ccc; border-color: #eee; cursor: not-allowed; }
-    .confirm-row { display: flex; align-items: center; justify-content: space-between; padding-top: 2px; }
-    .lang-status { font-size: 12px; color: #999; }
+    .confirm-row { display: flex; align-items: center; justify-content: flex-end; padding-top: 2px; }
+    .btn-html-dirty { background: #FF7F32; color: #fff; border: none; }
+    .btn-html-dirty:hover { background: #e86e22; }
+    .btn-html-clean { background: #f0fdf4; border: 1.5px solid #bbf7d0; color: #166534; cursor: not-allowed; }
 
     /* ── Quill overrides ── */
     .ql-container.ql-snow { border-color: #e0e0e0; border-radius: 0 0 8px 8px; font-family: inherit; }
@@ -554,10 +555,10 @@
     <div class="card">
       <div style="display:flex;align-items:center;justify-content:space-between;border-bottom:2px solid #f0f0f0;margin-bottom:22px;">
         <div class="lang-tabs" id="reviewTabs" style="border:none;margin:0;">
-          <div class="lang-tab active" data-lang="zh" onclick="switchReviewTab('zh')">中文 <span class="check">✓</span></div>
-          <div class="lang-tab" data-lang="en" onclick="switchReviewTab('en')">英文 <span class="check">✓</span></div>
-          <div class="lang-tab" data-lang="es" onclick="switchReviewTab('es')">西班牙语 <span class="check">✓</span></div>
-          <div class="lang-tab" data-lang="ja" onclick="switchReviewTab('ja')">日语 <span class="check">✓</span></div>
+          <div class="lang-tab active" data-lang="zh" onclick="switchReviewTab('zh')">中文 <span class="tab-badge"></span></div>
+          <div class="lang-tab" data-lang="en" onclick="switchReviewTab('en')">英文 <span class="tab-badge"></span></div>
+          <div class="lang-tab" data-lang="es" onclick="switchReviewTab('es')">西班牙语 <span class="tab-badge"></span></div>
+          <div class="lang-tab" data-lang="ja" onclick="switchReviewTab('ja')">日语 <span class="tab-badge"></span></div>
         </div>
         <button class="btn btn-secondary btn-sm" id="batchRegenBtn" onclick="handleBatchRegen()" style="flex-shrink:0;margin-left:12px;">↻ 批量重新生成</button>
       </div>
@@ -578,8 +579,7 @@
           <button class="btn-regen" id="regen-en" onclick="handleRegenerate('en')" title="重新生成标题+正文">↻</button>
         </div>
         <div class="confirm-row">
-          <span class="lang-status" id="status-en">⬜ 待确认</span>
-          <button class="btn btn-confirm" id="confirm-en" onclick="toggleConfirm('en')">✓ 确认内容</button>
+          <button class="btn btn-html-dirty" id="html-btn-en" onclick="generateHtml('en')">⬆ 生成 HTML</button>
         </div>
         <div class="output-panel hidden" id="output-en">
           <div class="output-label">✅ HTML 输出</div>
@@ -620,8 +620,7 @@
           <button class="btn-regen" id="regen-zh" onclick="handleRegenerate('zh')" title="重新生成标题+正文">↻</button>
         </div>
         <div class="confirm-row">
-          <span class="lang-status" id="status-zh">⬜ 待确认</span>
-          <button class="btn btn-confirm" id="confirm-zh" onclick="toggleConfirm('zh')">✓ 确认内容</button>
+          <button class="btn btn-html-dirty" id="html-btn-zh" onclick="generateHtml('zh')">⬆ 生成 HTML</button>
         </div>
         <div class="output-panel hidden" id="output-zh">
           <div class="output-label">✅ HTML 输出</div>
@@ -662,8 +661,7 @@
           <button class="btn-regen" id="regen-es" onclick="handleRegenerate('es')" title="重新生成标题+正文">↻</button>
         </div>
         <div class="confirm-row">
-          <span class="lang-status" id="status-es">⬜ Pendiente</span>
-          <button class="btn btn-confirm" id="confirm-es" onclick="toggleConfirm('es')">✓ Confirmar</button>
+          <button class="btn btn-html-dirty" id="html-btn-es" onclick="generateHtml('es')">⬆ 生成 HTML</button>
         </div>
         <div class="output-panel hidden" id="output-es">
           <div class="output-label">✅ HTML 输出</div>
@@ -704,8 +702,7 @@
           <button class="btn-regen" id="regen-ja" onclick="handleRegenerate('ja')" title="重新生成标题+正文">↻</button>
         </div>
         <div class="confirm-row">
-          <span class="lang-status" id="status-ja">⬜ 未確認</span>
-          <button class="btn btn-confirm" id="confirm-ja" onclick="toggleConfirm('ja')">✓ 確認</button>
+          <button class="btn btn-html-dirty" id="html-btn-ja" onclick="generateHtml('ja')">⬆ 生成 HTML</button>
         </div>
         <div class="output-panel hidden" id="output-ja">
           <div class="output-label">✅ HTML 输出</div>
@@ -878,7 +875,8 @@ let activeNavStep = 1;    // which step is highlighted in nav
 let stepDoneState = {};   // {1: bool, 2: bool}
 let generatedContent = {};
 let assembledHtml = {};
-let confirmedLangs = new Set();
+let htmlReadyLangs = new Set();  // langs whose assembled HTML matches current content
+let dirtyLangs     = new Set();  // langs with unsaved edits since last HTML gen
 let quillEditors = {};
 let currentEditorLang = 'en';
 let selectedLangs = [...LANGS]; // languages selected for generation
@@ -1274,7 +1272,7 @@ async function handleGenerate() {
     });
     if (!resp.ok) { const e = await resp.json(); throw new Error(e.detail || resp.statusText); }
     generatedContent = await resp.json();
-    confirmedLangs = new Set();
+    htmlReadyLangs = new Set(); dirtyLangs = new Set();
     assembledHtml = {};
     // Hide all output panels
     LANGS.forEach(l => document.getElementById(`output-${l}`).classList.add('hidden'));
@@ -1310,6 +1308,13 @@ function initQuillEditors() {
       theme: 'snow',
       modules: { toolbar: QUILL_TOOLBAR },
     });
+    // Mark dirty when user edits body
+    quillEditors[lang].on('text-change', (delta, old, source) => {
+      if (source === 'user') markDirty(lang);
+    });
+    // Mark dirty when user edits title
+    const titleEl = document.getElementById(`title-${lang}`);
+    if (titleEl) titleEl.addEventListener('input', () => markDirty(lang));
   });
 }
 
@@ -1322,7 +1327,8 @@ function populateQuillEditors() {
     if (quillEditors[lang] && data.body) {
       quillEditors[lang].clipboard.dangerouslyPasteHTML(data.body);
     }
-    setLangConfirmed(lang, false);
+    // Mark dirty (new content, no HTML yet)
+    markDirty(lang);
   });
   // Show/hide language tabs based on selectedLangs
   updateReviewTabVisibility();
@@ -1391,8 +1397,7 @@ async function handleRegenerate(lang) {
         quillEditors[lang].clipboard.dangerouslyPasteHTML(newData.body);
       }
       document.getElementById(`revision-${lang}`).value = '';
-      setLangConfirmed(lang, false);
-      // Hide output panel since content changed
+      markDirty(lang);
       document.getElementById(`output-${lang}`).classList.add('hidden');
     }
   } catch (e) {
@@ -1451,7 +1456,7 @@ async function handleRegenField(lang, scope) {
         if (quillEditors[lang]) quillEditors[lang].clipboard.dangerouslyPasteHTML(newData.body);
         if (generatedContent[lang]) generatedContent[lang].body = newData.body;
       }
-      setLangConfirmed(lang, false);
+      markDirty(lang);
       document.getElementById(`output-${lang}`).classList.add('hidden');
     }
   } catch (e) {
@@ -1511,7 +1516,7 @@ async function handleBatchRegen() {
         document.getElementById(`title-${lang}`).value = newData.title || '';
         if (quillEditors[lang] && newData.body) quillEditors[lang].clipboard.dangerouslyPasteHTML(newData.body);
         document.getElementById(`revision-${lang}`).value = '';
-        setLangConfirmed(lang, false);
+        markDirty(lang);
         document.getElementById(`output-${lang}`).classList.add('hidden');
         succeeded++;
       }
@@ -1524,34 +1529,52 @@ async function handleBatchRegen() {
   btn.textContent = '↻ 批量重新生成';
 }
 
-async function toggleConfirm(lang) {
-  if (confirmedLangs.has(lang)) {
-    setLangConfirmed(lang, false);
-    document.getElementById(`output-${lang}`).classList.add('hidden');
+// ── Dirty-state tracking ──────────────────────────────────────────
+function markDirty(lang) {
+  htmlReadyLangs.delete(lang);
+  dirtyLangs.add(lang);
+  _updateHtmlBtn(lang);
+}
+
+function markClean(lang) {
+  dirtyLangs.delete(lang);
+  htmlReadyLangs.add(lang);
+  _updateHtmlBtn(lang);
+}
+
+function _updateHtmlBtn(lang) {
+  const btn = document.getElementById(`html-btn-${lang}`);
+  const tab = document.querySelector(`#reviewTabs .lang-tab[data-lang="${lang}"]`);
+  if (!btn) return;
+  const isClean = htmlReadyLangs.has(lang);
+  if (isClean) {
+    btn.textContent = '✓ HTML 已是最新';
+    btn.className = 'btn btn-html-clean';
+    btn.disabled = true;
   } else {
-    if (quillEditors[lang]) {
-      if (!generatedContent[lang]) generatedContent[lang] = {};
-      generatedContent[lang].body  = quillEditors[lang].root.innerHTML;
-      generatedContent[lang].title = document.getElementById(`title-${lang}`).value;
-    }
-    setLangConfirmed(lang, true);
-    // Auto-assemble and show inline output
-    const confirmBtn = document.getElementById(`confirm-${lang}`);
-    confirmBtn.disabled = true;
-    await assembleForLang(lang);
-    confirmBtn.disabled = false;
-    showInlineOutput(lang);
+    btn.textContent = '⬆ 生成 HTML';
+    btn.className = 'btn btn-html-dirty';
+    btn.disabled = false;
+  }
+  if (tab) {
+    tab.classList.toggle('html-ready', isClean);
+    tab.classList.toggle('dirty', !isClean && dirtyLangs.has(lang));
   }
 }
 
-function setLangConfirmed(lang, yes) {
-  if (yes) confirmedLangs.add(lang); else confirmedLangs.delete(lang);
-  const tab   = document.querySelector(`#reviewTabs .lang-tab[data-lang="${lang}"]`);
-  const stat  = document.getElementById(`status-${lang}`);
-  const btn   = document.getElementById(`confirm-${lang}`);
-  if (tab)  tab.classList.toggle('confirmed', yes);
-  if (stat) stat.textContent = yes ? '✅ 已确认' : '⬜ 待确认';
-  if (btn)  { btn.classList.toggle('confirmed', yes); btn.textContent = yes ? '✓ 已确认（再次点击取消）' : '✓ 确认内容'; }
+async function generateHtml(lang) {
+  // Snapshot current editor content
+  if (quillEditors[lang]) {
+    if (!generatedContent[lang]) generatedContent[lang] = {};
+    generatedContent[lang].body  = quillEditors[lang].root.innerHTML;
+    generatedContent[lang].title = document.getElementById(`title-${lang}`).value;
+  }
+  const btn = document.getElementById(`html-btn-${lang}`);
+  btn.disabled = true;
+  btn.textContent = '⟳ 生成中…';
+  await assembleForLang(lang);
+  markClean(lang);
+  showInlineOutput(lang);
 }
 
 async function assembleForLang(lang) {
@@ -1628,7 +1651,7 @@ function saveToLibrary() {
     trigger:  document.getElementById('trigger').value.trim(),
     content:  JSON.parse(JSON.stringify(generatedContent)),
     assembled_html: JSON.parse(JSON.stringify(assembledHtml)),
-    langs: [...confirmedLangs],
+    langs: [...htmlReadyLangs],
     saved_at: new Date().toLocaleDateString('zh-CN'),
   };
   if (idx >= 0) { if (!confirm(`Replace "${name}"?`)) return; lib.splice(idx, 1); }
@@ -1662,7 +1685,8 @@ function loadData(data) {
     sel.value = data.template_id;
   generatedContent = JSON.parse(JSON.stringify(data.content || {}));
   assembledHtml    = JSON.parse(JSON.stringify(data.assembled_html || {}));
-  confirmedLangs   = new Set(data.langs || Object.keys(data.content || {}));
+  // htmlReadyLangs / dirtyLangs set later via markClean/markDirty per lang
+  htmlReadyLangs = new Set(); dirtyLangs = new Set();
   // Update language checkboxes to match loaded data
   selectedLangs = Object.keys(data.content || {}).filter(l => data.content[l] && (data.content[l].title || data.content[l].body));
   if (selectedLangs.length === 0) selectedLangs = [...LANGS];
@@ -1677,9 +1701,10 @@ function loadData(data) {
   // Hide all output panels first
   LANGS.forEach(l => document.getElementById(`output-${l}`).classList.add('hidden'));
   populateQuillEditors();
-  (data.langs || []).forEach(l => {
-    setLangConfirmed(l, true);
-    if (assembledHtml[l]) showInlineOutput(l);
+  // For langs with assembled HTML → mark clean; others → mark dirty
+  LANGS.forEach(l => {
+    if (assembledHtml[l]) { markClean(l); showInlineOutput(l); }
+    else if (generatedContent[l]) markDirty(l);
   });
   // Close drawer if open
   document.getElementById('drawerPanel').classList.remove('open');
@@ -1743,13 +1768,14 @@ function loadPreset(id) {
 }
 
 function startNew() {
-  generatedContent = {}; assembledHtml = {}; confirmedLangs = new Set();
+  generatedContent = {}; assembledHtml = {};
+  htmlReadyLangs = new Set(); dirtyLangs = new Set();
   stepDoneState = {};
   LANGS.forEach(l => {
     if (quillEditors[l]) quillEditors[l].setText('');
     document.getElementById(`title-${l}`).value = '';
     document.getElementById(`revision-${l}`).value = '';
-    setLangConfirmed(l, false);
+    htmlReadyLangs.delete(l); dirtyLangs.delete(l); _updateHtmlBtn(l);
     document.getElementById(`output-${l}`).classList.add('hidden');
     document.getElementById(`preview-wrap-${l}`).classList.add('hidden');
   });

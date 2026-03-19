@@ -281,12 +281,30 @@
     }
     .btn-utm-toggle:hover { border-color: #FF7F32; color: #FF7F32; background: #fff8f4; }
 
+    /* ── Review Modal ── */
+    .review-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.65); z-index: 300;
+    }
+    .review-modal {
+      position: fixed; inset: 0; z-index: 301; background: #f2f2f2;
+      display: flex; flex-direction: column;
+    }
+    .review-modal-header {
+      display: flex; align-items: center; gap: 12px; flex-shrink: 0;
+      padding: 10px 20px; background: #fff; border-bottom: 1px solid #e5e5e5;
+      min-height: 56px; flex-wrap: wrap;
+    }
+    .review-nav { display: flex; align-items: center; white-space: nowrap; gap: 4px; flex-shrink: 0; }
+    .review-modal-body { flex: 1; overflow: hidden; display: flex; flex-direction: column; position: relative; }
+    .review-frame-center { width: 100%; height: 100%; display: flex; justify-content: center; align-items: flex-start; overflow: auto; padding: 20px 0; }
+    .review-frame-center iframe { border: none; background: #fff; box-shadow: 0 4px 24px rgba(0,0,0,0.12); border-radius: 4px; transition: width 0.25s ease, height 0.25s ease; }
+
     /* ── Library (Step 4) ── */
     .lib-save-row { display: flex; gap: 10px; align-items: center; }
     .lib-save-row input { flex: 1; }
     .section-label { font-size: 11px; font-weight: 700; color: #aaa; text-transform: uppercase; letter-spacing: 0.6px; margin: 20px 0 12px; }
     .tpl-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 12px; margin-bottom: 8px; }
-    .tpl-card { background: #fff; border: 1.5px solid #e5e5e5; border-radius: 10px; padding: 14px; transition: all 0.18s; }
+    .tpl-card { background: #fff; border: 1.5px solid #e5e5e5; border-radius: 10px; padding: 14px; transition: all 0.18s; cursor: pointer; }
     .tpl-card:hover { border-color: #FF7F32; box-shadow: 0 2px 10px rgba(255,127,50,0.1); }
     .tpl-card-name { font-size: 13px; font-weight: 700; color: #111; margin-bottom: 4px; line-height: 1.3; }
     .tpl-card-meta { font-size: 11px; color: #aaa; margin-bottom: 8px; }
@@ -683,6 +701,34 @@
 
     <div style="margin-top:16px;">
       <button class="btn btn-primary btn-sm" onclick="startNew();toggleLibraryDrawer();">✦ 创建新邮件</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Review Modal ── -->
+<div class="review-overlay hidden" id="reviewOverlay" onclick="closeReviewModal()"></div>
+<div class="review-modal hidden" id="reviewModal">
+  <div class="review-modal-header">
+    <div class="review-nav">
+      <button class="btn btn-secondary btn-sm" onclick="reviewNav(-1)">← 上一个</button>
+      <span id="reviewNavLabel" style="font-size:12px;color:#888;padding:0 6px;white-space:nowrap;"></span>
+      <button class="btn btn-secondary btn-sm" onclick="reviewNav(1)">下一个 →</button>
+    </div>
+    <div id="reviewModalTitle" style="font-size:15px;font-weight:700;flex:1;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"></div>
+    <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;flex-wrap:wrap;">
+      <div class="lang-tabs" id="reviewLangTabs" style="border:none;margin:0;gap:2px;"></div>
+      <button class="view-toggle active" id="reviewWebBtn" onclick="setReviewView('web')">🖥 Web</button>
+      <button class="view-toggle" id="reviewMobileBtn" onclick="setReviewView('mobile')">📱 Mobile</button>
+      <button class="btn btn-secondary btn-sm" onclick="loadFromReview()">✏️ 编辑</button>
+      <button onclick="closeReviewModal()" style="border:none;background:none;font-size:22px;cursor:pointer;color:#999;padding:0 4px;line-height:1;">✕</button>
+    </div>
+  </div>
+  <div class="review-modal-body">
+    <div id="reviewLoadingTip" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#aaa;font-size:13px;background:#f2f2f2;z-index:1;">
+      <span class="spin" style="font-size:18px;margin-right:8px;">⟳</span> 正在渲染…
+    </div>
+    <div class="review-frame-center" id="reviewFrameCenter" style="display:none;">
+      <iframe id="reviewIframe" style="width:100%;height:calc(100vh - 56px);"></iframe>
     </div>
   </div>
 </div>
@@ -1400,7 +1446,7 @@ function renderUserTpls() {
     return;
   }
   grid.innerHTML = lib.map(e => `
-    <div class="tpl-card">
+    <div class="tpl-card" onclick="openReviewModal('user','${e.id}')">
       <div class="tpl-card-name">${esc(e.name)}</div>
       <div class="tpl-card-meta">${e.saved_at || ''}</div>
       <div class="tpl-tags">
@@ -1408,8 +1454,8 @@ function renderUserTpls() {
         ${(e.langs||[]).map(l=>`<span class="tag tag-lang">${l.toUpperCase()}</span>`).join('')}
       </div>
       <div class="tpl-actions">
-        <button class="btn btn-secondary btn-sm" onclick="loadFromLibrary('${e.id}')">加载编辑</button>
-        <button class="btn btn-danger btn-sm" onclick="deleteFromLibrary('${e.id}')">删除</button>
+        <button class="btn btn-secondary btn-sm" onclick="event.stopPropagation();loadFromLibrary('${e.id}')">✏️ 编辑</button>
+        <button class="btn btn-danger btn-sm" onclick="event.stopPropagation();deleteFromLibrary('${e.id}')">删除</button>
       </div>
     </div>`).join('');
 }
@@ -1417,7 +1463,7 @@ function renderUserTpls() {
 function renderPresetTpls() {
   document.getElementById('presetTplGrid').innerHTML =
     Object.entries(PRESET_EMAILS).map(([id, p]) => `
-    <div class="tpl-card">
+    <div class="tpl-card" onclick="openReviewModal('preset','${id}')">
       <div class="tpl-card-name">${esc(p.name)}</div>
       <div class="tpl-card-meta">系统预置</div>
       <div class="tpl-tags">
@@ -1426,7 +1472,7 @@ function renderPresetTpls() {
         ${Object.keys(p.content).map(l=>`<span class="tag tag-lang">${l.toUpperCase()}</span>`).join('')}
       </div>
       <div class="tpl-actions">
-        <button class="btn btn-secondary btn-sm" onclick="loadPreset('${id}')">加载编辑</button>
+        <button class="btn btn-secondary btn-sm" onclick="event.stopPropagation();loadPreset('${id}')">✏️ 编辑</button>
       </div>
     </div>`).join('');
 }
@@ -1541,34 +1587,176 @@ const PRESET_EMAILS = {
 };
 
 // ─────────────────────────────────────────────
-// PREVIEW VIEW TOGGLE (Web / Mobile)
+// REVIEW MODAL
 // ─────────────────────────────────────────────
-function setPreviewView(lang, mode, btn) {
-  const wrap = document.getElementById(`preview-wrap-${lang}`);
-  wrap.querySelectorAll('.view-toggle').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-  const iframe = document.getElementById(`inline-iframe-${lang}`);
+let reviewList = [];
+let reviewIndex = 0;
+let reviewLang = 'en';
+let reviewHtmlCache = {};  // {lang: html} for current template
+let reviewCurrentMode = 'web';
+
+function buildReviewList() {
+  const userItems = loadLibrary().map(e => ({ type: 'user', id: e.id, data: e }));
+  const presetItems = Object.entries(PRESET_EMAILS).map(([id, p]) => ({
+    type: 'preset', id,
+    data: { name: p.name, template_id: p.template_id, subject: p.subject,
+            audience: p.audience, trigger: p.trigger,
+            content: p.content, assembled_html: {}, langs: Object.keys(p.content) }
+  }));
+  return [...userItems, ...presetItems];
+}
+
+function openReviewModal(type, id) {
+  reviewList = buildReviewList();
+  reviewIndex = reviewList.findIndex(r => r.type === type && r.id === id);
+  if (reviewIndex < 0) reviewIndex = 0;
+  reviewHtmlCache = {};
+  document.getElementById('reviewOverlay').classList.remove('hidden');
+  document.getElementById('reviewModal').classList.remove('hidden');
+  document.body.style.overflow = 'hidden';
+  loadReviewTemplate(reviewIndex);
+}
+
+function closeReviewModal() {
+  document.getElementById('reviewOverlay').classList.add('hidden');
+  document.getElementById('reviewModal').classList.add('hidden');
+  document.body.style.overflow = '';
+  reviewHtmlCache = {};
+}
+
+async function loadReviewTemplate(idx) {
+  reviewIndex = idx;
+  reviewHtmlCache = {};
+  const item = reviewList[idx];
+  const data = item.data;
+
+  // Nav label
+  document.getElementById('reviewNavLabel').textContent = `${idx + 1} / ${reviewList.length}`;
+  // Title
+  document.getElementById('reviewModalTitle').textContent = data.name || '(无标题)';
+
+  // Available langs
+  const availLangs = (data.langs && data.langs.length)
+    ? data.langs
+    : Object.keys(data.content || {}).filter(l => data.content[l] && (data.content[l].body || data.content[l].title));
+  if (!availLangs.length) availLangs.push('en');
+
+  // Render lang tabs
+  const tabsEl = document.getElementById('reviewLangTabs');
+  tabsEl.innerHTML = availLangs.map(l =>
+    `<div class="lang-tab${l === availLangs[0] ? ' active' : ''}" data-lang="${l}" onclick="switchReviewLang('${l}')">${l.toUpperCase()}</div>`
+  ).join('');
+
+  // Reset view
+  setReviewView(reviewCurrentMode, false);
+
+  // Show loading
+  document.getElementById('reviewLoadingTip').style.display = 'flex';
+  document.getElementById('reviewFrameCenter').style.display = 'none';
+
+  // Load first lang
+  const firstLang = availLangs[0];
+  reviewLang = firstLang;
+  await renderReviewLang(item, firstLang);
+}
+
+async function switchReviewLang(lang) {
+  reviewLang = lang;
+  document.querySelectorAll('#reviewLangTabs .lang-tab').forEach(t =>
+    t.classList.toggle('active', t.dataset.lang === lang));
+  const item = reviewList[reviewIndex];
+  document.getElementById('reviewLoadingTip').style.display = 'flex';
+  document.getElementById('reviewFrameCenter').style.display = 'none';
+  await renderReviewLang(item, lang);
+}
+
+async function renderReviewLang(item, lang) {
+  const html = await assembleReviewLang(item, lang);
+  const iframe = document.getElementById('reviewIframe');
+  if (html) {
+    const doc = iframe.contentDocument || iframe.contentWindow.document;
+    doc.open(); doc.write(html); doc.close();
+    // Inject CTA tooltips
+    setTimeout(() => injectCtaTooltips_iframe(iframe), 200);
+  }
+  document.getElementById('reviewLoadingTip').style.display = 'none';
+  document.getElementById('reviewFrameCenter').style.display = 'flex';
+}
+
+async function assembleReviewLang(item, lang) {
+  // Check cache first
+  if (reviewHtmlCache[lang]) return reviewHtmlCache[lang];
+  const data = item.data;
+  // Check stored assembled_html
+  if (data.assembled_html && data.assembled_html[lang]) {
+    reviewHtmlCache[lang] = data.assembled_html[lang];
+    return data.assembled_html[lang];
+  }
+  // Need to assemble
+  const bodyHtml = data.content && data.content[lang] && data.content[lang].body;
+  if (!bodyHtml) return null;
+  try {
+    const resp = await fetch('/api/assemble', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ template_id: data.template_id, body_html: bodyHtml, language: lang }),
+    });
+    if (resp.ok) {
+      const json = await resp.json();
+      reviewHtmlCache[lang] = json.html;
+      return json.html;
+    }
+  } catch {}
+  return null;
+}
+
+function reviewNav(dir) {
+  const len = reviewList.length;
+  if (!len) return;
+  const next = ((reviewIndex + dir) % len + len) % len;
+  reviewHtmlCache = {};
+  loadReviewTemplate(next);
+}
+
+function setReviewView(mode, persist = true) {
+  if (persist !== false) reviewCurrentMode = mode;
+  const iframe = document.getElementById('reviewIframe');
+  const webBtn = document.getElementById('reviewWebBtn');
+  const mobBtn = document.getElementById('reviewMobileBtn');
   if (mode === 'mobile') {
     iframe.style.width = '375px';
-    iframe.style.height = '667px';
+    iframe.style.height = '812px';
+    webBtn.classList.remove('active');
+    mobBtn.classList.add('active');
   } else {
     iframe.style.width = '100%';
-    iframe.style.height = '420px';
+    iframe.style.height = 'calc(100vh - 56px)';
+    webBtn.classList.add('active');
+    mobBtn.classList.remove('active');
   }
 }
 
-// ─────────────────────────────────────────────
-// CTA HOVER TOOLTIP (show UTM link on hover)
-// ─────────────────────────────────────────────
-function injectCtaTooltips(lang) {
-  const iframe = document.getElementById(`inline-iframe-${lang}`);
+function loadFromReview() {
+  const item = reviewList[reviewIndex];
+  if (!item) return;
+  closeReviewModal();
+  if (item.type === 'user') {
+    loadFromLibrary(item.id);
+  } else {
+    loadPreset(item.id);
+  }
+  // Close library drawer too
+  document.getElementById('drawerPanel').classList.remove('open');
+  document.getElementById('drawerOverlay').classList.add('hidden');
+}
+
+// Variant of injectCtaTooltips that takes iframe element directly
+function injectCtaTooltips_iframe(iframe) {
   const doc = iframe.contentDocument || iframe.contentWindow.document;
   if (!doc) return;
   const links = doc.querySelectorAll('a[href]');
   links.forEach(a => {
     const href = a.getAttribute('href');
     if (!href || href === '#') return;
-    a.style.position = 'relative';
     a.addEventListener('mouseenter', function() {
       let tip = doc.getElementById('_cta_tooltip');
       if (!tip) {
@@ -1591,6 +1779,31 @@ function injectCtaTooltips(lang) {
       if (tip) tip.style.opacity = '0';
     });
   });
+}
+
+// ─────────────────────────────────────────────
+// PREVIEW VIEW TOGGLE (Web / Mobile)
+// ─────────────────────────────────────────────
+function setPreviewView(lang, mode, btn) {
+  const wrap = document.getElementById(`preview-wrap-${lang}`);
+  wrap.querySelectorAll('.view-toggle').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  const iframe = document.getElementById(`inline-iframe-${lang}`);
+  if (mode === 'mobile') {
+    iframe.style.width = '375px';
+    iframe.style.height = '667px';
+  } else {
+    iframe.style.width = '100%';
+    iframe.style.height = '420px';
+  }
+}
+
+// ─────────────────────────────────────────────
+// CTA HOVER TOOLTIP (show UTM link on hover)
+// ─────────────────────────────────────────────
+function injectCtaTooltips(lang) {
+  const iframe = document.getElementById(`inline-iframe-${lang}`);
+  injectCtaTooltips_iframe(iframe);
 }
 
 // ─────────────────────────────────────────────

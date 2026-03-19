@@ -296,10 +296,18 @@ def regenerate_single_language(
     existing_content: dict,
     instructions: str = "",
     cta_url: str = "",
+    scope: str = "both",
 ) -> dict:
-    """Regenerate content for a single language, using others as context."""
+    """Regenerate content for a single language, using others as context.
+
+    scope: 'both' | 'title_only' | 'body_only'
+    """
     meta = TEMPLATES[template_id]
     sender = meta["sender"]
+
+    current = existing_content.get(language, {})
+    existing_title = current.get("title", "")
+    existing_body  = current.get("body", "")
 
     context_parts = []
     for lang, content in existing_content.items():
@@ -316,11 +324,29 @@ def regenerate_single_language(
         f"Style it with the orange link style."
     ) if cta_url else "No specific CTA URL."
 
-    user_prompt = f"""Regenerate ONLY the {language} version of this email.
+    if scope == "title_only":
+        task = (
+            f"Regenerate ONLY the subject/title line for the {language} version.\n"
+            f"Keep the body EXACTLY as-is — do NOT modify it.\n"
+            f"Current body (preserve verbatim): {existing_body}"
+        )
+        output_hint = f'{{"{language}": {{"title": "...", "body": {json.dumps(existing_body)}}}}}'
+    elif scope == "body_only":
+        task = (
+            f"Regenerate ONLY the email body for the {language} version.\n"
+            f"Keep the subject/title EXACTLY as-is — do NOT modify it.\n"
+            f"Current title (preserve verbatim): {existing_title}"
+        )
+        output_hint = f'{{"{language}": {{"title": {json.dumps(existing_title)}, "body": "<p>...</p>"}}}}'
+    else:
+        task = f"Regenerate BOTH the subject/title and body for the {language} version."
+        output_hint = f'{{"{language}": {{"title": "...", "body": "<p>...</p>"}}}}'
+
+    user_prompt = f"""{task}
 
 Template: {meta['name']}
 Sender: {sender}
-Email topic/direction (创作方向, NOT the literal subject — generate a unique native subject for EACH language): {subject}
+Email topic/direction (创作方向, NOT the literal subject): {subject}
 Target audience: {audience}
 Trigger/timing: {trigger}
 CTA: {cta_instruction}
@@ -330,7 +356,7 @@ The other language versions (for reference/consistency):
 {context_str}
 
 Output JSON with only the "{language}" key:
-{{"{language}": {{"title": "...", "body": "<p>...</p>"}}}}"""
+{output_hint}"""
 
     model = os.getenv("MODEL", "anthropic/claude-sonnet-4-5")
     response = _get_client().chat.completions.create(

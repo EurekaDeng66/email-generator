@@ -220,6 +220,14 @@
       font-size: 17px; transition: all 0.15s; display: flex; align-items: center; justify-content: center;
     }
     .btn-regen:hover { background: #fff3e8; border-color: #FF7F32; }
+    .btn-ai-field {
+      padding: 3px 8px; font-size: 11px; font-weight: 700; line-height: 1.4;
+      border: 1.5px solid #e0e0e0; border-radius: 6px; flex-shrink: 0;
+      background: #fff; color: #FF7F32; cursor: pointer; transition: all 0.15s;
+      white-space: nowrap;
+    }
+    .btn-ai-field:hover { border-color: #FF7F32; background: #fff8f4; }
+    .btn-ai-field:disabled { color: #ccc; border-color: #eee; cursor: not-allowed; }
     .confirm-row { display: flex; align-items: center; justify-content: space-between; padding-top: 2px; }
     .lang-status { font-size: 12px; color: #999; }
 
@@ -544,11 +552,14 @@
     <div id="step2-editor" class="hidden">
 
     <div class="card">
-      <div class="lang-tabs" id="reviewTabs">
-        <div class="lang-tab active" data-lang="zh" onclick="switchReviewTab('zh')">中文 <span class="check">✓</span></div>
-        <div class="lang-tab" data-lang="en" onclick="switchReviewTab('en')">英文 <span class="check">✓</span></div>
-        <div class="lang-tab" data-lang="es" onclick="switchReviewTab('es')">西班牙语 <span class="check">✓</span></div>
-        <div class="lang-tab" data-lang="ja" onclick="switchReviewTab('ja')">日语 <span class="check">✓</span></div>
+      <div style="display:flex;align-items:center;justify-content:space-between;border-bottom:2px solid #f0f0f0;margin-bottom:22px;">
+        <div class="lang-tabs" id="reviewTabs" style="border:none;margin:0;">
+          <div class="lang-tab active" data-lang="zh" onclick="switchReviewTab('zh')">中文 <span class="check">✓</span></div>
+          <div class="lang-tab" data-lang="en" onclick="switchReviewTab('en')">英文 <span class="check">✓</span></div>
+          <div class="lang-tab" data-lang="es" onclick="switchReviewTab('es')">西班牙语 <span class="check">✓</span></div>
+          <div class="lang-tab" data-lang="ja" onclick="switchReviewTab('ja')">日语 <span class="check">✓</span></div>
+        </div>
+        <button class="btn btn-secondary btn-sm" id="batchRegenBtn" onclick="handleBatchRegen()" style="flex-shrink:0;margin-left:12px;">↻ 批量重新生成</button>
       </div>
 
       <!-- EN -->
@@ -556,11 +567,15 @@
         <div class="review-subject-row">
           <label>Subject</label>
           <input type="text" id="title-en" placeholder="Email subject line">
+          <button class="btn-ai-field" id="regen-title-en" onclick="handleRegenField('en','title_only')" title="AI 重新生成标题">✦ 标题</button>
         </div>
         <div class="quill-wrap"><div id="quill-en"></div></div>
+        <div style="display:flex;justify-content:flex-end;margin-top:4px;">
+          <button class="btn-ai-field" id="regen-body-en" onclick="handleRegenField('en','body_only')" title="AI 重新生成正文">✦ 正文</button>
+        </div>
         <div class="revision-row">
-          <textarea id="revision-en" placeholder="修改意见，例如：语气更友好，强调免费额度，末尾加一句问候…"></textarea>
-          <button class="btn-regen" id="regen-en" onclick="handleRegenerate('en')" title="Regenerate this language">↻</button>
+          <textarea id="revision-en" placeholder="修改意见（标题/正文共用），例如：语气更友好，强调免费额度…"></textarea>
+          <button class="btn-regen" id="regen-en" onclick="handleRegenerate('en')" title="重新生成标题+正文">↻</button>
         </div>
         <div class="confirm-row">
           <span class="lang-status" id="status-en">⬜ 待确认</span>
@@ -594,11 +609,15 @@
         <div class="review-subject-row">
           <label>Subject</label>
           <input type="text" id="title-zh" placeholder="邮件标题">
+          <button class="btn-ai-field" id="regen-title-zh" onclick="handleRegenField('zh','title_only')" title="AI 重新生成标题">✦ 标题</button>
         </div>
         <div class="quill-wrap"><div id="quill-zh"></div></div>
+        <div style="display:flex;justify-content:flex-end;margin-top:4px;">
+          <button class="btn-ai-field" id="regen-body-zh" onclick="handleRegenField('zh','body_only')" title="AI 重新生成正文">✦ 正文</button>
+        </div>
         <div class="revision-row">
-          <textarea id="revision-zh" placeholder="修改意见，例如：语气更活泼，加入产品亮点…"></textarea>
-          <button class="btn-regen" id="regen-zh" onclick="handleRegenerate('zh')" title="Regenerate">↻</button>
+          <textarea id="revision-zh" placeholder="修改意见（标题/正文共用），例如：语气更活泼，加入产品亮点…"></textarea>
+          <button class="btn-regen" id="regen-zh" onclick="handleRegenerate('zh')" title="重新生成标题+正文">↻</button>
         </div>
         <div class="confirm-row">
           <span class="lang-status" id="status-zh">⬜ 待确认</span>
@@ -632,11 +651,15 @@
         <div class="review-subject-row">
           <label>Subject</label>
           <input type="text" id="title-es" placeholder="Asunto del correo">
+          <button class="btn-ai-field" id="regen-title-es" onclick="handleRegenField('es','title_only')" title="AI 重新生成标题">✦ 标题</button>
         </div>
         <div class="quill-wrap"><div id="quill-es"></div></div>
+        <div style="display:flex;justify-content:flex-end;margin-top:4px;">
+          <button class="btn-ai-field" id="regen-body-es" onclick="handleRegenField('es','body_only')" title="AI 重新生成正文">✦ 正文</button>
+        </div>
         <div class="revision-row">
-          <textarea id="revision-es" placeholder="Instrucciones de revisión…"></textarea>
-          <button class="btn-regen" id="regen-es" onclick="handleRegenerate('es')" title="Regenerate">↻</button>
+          <textarea id="revision-es" placeholder="修改意见（标题/正文共用）…"></textarea>
+          <button class="btn-regen" id="regen-es" onclick="handleRegenerate('es')" title="重新生成标题+正文">↻</button>
         </div>
         <div class="confirm-row">
           <span class="lang-status" id="status-es">⬜ Pendiente</span>
@@ -670,11 +693,15 @@
         <div class="review-subject-row">
           <label>Subject</label>
           <input type="text" id="title-ja" placeholder="メール件名">
+          <button class="btn-ai-field" id="regen-title-ja" onclick="handleRegenField('ja','title_only')" title="AI 重新生成标题">✦ 标题</button>
         </div>
         <div class="quill-wrap"><div id="quill-ja"></div></div>
+        <div style="display:flex;justify-content:flex-end;margin-top:4px;">
+          <button class="btn-ai-field" id="regen-body-ja" onclick="handleRegenField('ja','body_only')" title="AI 重新生成正文">✦ 正文</button>
+        </div>
         <div class="revision-row">
-          <textarea id="revision-ja" placeholder="修正のご意見…"></textarea>
-          <button class="btn-regen" id="regen-ja" onclick="handleRegenerate('ja')" title="Regenerate">↻</button>
+          <textarea id="revision-ja" placeholder="修改意见（标题/正文共用）…"></textarea>
+          <button class="btn-regen" id="regen-ja" onclick="handleRegenerate('ja')" title="重新生成标题+正文">↻</button>
         </div>
         <div class="confirm-row">
           <span class="lang-status" id="status-ja">⬜ 未確認</span>
@@ -1373,6 +1400,128 @@ async function handleRegenerate(lang) {
   } finally {
     btn.classList.remove('spin'); btn.disabled = false;
   }
+}
+
+// ── Single-field regenerate (title_only / body_only) ──────────────
+async function handleRegenField(lang, scope) {
+  const templateId = document.getElementById('template').value;
+  const subject    = document.getElementById('subject').value.trim();
+  const audience   = document.getElementById('audience').value.trim();
+  const trigger    = document.getElementById('trigger').value.trim();
+  const ctaUrl     = document.getElementById('cta_url').value.trim();
+  const ctaLabel   = document.getElementById('cta_label').value.trim();
+  let   instructions = (document.getElementById(`revision-${lang}`).value || '').trim();
+  if (ctaLabel && ctaUrl) {
+    const note = `CTA button label: "${ctaLabel}" — translate naturally into ${lang}.`;
+    instructions = instructions ? `${instructions}\n${note}` : note;
+  }
+
+  const existing = {};
+  LANGS.forEach(l => {
+    existing[l] = {
+      title: document.getElementById(`title-${l}`).value,
+      body:  quillEditors[l] ? quillEditors[l].root.innerHTML : (generatedContent[l]?.body || ''),
+    };
+  });
+
+  const btnId = scope === 'title_only' ? `regen-title-${lang}` : `regen-body-${lang}`;
+  const btn = document.getElementById(btnId);
+  const origText = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = scope === 'title_only' ? '…标题' : '…正文';
+
+  try {
+    const resp = await fetch('/api/regenerate', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        template_id: templateId, subject, audience, trigger,
+        language: lang, existing_content: existing,
+        instructions, cta_url: ctaUrl, scope,
+      }),
+    });
+    if (!resp.ok) { const e = await resp.json(); throw new Error(e.detail); }
+    const result  = await resp.json();
+    const newData = result[lang];
+    if (newData) {
+      if (scope === 'title_only' && newData.title) {
+        document.getElementById(`title-${lang}`).value = newData.title;
+        if (generatedContent[lang]) generatedContent[lang].title = newData.title;
+      }
+      if (scope === 'body_only' && newData.body) {
+        if (quillEditors[lang]) quillEditors[lang].clipboard.dangerouslyPasteHTML(newData.body);
+        if (generatedContent[lang]) generatedContent[lang].body = newData.body;
+      }
+      setLangConfirmed(lang, false);
+      document.getElementById(`output-${lang}`).classList.add('hidden');
+    }
+  } catch (e) {
+    setStatus(`重新生成失败: ${e.message}`, 'error');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = origText;
+  }
+}
+
+// ── Batch regenerate (all selected langs, both title+body) ─────────
+async function handleBatchRegen() {
+  if (selectedLangs.length === 0) { setStatus('请先生成内容', 'error'); return; }
+  const templateId = document.getElementById('template').value;
+  const subject    = document.getElementById('subject').value.trim();
+  const audience   = document.getElementById('audience').value.trim();
+  const trigger    = document.getElementById('trigger').value.trim();
+  const ctaUrl     = document.getElementById('cta_url').value.trim();
+  const ctaLabel   = document.getElementById('cta_label').value.trim();
+
+  const btn = document.getElementById('batchRegenBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spin">⟳</span> 批量生成中…';
+  setStatus(`正在批量重新生成 ${selectedLangs.length} 种语言…`, 'info');
+
+  const existing = {};
+  LANGS.forEach(l => {
+    existing[l] = {
+      title: document.getElementById(`title-${l}`).value,
+      body:  quillEditors[l] ? quillEditors[l].root.innerHTML : (generatedContent[l]?.body || ''),
+    };
+  });
+
+  const results = await Promise.allSettled(selectedLangs.map(lang => {
+    let instructions = (document.getElementById(`revision-${lang}`).value || '').trim();
+    if (ctaLabel && ctaUrl) {
+      const note = `CTA button label: "${ctaLabel}" — translate naturally into ${lang}.`;
+      instructions = instructions ? `${instructions}\n${note}` : note;
+    }
+    return fetch('/api/regenerate', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        template_id: templateId, subject, audience, trigger,
+        language: lang, existing_content: existing,
+        instructions, cta_url: ctaUrl, scope: 'both',
+      }),
+    }).then(r => r.ok ? r.json() : r.json().then(e => Promise.reject(e.detail)));
+  }));
+
+  let succeeded = 0;
+  results.forEach((res, i) => {
+    const lang = selectedLangs[i];
+    if (res.status === 'fulfilled') {
+      const newData = res.value[lang];
+      if (newData) {
+        generatedContent[lang] = newData;
+        document.getElementById(`title-${lang}`).value = newData.title || '';
+        if (quillEditors[lang] && newData.body) quillEditors[lang].clipboard.dangerouslyPasteHTML(newData.body);
+        document.getElementById(`revision-${lang}`).value = '';
+        setLangConfirmed(lang, false);
+        document.getElementById(`output-${lang}`).classList.add('hidden');
+        succeeded++;
+      }
+    }
+  });
+
+  clearStatus();
+  if (succeeded > 0) setStatus(`批量重新生成完成（${succeeded}/${selectedLangs.length} 种语言）`, 'success');
+  btn.disabled = false;
+  btn.textContent = '↻ 批量重新生成';
 }
 
 async function toggleConfirm(lang) {

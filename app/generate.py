@@ -27,6 +27,7 @@ class RegenerateRequest(BaseModel):
     existing_content: dict
     instructions: str = ""
     cta_url: str = ""
+    scope: str = "both"  # 'both' | 'title_only' | 'body_only'
 
 
 @router.get("/templates")
@@ -75,6 +76,7 @@ def regenerate(req: RegenerateRequest):
             existing_content=req.existing_content,
             instructions=req.instructions,
             cta_url=req.cta_url,
+            scope=req.scope,
         )
         return result
     except Exception as e:

@@ -2,7 +2,7 @@
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
-from .claude_client import generate_emails, regenerate_single_language, polish_cta_label
+from .claude_client import generate_emails, regenerate_single_language, polish_cta_label, parse_intent
 from .html_assembler import TEMPLATES
 
 router = APIRouter(prefix="/api")
@@ -79,6 +79,21 @@ def regenerate(req: RegenerateRequest):
             scope=req.scope,
         )
         return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+class ParseIntentRequest(BaseModel):
+    description: str
+
+
+@router.post("/parse_intent")
+def parse_intent_endpoint(req: ParseIntentRequest):
+    """Parse natural language campaign description into structured fields."""
+    if not req.description.strip():
+        raise HTTPException(status_code=400, detail="Description is empty")
+    try:
+        return parse_intent(req.description.strip())
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

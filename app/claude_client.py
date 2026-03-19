@@ -373,6 +373,50 @@ Output JSON with only the "{language}" key:
     return json.loads(cleaned)
 
 
+def parse_intent(description: str) -> dict:
+    """Parse a natural language campaign description into structured email config fields."""
+    system = """You are a campaign configuration assistant for BlockSec email marketing.
+Extract the campaign intent from the user's description and return ONLY valid JSON with these exact keys:
+{
+  "template_id": "ruby_sales|ruby_kyt|jenna_marketing",
+  "subject": "...",
+  "audience": "...",
+  "trigger": "...",
+  "instructions": "...",
+  "cta_destination": "...",
+  "cta_label": "...",
+  "utm_content": "..."
+}
+
+Rules:
+- template_id: ruby_sales = Ruby personal outreach/sales; ruby_kyt = Ruby KYT/compliance product focus; jenna_marketing = Jenna re-engagement/marketing
+- subject: describe the email direction in Chinese (theme, not a literal subject line)
+- audience: target recipients in Chinese
+- trigger: send timing/trigger context in Chinese
+- instructions: any tone/style/content notes mentioned
+- cta_destination: pick the best matching URL or empty string:
+    https://app.blocksec.com/phalcon/compliance
+    https://blocksec.com/phalcon/network
+    https://metasleuth.io/
+    https://blocksec.com
+- cta_label: CTA button text if mentioned, otherwise empty string
+- utm_content: short snake_case identifier e.g. welcome, crime_report_kyt, 14d_inactive
+Return ONLY the JSON object, no other text."""
+
+    model = os.getenv("MODEL", "anthropic/claude-sonnet-4-5")
+    response = _get_client().chat.completions.create(
+        model=model,
+        max_tokens=400,
+        messages=[
+            {"role": "system", "content": system},
+            {"role": "user", "content": description},
+        ],
+    )
+    raw = response.choices[0].message.content
+    cleaned = _clean_json_response(raw)
+    return json.loads(cleaned)
+
+
 def polish_cta_label(label: str) -> str:
     """Polish a CTA button label — make it concise, action-oriented, and marketing-ready."""
     model = os.getenv("MODEL", "anthropic/claude-sonnet-4-5")

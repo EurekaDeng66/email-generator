@@ -102,49 +102,107 @@
     textarea { resize: vertical; min-height: 70px; }
     input[readonly] { background: #f8f8f8; color: #666; cursor: default; }
 
-    /* ── Combo field (saveable input + dropdown) ── */
+    /* ── AI Intent Input ── */
+    .intent-wrap {
+      position: relative; border-radius: 14px; background: #fff;
+      border: 1.5px solid #e8e8e8;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.06), 0 1px 4px rgba(0,0,0,0.04);
+      transition: border-color 0.2s, box-shadow 0.2s; margin-bottom: 8px;
+    }
+    .intent-wrap:focus-within {
+      border-color: #FF7F32;
+      box-shadow: 0 4px 24px rgba(255,127,50,0.10), 0 0 0 3px rgba(255,127,50,0.08);
+    }
+    .intent-textarea {
+      width: 100%; border: none; border-radius: 14px; padding: 16px 18px 52px;
+      font-size: 14px; color: #111; background: transparent; resize: none;
+      min-height: 90px; font-family: inherit; line-height: 1.6;
+    }
+    .intent-textarea:focus { outline: none; }
+    .intent-textarea::placeholder { color: #bbb; }
+    .intent-actions {
+      position: absolute; bottom: 12px; right: 14px;
+      display: flex; gap: 8px; align-items: center;
+    }
+    .intent-manual {
+      font-size: 11px; color: #bbb; cursor: pointer; text-decoration: underline;
+      text-underline-offset: 2px; background: none; border: none; padding: 0;
+      font-family: inherit; transition: color 0.15s;
+    }
+    .intent-manual:hover { color: #888; }
+    .intent-parse-btn {
+      padding: 7px 16px; background: #FF7F32; color: #fff; border: none;
+      border-radius: 8px; font-size: 12px; font-weight: 700; cursor: pointer;
+      display: flex; align-items: center; gap: 6px; transition: background 0.15s;
+      font-family: inherit;
+    }
+    .intent-parse-btn:hover { background: #e86e22; }
+    .intent-parse-btn:disabled { background: #f5c9a8; cursor: not-allowed; }
+    /* AI-filled field badge */
+    .ai-badge::after {
+      content: '✦ AI'; font-size: 9px; font-weight: 700; color: #FF7F32;
+      margin-left: 6px; vertical-align: middle; opacity: 0.8;
+    }
+
+    /* ── Fields reveal section ── */
+    .fields-section { display: none; }
+    .fields-section.show { display: block; }
+
+    /* ── Modern combo field ── */
     .combo-field { position: relative; }
-    .combo-row { display: flex; gap: 6px; align-items: center; }
-    .combo-row input { flex: 1; }
-    .btn-combo-toggle {
-      flex-shrink: 0; width: 34px; height: 34px; border: 1.5px solid #e0e0e0;
-      border-radius: 7px; background: #fff; cursor: pointer; font-size: 11px;
-      color: #aaa; display: flex; align-items: center; justify-content: center;
-      transition: all 0.15s;
-    }
-    .btn-combo-toggle:hover { border-color: #FF7F32; color: #FF7F32; background: #fff8f4; }
-    .btn-combo-toggle.open { border-color: #FF7F32; color: #FF7F32; background: #fff8f4; }
-    .btn-save-opt {
-      flex-shrink: 0; width: 32px; height: 34px; border: 1.5px solid #e0e0e0;
-      border-radius: 7px; background: #fff; cursor: pointer; font-size: 15px;
-      color: #aaa; display: flex; align-items: center; justify-content: center;
-      transition: all 0.15s;
-    }
-    .btn-save-opt:hover { border-color: #FF7F32; color: #FF7F32; background: #fff8f4; }
+    .combo-row { display: flex; gap: 0; align-items: stretch; }
+    .combo-row input { flex: 1; border-radius: 8px; }
+    .combo-row input:focus + .combo-dropdown { /* keep open */ }
+    /* Legacy buttons kept for JS compatibility */
+    .btn-combo-toggle { display: none; }
+    .btn-save-opt { display: none; }
     .combo-dropdown {
-      position: absolute; top: calc(100% + 4px); left: 0; right: 0;
-      background: #fff; border: 1.5px solid #e0e0e0; border-radius: 10px;
-      box-shadow: 0 6px 20px rgba(0,0,0,0.1); z-index: 50;
-      max-height: 220px; overflow-y: auto; display: none;
+      position: absolute; top: calc(100% + 6px); left: 0; right: 0; z-index: 50;
+      background: #fff; border-radius: 12px; display: none;
+      border: 1px solid rgba(0,0,0,0.07);
+      box-shadow: 0 8px 32px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.04);
+      overflow: hidden;
     }
     .combo-dropdown.show { display: block; }
     .combo-opt {
       display: flex; align-items: center; justify-content: space-between;
-      padding: 8px 12px; font-size: 12px; color: #444; cursor: pointer;
+      padding: 9px 14px; font-size: 12px; color: #444; cursor: pointer;
       transition: background 0.1s;
     }
-    .combo-opt:first-child { border-radius: 9px 9px 0 0; }
-    .combo-opt:last-child  { border-radius: 0 0 9px 9px; }
-    .combo-opt:hover { background: #fff8f4; color: #FF7F32; }
+    .combo-opt:hover { background: #faf8f6; }
     .combo-opt-text { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .combo-opt-del {
-      flex-shrink: 0; margin-left: 8px; color: #ccc; font-size: 10px;
-      padding: 2px 5px; border-radius: 4px; cursor: pointer; transition: all 0.1s;
+      flex-shrink: 0; margin-left: 8px; color: #ddd; font-size: 10px;
+      padding: 2px 6px; border-radius: 4px; cursor: pointer; transition: all 0.1s;
     }
     .combo-opt-del:hover { color: #e53e3e; background: #fef2f2; }
-    .combo-empty { padding: 14px 12px; font-size: 11px; color: #bbb; text-align: center; line-height: 1.5; }
+    .combo-empty { padding: 14px; font-size: 11px; color: #bbb; text-align: center; }
+    .combo-dropdown-footer {
+      padding: 8px 14px; border-top: 1px solid #f5f5f5;
+    }
+    .combo-save-btn {
+      width: 100%; padding: 7px; font-size: 11px; font-weight: 600; color: #999;
+      background: #f8f8f8; border: none; border-radius: 7px; cursor: pointer;
+      transition: all 0.15s; font-family: inherit;
+    }
+    .combo-save-btn:hover { background: #fff8f4; color: #FF7F32; }
     .sf-input-row { display: flex; gap: 6px; align-items: center; }
     .sf-input-row input { flex: 1; }
+
+    /* ── CTA collapsible section ── */
+    .cta-toggle-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 14px 0 0; cursor: pointer; user-select: none;
+    }
+    .cta-toggle-label {
+      font-size: 11px; font-weight: 700; color: #aaa; text-transform: uppercase;
+      letter-spacing: 0.6px; transition: color 0.15s;
+    }
+    .cta-toggle-header:hover .cta-toggle-label { color: #666; }
+    .cta-toggle-arrow { font-size: 11px; color: #bbb; transition: transform 0.2s; }
+    .cta-toggle-arrow.open { transform: rotate(180deg); }
+    .cta-toggle-body { display: none; padding-top: 14px; }
+    .cta-toggle-body.open { display: block; }
 
     /* ── CTA ── */
     .cta-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
@@ -385,12 +443,26 @@
   <div class="step-panel" id="step-1" data-step="1">
     <div class="step-header">
       <h2>创建邮件营销事件</h2>
-      <p>设置发送邮件的用户群、触发时机、邮件主题，及 CTA 按钮名称与跳转页面链接</p>
+      <p>用一句话描述，AI 自动填写所有字段；也可直接手动填写</p>
     </div>
 
-    <!-- Email config -->
-    <div class="card">
-      <div class="card-title">邮件内容方向</div>
+    <!-- AI Intent Input -->
+    <div class="intent-wrap">
+      <textarea id="intent-input" class="intent-textarea" rows="3"
+        placeholder="例如：给下载了2026犯罪报告的交易所合规人员发一封推广KYT产品的邮件，CTA跳到Compliance App，Ruby来发…"></textarea>
+      <div class="intent-actions">
+        <button class="intent-manual" onclick="showFieldsManually()" type="button">手动填写 →</button>
+        <button class="intent-parse-btn" id="intentParseBtn" onclick="parseIntentAndFill()">
+          ✦ AI 解析并填写
+        </button>
+      </div>
+    </div>
+
+    <!-- Fields section (hidden until AI parse or manual) -->
+    <div id="fields-section" class="fields-section">
+
+    <!-- Email config card -->
+    <div class="card" style="margin-top:16px;">
       <div class="form-grid">
 
         <div class="form-group">
@@ -401,29 +473,27 @@
         </div>
 
         <div class="form-group">
-          <label>邮件主题 / 方向<span class="req">*</span></label>
+          <label id="subject-label">邮件主题 / 方向<span class="req">*</span></label>
           <input type="text" id="subject" placeholder="例如：下载犯罪报告后推广 KYT 产品">
         </div>
 
         <div class="form-group">
-          <label>目标受众 <span class="text-muted">(选填)</span></label>
+          <label id="audience-label">目标受众 <span class="text-muted">(选填)</span></label>
           <div class="combo-field" data-combo="audience">
             <div class="combo-row">
-              <input type="text" id="audience" placeholder="例如：加密交易所合规人员" oninput="filterCombo('audience')" autocomplete="off">
-              <button class="btn-combo-toggle" onclick="toggleCombo('audience')" title="展开已保存选项">▾</button>
-              <button class="btn-save-opt" onclick="saveComboOpt('audience')" title="保存到下拉选项">＋</button>
+              <input type="text" id="audience" placeholder="例如：加密交易所合规人员"
+                oninput="filterCombo('audience')" onfocus="openCombo('audience')" autocomplete="off">
             </div>
             <div class="combo-dropdown" id="combo-audience"></div>
           </div>
         </div>
 
         <div class="form-group">
-          <label>发送时机 <span class="text-muted">(选填)</span></label>
+          <label id="trigger-label">发送时机 <span class="text-muted">(选填)</span></label>
           <div class="combo-field" data-combo="trigger">
             <div class="combo-row">
-              <input type="text" id="trigger" placeholder="例如：下载 2026 加密犯罪报告后" oninput="filterCombo('trigger')" autocomplete="off">
-              <button class="btn-combo-toggle" onclick="toggleCombo('trigger')" title="展开已保存选项">▾</button>
-              <button class="btn-save-opt" onclick="saveComboOpt('trigger')" title="保存到下拉选项">＋</button>
+              <input type="text" id="trigger" placeholder="例如：下载 2026 加密犯罪报告后"
+                oninput="filterCombo('trigger')" onfocus="openCombo('trigger')" autocomplete="off">
             </div>
             <div class="combo-dropdown" id="combo-trigger"></div>
           </div>
@@ -437,88 +507,92 @@
       </div>
     </div>
 
-    <!-- CTA Builder -->
+    <!-- CTA Builder (collapsible) -->
     <div class="card">
-      <div class="card-title">CTA 按钮配置 <span class="text-muted" style="text-transform:none;letter-spacing:0;font-weight:400">(选填)</span></div>
+      <div class="cta-toggle-header" onclick="toggleCtaSection()">
+        <span class="cta-toggle-label">可选 — CTA 按钮配置</span>
+        <span class="cta-toggle-arrow" id="ctaArrow">▾</span>
+      </div>
 
-      <div id="cta_saved_list" class="cta-saved-row"></div>
+      <div class="cta-toggle-body" id="ctaToggleBody">
+        <div id="cta_saved_list" class="cta-saved-row"></div>
 
-      <div class="cta-grid" style="margin-bottom:14px;">
-        <div class="form-group">
-          <label>目标页面</label>
-          <select id="cta_base" onchange="onCtaBaseChange()">
-            <option value="">— 不设置 CTA —</option>
-            <option value="https://app.blocksec.com/phalcon/compliance">Phalcon Compliance App</option>
-            <option value="https://blocksec.com/phalcon/network">Phalcon Network</option>
-            <option value="https://metasleuth.io/">MetaSleuth</option>
-            <option value="https://blocksec.com">BlockSec Website</option>
-            <option value="__custom__">自定义 URL…</option>
-          </select>
-        </div>
+        <div class="cta-grid" style="margin-bottom:14px;">
+          <div class="form-group">
+            <label>目标页面</label>
+            <select id="cta_base" onchange="onCtaBaseChange()">
+              <option value="">— 不设置 CTA —</option>
+              <option value="https://app.blocksec.com/phalcon/compliance">Phalcon Compliance App</option>
+              <option value="https://blocksec.com/phalcon/network">Phalcon Network</option>
+              <option value="https://metasleuth.io/">MetaSleuth</option>
+              <option value="https://blocksec.com">BlockSec Website</option>
+              <option value="__custom__">自定义 URL…</option>
+            </select>
+          </div>
 
-        <div class="form-group">
-          <label>UTM 来源</label>
-          <div class="combo-field" data-combo="utm_source">
-            <div class="combo-row">
-              <input type="text" id="cta_utm_source" value="product_email" oninput="assembleCTAUrl();filterCombo('utm_source')" autocomplete="off">
-              <button class="btn-combo-toggle" onclick="toggleCombo('utm_source')" title="展开已保存选项">▾</button>
-              <button class="btn-save-opt" onclick="saveComboOpt('utm_source')" title="保存到下拉选项">＋</button>
+          <div class="form-group">
+            <label>UTM 来源</label>
+            <div class="combo-field" data-combo="utm_source">
+              <div class="combo-row">
+                <input type="text" id="cta_utm_source" value="product_email"
+                  oninput="assembleCTAUrl();filterCombo('utm_source')"
+                  onfocus="openCombo('utm_source')" autocomplete="off">
+              </div>
+              <div class="combo-dropdown" id="combo-utm_source"></div>
             </div>
-            <div class="combo-dropdown" id="combo-utm_source"></div>
           </div>
         </div>
-      </div>
 
-      <!-- Custom URL (hidden by default) -->
-      <div id="cta_custom_wrap" class="form-group hidden" style="margin-bottom:14px;">
-        <label>自定义 URL</label>
-        <div class="sf-input-row">
-          <input type="text" id="cta_custom_url" placeholder="https://…" oninput="assembleCTAUrl()">
-          <button class="btn btn-secondary btn-sm" onclick="saveCustomDest()" style="white-space:nowrap;flex-shrink:0;">保存 URL</button>
-        </div>
-      </div>
-
-      <div class="form-group" style="margin-bottom:14px;">
-        <label>UTM 内容标识</label>
-        <div class="combo-field" data-combo="utm_content">
-          <div class="combo-row">
-            <input type="text" id="cta_utm_content" placeholder="例如：welcome_email" oninput="assembleCTAUrl();filterCombo('utm_content')" autocomplete="off">
-            <button class="btn-combo-toggle" onclick="toggleCombo('utm_content')" title="展开已保存选项">▾</button>
-            <button class="btn-save-opt" onclick="saveComboOpt('utm_content')" title="保存到下拉选项">＋</button>
-          </div>
-          <div class="combo-dropdown" id="combo-utm_content"></div>
-        </div>
-      </div>
-
-      <div class="form-group" style="margin-bottom:14px;">
-        <label>CTA 按钮名称 <span class="text-muted">(AI 将自动翻译为各语言)</span></label>
-        <div class="sf-input-row">
-          <input type="text" id="cta_label" placeholder="例如：开始免费筛查、免费试用、了解更多">
-          <button class="btn btn-secondary btn-sm" onclick="polishCtaLabel()" id="ctaPolishBtn" style="white-space:nowrap;flex-shrink:0;">✦ AI 润色</button>
-        </div>
-      </div>
-
-      <div class="form-group">
-        <label>组装后的 CTA 链接</label>
-        <div class="cta-url-row">
-          <input type="text" id="cta_url" readonly placeholder="请先选择目标页面，链接将自动组装"
-            style="text-overflow:ellipsis;" title="">
-          <div class="cta-save-row">
-            <input type="text" id="cta_save_name" placeholder="模版名称">
-            <button class="btn btn-secondary btn-sm" onclick="saveCTATemplate()">保存</button>
+        <div id="cta_custom_wrap" class="form-group hidden" style="margin-bottom:14px;">
+          <label>自定义 URL</label>
+          <div class="sf-input-row">
+            <input type="text" id="cta_custom_url" placeholder="https://…" oninput="assembleCTAUrl()">
+            <button class="btn btn-secondary btn-sm" onclick="saveCustomDest()" style="white-space:nowrap;flex-shrink:0;">保存 URL</button>
           </div>
         </div>
-      </div>
+
+        <div class="form-group" style="margin-bottom:14px;">
+          <label>UTM 内容标识</label>
+          <div class="combo-field" data-combo="utm_content">
+            <div class="combo-row">
+              <input type="text" id="cta_utm_content" placeholder="例如：welcome_email"
+                oninput="assembleCTAUrl();filterCombo('utm_content')"
+                onfocus="openCombo('utm_content')" autocomplete="off">
+            </div>
+            <div class="combo-dropdown" id="combo-utm_content"></div>
+          </div>
+        </div>
+
+        <div class="form-group" style="margin-bottom:14px;">
+          <label>CTA 按钮名称 <span class="text-muted">(AI 将自动翻译为各语言)</span></label>
+          <div class="sf-input-row">
+            <input type="text" id="cta_label" placeholder="例如：开始免费筛查、免费试用、了解更多">
+            <button class="btn btn-secondary btn-sm" onclick="polishCtaLabel()" id="ctaPolishBtn" style="white-space:nowrap;flex-shrink:0;">✦ AI 润色</button>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>组装后的 CTA 链接</label>
+          <div class="cta-url-row">
+            <input type="text" id="cta_url" readonly placeholder="请先选择目标页面，链接将自动组装"
+              style="text-overflow:ellipsis;" title="">
+            <div class="cta-save-row">
+              <input type="text" id="cta_save_name" placeholder="模版名称">
+              <button class="btn btn-secondary btn-sm" onclick="saveCTATemplate()">保存</button>
+            </div>
+          </div>
+        </div>
+      </div><!-- /.cta-toggle-body -->
     </div>
 
     <div style="margin-top:20px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
       <div style="display:flex;gap:18px;align-items:center;">
         <span style="font-size:11px;font-weight:700;color:#555;text-transform:uppercase;letter-spacing:0.5px;">生成语言</span>
         <label style="display:flex;align-items:center;gap:5px;font-size:13px;cursor:pointer;">
-          <input type="checkbox" id="lang-check-en" value="en" checked onchange="updateGenerateBtn()"> English
+          <input type="checkbox" id="lang-check-zh" value="zh" checked onchange="updateGenerateBtn()"> 中文
         </label>
         <label style="display:flex;align-items:center;gap:5px;font-size:13px;cursor:pointer;">
-          <input type="checkbox" id="lang-check-zh" value="zh" checked onchange="updateGenerateBtn()"> 中文
+          <input type="checkbox" id="lang-check-en" value="en" checked onchange="updateGenerateBtn()"> English
         </label>
         <label style="display:flex;align-items:center;gap:5px;font-size:13px;cursor:pointer;">
           <input type="checkbox" id="lang-check-es" value="es" checked onchange="updateGenerateBtn()"> Español
@@ -531,6 +605,8 @@
         ✦ 生成 4 种语言
       </button>
     </div>
+
+    </div><!-- /#fields-section -->
   </div>
 
   <!-- ══════════════════════════════════════
@@ -949,6 +1025,84 @@ function clearStatus() { document.getElementById('statusBar').className = 'statu
 
 // ─────────────────────────────────────────────
 // ─────────────────────────────────────────────
+// ─────────────────────────────────────────────
+// STEP 1 — AI INTENT PARSE + FIELDS REVEAL
+// ─────────────────────────────────────────────
+function showFieldsSection() {
+  document.getElementById('fields-section').classList.add('show');
+}
+
+function showFieldsManually() {
+  showFieldsSection();
+  document.getElementById('subject').focus();
+}
+
+function toggleCtaSection() {
+  const body  = document.getElementById('ctaToggleBody');
+  const arrow = document.getElementById('ctaArrow');
+  const open  = body.classList.toggle('open');
+  arrow.classList.toggle('open', open);
+}
+
+function _applyAiBadge(fieldId, value) {
+  if (!value) return;
+  const el = document.getElementById(fieldId);
+  if (el) el.value = value;
+  const label = document.querySelector(`label[id="${fieldId}-label"]`);
+  if (label) label.classList.add('ai-badge');
+}
+
+async function parseIntentAndFill() {
+  const description = (document.getElementById('intent-input').value || '').trim();
+  if (!description) { setStatus('请输入邮件描述', 'error'); return; }
+  const btn = document.getElementById('intentParseBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spin">⟳</span> 解析中…';
+  try {
+    const resp = await fetch('/api/parse_intent', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ description }),
+    });
+    if (!resp.ok) { const e = await resp.json(); throw new Error(e.detail || resp.statusText); }
+    const data = await resp.json();
+    // Remove AI badges from previous parse
+    document.querySelectorAll('label.ai-badge').forEach(l => l.classList.remove('ai-badge'));
+    // Fill template
+    const sel = document.getElementById('template');
+    if (data.template_id && sel.querySelector(`option[value="${data.template_id}"]`)) {
+      sel.value = data.template_id;
+    }
+    // Fill text fields
+    _applyAiBadge('subject',  data.subject);
+    _applyAiBadge('audience', data.audience);
+    _applyAiBadge('trigger',  data.trigger);
+    if (data.instructions) document.getElementById('instructions').value = data.instructions;
+    // Fill CTA fields if provided
+    if (data.cta_destination || data.cta_label || data.utm_content) {
+      const body  = document.getElementById('ctaToggleBody');
+      const arrow = document.getElementById('ctaArrow');
+      body.classList.add('open'); arrow.classList.add('open');
+      if (data.cta_destination) {
+        const ctaSel = document.getElementById('cta_base');
+        const match = [...ctaSel.options].find(o => o.value === data.cta_destination);
+        if (match) { ctaSel.value = data.cta_destination; onCtaBaseChange(); }
+      }
+      if (data.utm_content) document.getElementById('cta_utm_content').value = data.utm_content;
+      if (data.cta_label)   document.getElementById('cta_label').value = data.cta_label;
+      assembleCTAUrl();
+    }
+    showFieldsSection();
+    clearStatus();
+    setStatus('✦ AI 已填写字段，请检查并按需调整', 'success');
+    setTimeout(clearStatus, 3000);
+  } catch (e) {
+    setStatus(`解析失败: ${e.message}`, 'error');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '✦ AI 解析并填写';
+  }
+}
+
 // SERVER SYNC (write-through to SQLite on Railway)
 // ─────────────────────────────────────────────
 async function initServerSync() {
@@ -1026,19 +1180,22 @@ const COMBO_INPUT = {
 function comboInputEl(key)  { return document.getElementById(COMBO_INPUT[key]); }
 function comboDropdownEl(key){ return document.getElementById(`combo-${key}`); }
 
-function toggleCombo(key) {
+function openCombo(key) {
+  const dd = comboDropdownEl(key);
+  if (!dd.classList.contains('show')) { renderComboDropdown(key); dd.classList.add('show'); }
+}
+
+function toggleCombo(key) { // kept for backward compat
   const dd = comboDropdownEl(key);
   const isOpen = dd.classList.contains('show');
   closeAllCombos();
   if (!isOpen) { renderComboDropdown(key); dd.classList.add('show'); }
-  // toggle button highlight
-  dd.closest('.combo-field').querySelector('.btn-combo-toggle').classList.toggle('open', !isOpen);
 }
 
 function filterCombo(key) {
   const dd = comboDropdownEl(key);
-  if (!dd.classList.contains('show')) return;
-  renderComboDropdown(key);
+  if (!dd.classList.contains('show')) { renderComboDropdown(key); dd.classList.add('show'); }
+  else renderComboDropdown(key);
 }
 
 function renderComboDropdown(key) {
@@ -1046,16 +1203,17 @@ function renderComboDropdown(key) {
   const query   = (comboInputEl(key).value || '').toLowerCase();
   const filtered = query ? allOpts.filter(v => v.toLowerCase().includes(query)) : allOpts;
   const dd = comboDropdownEl(key);
-  if (!filtered.length) {
-    dd.innerHTML = '<div class="combo-empty">暂无已保存选项<br>输入内容后点 ＋ 保存</div>';
-    return;
-  }
-  dd.innerHTML = filtered.map(v =>
-    `<div class="combo-opt" onclick="pickCombo('${key}',this)" data-val="${esc(v)}">
-      <span class="combo-opt-text">${esc(v)}</span>
-      <span class="combo-opt-del" onclick="event.stopPropagation();deleteComboOpt('${key}','${escAttr(v)}')">✕</span>
-    </div>`
-  ).join('');
+  const optHtml = filtered.length
+    ? filtered.map(v =>
+        `<div class="combo-opt" onclick="pickCombo('${key}',this)" data-val="${esc(v)}">
+          <span class="combo-opt-text">${esc(v)}</span>
+          <span class="combo-opt-del" onclick="event.stopPropagation();deleteComboOpt('${key}','${escAttr(v)}')">✕</span>
+        </div>`).join('')
+    : '<div class="combo-empty">暂无已保存选项</div>';
+  dd.innerHTML = optHtml +
+    `<div class="combo-dropdown-footer">
+       <button class="combo-save-btn" onclick="saveComboOpt('${key}')">＋ 将当前输入保存为选项</button>
+     </div>`;
 }
 
 function pickCombo(key, el) {
@@ -1242,6 +1400,7 @@ function updateGenerateBtn() {
 }
 
 async function handleGenerate() {
+  showFieldsSection(); // ensure fields are visible (e.g. if user typed then generated)
   const templateId   = document.getElementById('template').value;
   const subject      = document.getElementById('subject').value.trim();
   const audience     = document.getElementById('audience').value.trim();
@@ -1676,6 +1835,7 @@ function loadFromLibrary(id) {
 }
 
 function loadData(data) {
+  showFieldsSection(); // always show fields when loading data
   document.getElementById('subject').value   = data.subject  || '';
   document.getElementById('audience').value  = data.audience || '';
   document.getElementById('trigger').value   = data.trigger  || '';
@@ -1771,6 +1931,10 @@ function startNew() {
   generatedContent = {}; assembledHtml = {};
   htmlReadyLangs = new Set(); dirtyLangs = new Set();
   stepDoneState = {};
+  // Hide fields section, reset intent input
+  document.getElementById('fields-section').classList.remove('show');
+  document.getElementById('intent-input').value = '';
+  document.querySelectorAll('label.ai-badge').forEach(l => l.classList.remove('ai-badge'));
   LANGS.forEach(l => {
     if (quillEditors[l]) quillEditors[l].setText('');
     document.getElementById(`title-${l}`).value = '';

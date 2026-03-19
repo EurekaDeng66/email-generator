@@ -282,22 +282,46 @@
     .btn-utm-toggle:hover { border-color: #FF7F32; color: #FF7F32; background: #fff8f4; }
 
     /* ── Review Modal ── */
-    .review-overlay {
-      position: fixed; inset: 0; background: rgba(0,0,0,0.65); z-index: 300;
-    }
+    .review-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.65); z-index: 300; }
     .review-modal {
-      position: fixed; inset: 0; z-index: 301; background: #f2f2f2;
+      position: fixed; inset: 0; z-index: 301; background: #e8e8e8;
       display: flex; flex-direction: column;
     }
-    .review-modal-header {
+    /* Top bar: template name + controls */
+    .review-topbar {
       display: flex; align-items: center; gap: 12px; flex-shrink: 0;
-      padding: 10px 20px; background: #fff; border-bottom: 1px solid #e5e5e5;
-      min-height: 56px; flex-wrap: wrap;
+      padding: 8px 20px; background: #fff; border-bottom: 1px solid #e5e5e5;
+      min-height: 50px;
     }
-    .review-nav { display: flex; align-items: center; white-space: nowrap; gap: 4px; flex-shrink: 0; }
-    .review-modal-body { flex: 1; overflow: hidden; display: flex; flex-direction: column; position: relative; }
-    .review-frame-center { width: 100%; height: 100%; display: flex; justify-content: center; align-items: flex-start; overflow: auto; padding: 20px 0; }
-    .review-frame-center iframe { border: none; background: #fff; box-shadow: 0 4px 24px rgba(0,0,0,0.12); border-radius: 4px; transition: width 0.25s ease, height 0.25s ease; }
+    .review-topbar-title { font-size: 14px; font-weight: 700; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    /* Subject bar: shows current language's email subject */
+    .review-subjectbar {
+      flex-shrink: 0; background: #fafafa; border-bottom: 1px solid #ececec;
+      padding: 7px 24px; display: flex; align-items: center; gap: 10px;
+    }
+    .review-subject-label { font-size: 10px; font-weight: 700; color: #aaa; text-transform: uppercase; letter-spacing: 0.5px; white-space: nowrap; }
+    .review-subject-text { font-size: 13px; color: #333; font-weight: 500; flex: 1; }
+    /* Body: scrollable email canvas */
+    .review-modal-body { flex: 1; overflow-y: auto; display: flex; flex-direction: column; align-items: center; padding: 28px 20px 0; position: relative; }
+    /* Email window chrome */
+    .review-email-chrome {
+      background: #fff; border-radius: 8px 8px 0 0;
+      box-shadow: 0 4px 32px rgba(0,0,0,0.15);
+      overflow: hidden; flex-shrink: 0;
+      transition: width 0.25s ease;
+    }
+    .review-email-chrome-bar {
+      background: #f0f0f0; padding: 8px 14px;
+      display: flex; align-items: center; gap: 6px; border-bottom: 1px solid #ddd;
+    }
+    .chrome-dot { width: 10px; height: 10px; border-radius: 50%; }
+    .review-email-chrome iframe { display: block; border: none; background: #fff; transition: width 0.25s ease, height 0.25s ease; }
+    /* Bottom nav bar */
+    .review-bottombar {
+      flex-shrink: 0; background: #fff; border-top: 1px solid #e5e5e5;
+      padding: 10px 24px; display: flex; align-items: center; justify-content: center; gap: 16px;
+    }
+    .review-nav-counter { font-size: 12px; color: #888; min-width: 60px; text-align: center; }
 
     /* ── Library (Step 4) ── */
     .lib-save-row { display: flex; gap: 10px; align-items: center; }
@@ -708,29 +732,47 @@
 <!-- ── Review Modal ── -->
 <div class="review-overlay hidden" id="reviewOverlay" onclick="closeReviewModal()"></div>
 <div class="review-modal hidden" id="reviewModal">
-  <div class="review-modal-header">
-    <div class="review-nav">
-      <button class="btn btn-secondary btn-sm" onclick="reviewNav(-1)">← 上一个</button>
-      <span id="reviewNavLabel" style="font-size:12px;color:#888;padding:0 6px;white-space:nowrap;"></span>
-      <button class="btn btn-secondary btn-sm" onclick="reviewNav(1)">下一个 →</button>
+
+  <!-- Top bar: template name, lang tabs, view toggle, edit, close -->
+  <div class="review-topbar">
+    <div class="review-topbar-title" id="reviewModalTitle"></div>
+    <div class="lang-tabs" id="reviewLangTabs" style="border:none;margin:0;gap:2px;flex-shrink:0;"></div>
+    <button class="view-toggle active" id="reviewWebBtn" onclick="setReviewView('web')">🖥 Web</button>
+    <button class="view-toggle" id="reviewMobileBtn" onclick="setReviewView('mobile')">📱 Mobile</button>
+    <button class="btn btn-secondary btn-sm" onclick="loadFromReview()" style="flex-shrink:0;">✏️ 编辑</button>
+    <button onclick="closeReviewModal()" style="border:none;background:none;font-size:22px;cursor:pointer;color:#bbb;padding:0 2px;line-height:1;flex-shrink:0;" title="关闭">✕</button>
+  </div>
+
+  <!-- Subject bar: current language email subject line -->
+  <div class="review-subjectbar">
+    <span class="review-subject-label">邮件标题</span>
+    <span class="review-subject-text" id="reviewSubjectText">—</span>
+  </div>
+
+  <!-- Email canvas body -->
+  <div class="review-modal-body" id="reviewModalBody">
+    <div id="reviewLoadingTip" style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:200px;color:#aaa;gap:10px;">
+      <span class="spin" style="font-size:24px;">⟳</span>
+      <span style="font-size:13px;">正在渲染邮件…</span>
     </div>
-    <div id="reviewModalTitle" style="font-size:15px;font-weight:700;flex:1;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"></div>
-    <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;flex-wrap:wrap;">
-      <div class="lang-tabs" id="reviewLangTabs" style="border:none;margin:0;gap:2px;"></div>
-      <button class="view-toggle active" id="reviewWebBtn" onclick="setReviewView('web')">🖥 Web</button>
-      <button class="view-toggle" id="reviewMobileBtn" onclick="setReviewView('mobile')">📱 Mobile</button>
-      <button class="btn btn-secondary btn-sm" onclick="loadFromReview()">✏️ 编辑</button>
-      <button onclick="closeReviewModal()" style="border:none;background:none;font-size:22px;cursor:pointer;color:#999;padding:0 4px;line-height:1;">✕</button>
+    <!-- Email window (browser chrome + iframe) -->
+    <div class="review-email-chrome hidden" id="reviewEmailChrome">
+      <div class="review-email-chrome-bar">
+        <div class="chrome-dot" style="background:#ff5f57;"></div>
+        <div class="chrome-dot" style="background:#febc2e;"></div>
+        <div class="chrome-dot" style="background:#28c840;"></div>
+      </div>
+      <iframe id="reviewIframe" style="width:680px;height:600px;"></iframe>
     </div>
   </div>
-  <div class="review-modal-body">
-    <div id="reviewLoadingTip" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#aaa;font-size:13px;background:#f2f2f2;z-index:1;">
-      <span class="spin" style="font-size:18px;margin-right:8px;">⟳</span> 正在渲染…
-    </div>
-    <div class="review-frame-center" id="reviewFrameCenter" style="display:none;">
-      <iframe id="reviewIframe" style="width:100%;height:calc(100vh - 56px);"></iframe>
-    </div>
+
+  <!-- Bottom nav bar -->
+  <div class="review-bottombar">
+    <button class="btn btn-secondary" onclick="reviewNav(-1)">← 上一个</button>
+    <span class="review-nav-counter" id="reviewNavLabel"></span>
+    <button class="btn btn-secondary" onclick="reviewNav(1)">下一个 →</button>
   </div>
+
 </div>
 
 <!-- ── UTM Management Drawer ── -->
@@ -1661,9 +1703,8 @@ async function loadReviewTemplate(idx) {
   const item = reviewList[idx];
   const data = item.data;
 
-  // Nav label
+  // Nav label & template name
   document.getElementById('reviewNavLabel').textContent = `${idx + 1} / ${reviewList.length}`;
-  // Title
   document.getElementById('reviewModalTitle').textContent = data.name || '(无标题)';
 
   // Available langs
@@ -1678,17 +1719,23 @@ async function loadReviewTemplate(idx) {
     `<div class="lang-tab${l === availLangs[0] ? ' active' : ''}" data-lang="${l}" onclick="switchReviewLang('${l}')">${l.toUpperCase()}</div>`
   ).join('');
 
-  // Reset view
+  // Reset view size
   setReviewView(reviewCurrentMode, false);
 
-  // Show loading
+  // Show loading, hide chrome
   document.getElementById('reviewLoadingTip').style.display = 'flex';
-  document.getElementById('reviewFrameCenter').style.display = 'none';
+  document.getElementById('reviewEmailChrome').classList.add('hidden');
 
   // Load first lang
   const firstLang = availLangs[0];
   reviewLang = firstLang;
+  updateReviewSubject(data, firstLang);
   await renderReviewLang(item, firstLang);
+}
+
+function updateReviewSubject(data, lang) {
+  const title = data.content && data.content[lang] && data.content[lang].title;
+  document.getElementById('reviewSubjectText').textContent = title || '—';
 }
 
 async function switchReviewLang(lang) {
@@ -1696,8 +1743,9 @@ async function switchReviewLang(lang) {
   document.querySelectorAll('#reviewLangTabs .lang-tab').forEach(t =>
     t.classList.toggle('active', t.dataset.lang === lang));
   const item = reviewList[reviewIndex];
+  updateReviewSubject(item.data, lang);
   document.getElementById('reviewLoadingTip').style.display = 'flex';
-  document.getElementById('reviewFrameCenter').style.display = 'none';
+  document.getElementById('reviewEmailChrome').classList.add('hidden');
   await renderReviewLang(item, lang);
 }
 
@@ -1707,11 +1755,10 @@ async function renderReviewLang(item, lang) {
   if (html) {
     const doc = iframe.contentDocument || iframe.contentWindow.document;
     doc.open(); doc.write(html); doc.close();
-    // Inject CTA tooltips
     setTimeout(() => injectCtaTooltips_iframe(iframe), 200);
   }
   document.getElementById('reviewLoadingTip').style.display = 'none';
-  document.getElementById('reviewFrameCenter').style.display = 'flex';
+  document.getElementById('reviewEmailChrome').classList.remove('hidden');
 }
 
 async function assembleReviewLang(item, lang) {
@@ -1759,8 +1806,8 @@ function setReviewView(mode, persist = true) {
     webBtn.classList.remove('active');
     mobBtn.classList.add('active');
   } else {
-    iframe.style.width = '100%';
-    iframe.style.height = 'calc(100vh - 56px)';
+    iframe.style.width = '680px';
+    iframe.style.height = '600px';
     webBtn.classList.add('active');
     mobBtn.classList.remove('active');
   }

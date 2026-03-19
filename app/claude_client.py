@@ -385,7 +385,8 @@ Extract the campaign intent from the user's description and return ONLY valid JS
   "instructions": "...",
   "cta_destination": "...",
   "cta_label": "...",
-  "utm_content": "..."
+  "utm_content": "...",
+  "clarification": null
 }
 
 Rules:
@@ -401,12 +402,17 @@ Rules:
     https://blocksec.com
 - cta_label: CTA button text if mentioned, otherwise empty string
 - utm_content: short snake_case identifier e.g. welcome, crime_report_kyt, 14d_inactive
+- clarification: If the description is too vague to fill "audience" OR "trigger" reliably, set this to:
+    {"question": "<one short Chinese question about the most important missing info>", "options": ["<option1>", "<option2>", "<option3>", "<option4>"]}
+    Options should be concrete, mutually-exclusive choices in Chinese (max 4).
+    If description is sufficient, set clarification to null.
+    Only ask ONE clarification question at a time — the most critical missing piece.
 Return ONLY the JSON object, no other text."""
 
     model = os.getenv("MODEL", "anthropic/claude-sonnet-4-5")
     response = _get_client().chat.completions.create(
         model=model,
-        max_tokens=400,
+        max_tokens=500,
         messages=[
             {"role": "system", "content": system},
             {"role": "user", "content": description},

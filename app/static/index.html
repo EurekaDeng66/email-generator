@@ -144,6 +144,21 @@
       margin-left: 6px; vertical-align: middle; opacity: 0.8;
     }
 
+    /* ── Clarification chips ── */
+    #clarification-area { margin-bottom: 8px; }
+    .clarification-box {
+      background: #fff8f4; border: 1px solid #ffe0cc; border-radius: 10px;
+      padding: 12px 14px; font-size: 13px;
+    }
+    .clarification-q { margin-bottom: 8px; font-weight: 500; color: #333; }
+    .clarification-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+    .clarification-chip {
+      background: #fff; border: 1.5px solid #FF7F32; color: #FF7F32;
+      border-radius: 20px; padding: 4px 12px; font-size: 12px; cursor: pointer;
+      transition: background 0.15s, color 0.15s; white-space: nowrap;
+    }
+    .clarification-chip:hover { background: #FF7F32; color: #fff; }
+
     /* ── Fields reveal section ── */
     .fields-section { display: none; }
     .fields-section.show { display: block; }
@@ -451,12 +466,15 @@
       <textarea id="intent-input" class="intent-textarea" rows="3"
         placeholder="例如：给下载了2026犯罪报告的交易所合规人员发一封推广KYT产品的邮件，CTA跳到Compliance App，Ruby来发…"></textarea>
       <div class="intent-actions">
-        <button class="intent-manual" onclick="showFieldsManually()" type="button">手动填写 →</button>
+        <button class="intent-manual" id="manualToggleBtn" onclick="toggleFieldsManually()" type="button">手动填写 →</button>
         <button class="intent-parse-btn" id="intentParseBtn" onclick="parseIntentAndFill()">
           ✦ AI 解析并填写
         </button>
       </div>
     </div>
+
+    <!-- Clarification chips (shown when AI needs more info) -->
+    <div id="clarification-area" style="display:none;"></div>
 
     <!-- Fields section (hidden until AI parse or manual) -->
     <div id="fields-section" class="fields-section">
@@ -505,11 +523,9 @@
         </div>
 
       </div>
-    </div>
 
-    <!-- CTA Builder (collapsible) -->
-    <div class="card">
-      <div class="cta-toggle-header" onclick="toggleCtaSection()">
+      <!-- CTA section inside same card -->
+      <div class="cta-toggle-header" onclick="toggleCtaSection()" style="border-top:1px solid #f0f0f0;margin-top:8px;">
         <span class="cta-toggle-label">可选 — CTA 按钮配置</span>
         <span class="cta-toggle-arrow" id="ctaArrow">▾</span>
       </div>
@@ -1030,11 +1046,46 @@ function clearStatus() { document.getElementById('statusBar').className = 'statu
 // ─────────────────────────────────────────────
 function showFieldsSection() {
   document.getElementById('fields-section').classList.add('show');
+  const btn = document.getElementById('manualToggleBtn');
+  if (btn) btn.textContent = '收起 ↑';
 }
 
-function showFieldsManually() {
-  showFieldsSection();
-  document.getElementById('subject').focus();
+function toggleFieldsManually() {
+  const section = document.getElementById('fields-section');
+  const btn = document.getElementById('manualToggleBtn');
+  if (section.classList.contains('show')) {
+    section.classList.remove('show');
+    btn.textContent = '手动填写 →';
+  } else {
+    section.classList.add('show');
+    btn.textContent = '收起 ↑';
+    document.getElementById('subject').focus();
+  }
+}
+
+function _hideClarification() {
+  const area = document.getElementById('clarification-area');
+  area.style.display = 'none';
+  area.innerHTML = '';
+}
+
+function _showClarification(clarification) {
+  const area = document.getElementById('clarification-area');
+  const chips = clarification.options.map(opt =>
+    `<button class="clarification-chip" onclick="applyChipAndReparse(${JSON.stringify(opt)})">${opt}</button>`
+  ).join('');
+  area.innerHTML = `<div class="clarification-box">
+    <div class="clarification-q">✦ ${clarification.question}</div>
+    <div class="clarification-chips">${chips}</div>
+  </div>`;
+  area.style.display = 'block';
+}
+
+function applyChipAndReparse(option) {
+  const input = document.getElementById('intent-input');
+  input.value = (input.value.trim() + '，' + option).trim();
+  _hideClarification();
+  parseIntentAndFill();
 }
 
 function toggleCtaSection() {
@@ -1065,6 +1116,13 @@ async function parseIntentAndFill() {
     });
     if (!resp.ok) { const e = await resp.json(); throw new Error(e.detail || resp.statusText); }
     const data = await resp.json();
+    // If AI needs clarification, show chips and stop
+    if (data.clarification) {
+      _showClarification(data.clarification);
+      // Still fill whatever fields were parsed
+    } else {
+      _hideClarification();
+    }
     // Remove AI badges from previous parse
     document.querySelectorAll('label.ai-badge').forEach(l => l.classList.remove('ai-badge'));
     // Fill template
@@ -1091,10 +1149,12 @@ async function parseIntentAndFill() {
       if (data.cta_label)   document.getElementById('cta_label').value = data.cta_label;
       assembleCTAUrl();
     }
-    showFieldsSection();
-    clearStatus();
-    setStatus('✦ AI 已填写字段，请检查并按需调整', 'success');
-    setTimeout(clearStatus, 3000);
+    if (!data.clarification) {
+      showFieldsSection();
+      clearStatus();
+      setStatus('✦ AI 已填写字段，请检查并按需调整', 'success');
+      setTimeout(clearStatus, 3000);
+    }
   } catch (e) {
     setStatus(`解析失败: ${e.message}`, 'error');
   } finally {
@@ -1933,7 +1993,10 @@ function startNew() {
   stepDoneState = {};
   // Hide fields section, reset intent input
   document.getElementById('fields-section').classList.remove('show');
+  const _mBtn = document.getElementById('manualToggleBtn');
+  if (_mBtn) _mBtn.textContent = '手动填写 →';
   document.getElementById('intent-input').value = '';
+  _hideClarification();
   document.querySelectorAll('label.ai-badge').forEach(l => l.classList.remove('ai-badge'));
   LANGS.forEach(l => {
     if (quillEditors[l]) quillEditors[l].setText('');

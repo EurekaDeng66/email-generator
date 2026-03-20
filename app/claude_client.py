@@ -213,6 +213,7 @@ def _generate_one_language(
     trigger: str,
     instructions: str,
     cta_url: str,
+    historical_context: str = "",
 ) -> tuple[str, dict]:
     """Generate email content for a single language. Returns (lang, content_dict)."""
     meta = TEMPLATES[template_id]
@@ -240,12 +241,21 @@ Language to generate: {lang}
 Output JSON with ONLY the "{lang}" key:
 {{"{lang}": {{"title": "...", "body": "<p>...</p>"}}}}"""
 
+    system_content = SYSTEM_PROMPT
+    if historical_context:
+        system_content = (
+            SYSTEM_PROMPT
+            + "\n\n## HISTORICAL PERFORMANCE DATA\n"
+            + historical_context
+            + "\nUse this data to inform tone, angle, and emphasis — lean into what has historically performed well."
+        )
+
     model = os.getenv("MODEL", "anthropic/claude-sonnet-4-5")
     response = _get_client().chat.completions.create(
         model=model,
         max_tokens=1500,
         messages=[
-            {"role": "system", "content": SYSTEM_PROMPT},
+            {"role": "system", "content": system_content},
             {"role": "user", "content": user_prompt},
         ],
     )
@@ -266,6 +276,7 @@ def generate_emails(
     instructions: str = "",
     languages: list[str] | None = None,
     cta_url: str = "",
+    historical_context: str = "",
 ) -> dict:
     """Generate multi-language email content in parallel using Claude API."""
     if languages is None:
@@ -277,6 +288,7 @@ def generate_emails(
             executor.submit(
                 _generate_one_language,
                 lang, template_id, subject, audience, trigger, instructions, cta_url,
+                historical_context,
             ): lang
             for lang in languages
         }
@@ -373,11 +385,15 @@ Output JSON with only the "{language}" key:
     return json.loads(cleaned)
 
 
-def parse_intent(description: str) -> dict:
+def parse_intent(description: str, historical_context: str = "") -> dict:
     """Parse a natural language campaign description into structured email config fields."""
-    system = """You are a campaign configuration assistant for BlockSec email marketing.
+    history_section = (
+        f"\n\nHISTORICAL PERFORMANCE DATA (use to inform your rationale):\n{historical_context}"
+        if historical_context else ""
+    )
+    system = f"""You are a campaign configuration assistant for BlockSec email marketing.
 Extract the campaign intent from the user's description and return ONLY valid JSON with these exact keys:
-{
+{{
   "template_id": "ruby_sales|ruby_kyt|jenna_marketing",
   "subject": "...",
   "audience": "...",
@@ -386,8 +402,9 @@ Extract the campaign intent from the user's description and return ONLY valid JS
   "cta_destination": "...",
   "cta_label": "...",
   "utm_content": "...",
+  "rationale": "...",
   "clarification": null
-}
+}}
 
 Rules:
 - template_id: ruby_sales = Ruby personal outreach/sales; ruby_kyt = Ruby KYT/compliance product focus; jenna_marketing = Jenna re-engagement/marketing
@@ -402,17 +419,18 @@ Rules:
     https://blocksec.com
 - cta_label: CTA button text if mentioned, otherwise empty string
 - utm_content: short snake_case identifier e.g. welcome, crime_report_kyt, 14d_inactive
+- rationale: 1-2 sentences in Chinese explaining your template/angle choice and why. If historical performance data is available, reference it to support your recommendation. Always fill this field — never leave it empty or null.
 - clarification: If the description is too vague to fill "audience" OR "trigger" reliably, set this to:
-    {"question": "<one short Chinese question about the most important missing info>", "options": ["<option1>", "<option2>", "<option3>", "<option4>"]}
+    {{"question": "<one short Chinese question about the most important missing info>", "options": ["<option1>", "<option2>", "<option3>", "<option4>"]}}
     Options should be concrete, mutually-exclusive choices in Chinese (max 4).
     If description is sufficient, set clarification to null.
     Only ask ONE clarification question at a time — the most critical missing piece.
-Return ONLY the JSON object, no other text."""
+Return ONLY the JSON object, no other text.{history_section}"""
 
     model = os.getenv("MODEL", "anthropic/claude-sonnet-4-5")
     response = _get_client().chat.completions.create(
         model=model,
-        max_tokens=500,
+        max_tokens=600,
         messages=[
             {"role": "system", "content": system},
             {"role": "user", "content": description},

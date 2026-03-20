@@ -4,6 +4,85 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from .claude_client import generate_emails, regenerate_single_language, polish_cta_label, parse_intent
 from .html_assembler import TEMPLATES
+from .store import read_store
+
+
+def _build_historical_context(template_id: str, audience: str) -> str:
+    """Aggregate campaign metrics from store into a prompt-ready context string."""
+    metrics = read_store("blocksec_campaign_metrics")
+    if not metrics:
+        return ""
+
+    lines = []
+
+    # Per-template aggregate stats
+    by_template: dict = {}
+    for m in metrics:
+        tid = m.get("template_id", "")
+        if not tid:
+            continue
+        if tid not in by_template:
+            by_template[tid] = {"n": 0, "lang_opens": {}, "lang_clicks": {}}
+        by_template[tid]["n"] += 1
+        for lang, stats in m.get("metrics", {}).items():
+            if "open_rate" in stats:
+                by_template[tid]["lang_opens"].setdefault(lang, []).append(stats["open_rate"])
+            if "click_rate" in stats:
+                by_template[tid]["lang_clicks"].setdefault(lang, []).append(stats["click_rate"])
+
+    if template_id in by_template:
+        t = by_template[template_id]
+        lang_parts = []
+        for lang in ("zh", "en", "es", "ja"):
+            opens = t["lang_opens"].get(lang, [])
+            clicks = t["lang_clicks"].get(lang, [])
+            if opens:
+                avg_o = sum(opens) / len(opens)
+                avg_c = sum(clicks) / len(clicks) if clicks else 0
+                lang_parts.append(f"{lang.upper()} open={avg_o:.0%} click={avg_c:.0%}")
+        if lang_parts:
+            lines.append(f"- {template_id} ({t['n']} campaigns): {' | '.join(lang_parts)}")
+
+    # Audience-overlapping campaigns from other templates
+    if audience:
+        kw = audience[:15].lower()
+        for m in metrics:
+            if m.get("template_id") == template_id:
+                continue
+            if kw in m.get("audience", "").lower():
+                for lang, stats in m.get("metrics", {}).items():
+                    if "click_rate" in stats:
+                        lines.append(
+                            f"- Similar audience ({m.get('template_id')}, {lang.upper()}): "
+                            f"click={stats['click_rate']:.0%}"
+                        )
+                break  # one example is enough
+
+    return "\n".join(lines)
+
+
+def _build_all_metrics_summary() -> str:
+    """Brief overall metrics summary for parse_intent (no template/audience filter)."""
+    metrics = read_store("blocksec_campaign_metrics")
+    if not metrics:
+        return ""
+
+    by_template: dict = {}
+    for m in metrics:
+        tid = m.get("template_id", "")
+        if not tid:
+            continue
+        by_template.setdefault(tid, [])
+        for lang, stats in m.get("metrics", {}).items():
+            if "click_rate" in stats:
+                by_template[tid].append((lang, stats["click_rate"]))
+
+    lines = []
+    for tid, pairs in by_template.items():
+        if pairs:
+            best_lang, best_rate = max(pairs, key=lambda x: x[1])
+            lines.append(f"- {tid}: best lang={best_lang.upper()} click={best_rate:.0%} (from {len(pairs)} data points)")
+    return "\n".join(lines)
 
 router = APIRouter(prefix="/api")
 
@@ -45,6 +124,7 @@ def generate(req: GenerateRequest):
     if req.template_id not in TEMPLATES:
         raise HTTPException(status_code=400, detail=f"Unknown template: {req.template_id}")
     try:
+        historical_context = _build_historical_context(req.template_id, req.audience)
         result = generate_emails(
             template_id=req.template_id,
             subject=req.subject,
@@ -53,6 +133,7 @@ def generate(req: GenerateRequest):
             instructions=req.instructions,
             cta_url=req.cta_url,
             languages=req.languages,
+            historical_context=historical_context,
         )
         return result
     except Exception as e:
@@ -93,7 +174,8 @@ def parse_intent_endpoint(req: ParseIntentRequest):
     if not req.description.strip():
         raise HTTPException(status_code=400, detail="Description is empty")
     try:
-        return parse_intent(req.description.strip())
+        historical_context = _build_all_metrics_summary()
+        return parse_intent(req.description.strip(), historical_context=historical_context)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

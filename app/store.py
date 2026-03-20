@@ -21,7 +21,17 @@ ALLOWED_KEYS = {
     "blocksec_utm_templates",
     "blocksec_cta_templates",
     "blocksec_field_options",
+    "blocksec_campaign_metrics",
 }
+
+
+def read_store(key: str):
+    """Read a store value directly (for internal use by other modules)."""
+    if key not in ALLOWED_KEYS:
+        return None
+    with _conn() as conn:
+        row = conn.execute("SELECT value FROM kv_store WHERE key=?", (key,)).fetchone()
+        return json.loads(row[0]) if row else None
 
 
 def _conn() -> sqlite3.Connection:

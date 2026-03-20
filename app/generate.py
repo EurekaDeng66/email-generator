@@ -2,7 +2,7 @@
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
-from .claude_client import generate_emails, regenerate_single_language, polish_cta_label, parse_intent
+from .claude_client import generate_emails, regenerate_single_language, polish_cta_label, parse_intent, translate_from_language
 from .html_assembler import TEMPLATES
 from .store import read_store
 
@@ -192,5 +192,42 @@ def polish_cta(req: PolishCtaRequest):
     try:
         polished = polish_cta_label(req.label.strip())
         return {"polished": polished}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+class TranslateFromRequest(BaseModel):
+    template_id: str
+    source_lang: str
+    source_title: str
+    source_body: str
+    target_langs: list[str]
+    subject: str = ""
+    audience: str = ""
+
+
+@router.post("/translate_from")
+def translate_from(req: TranslateFromRequest):
+    """Translate source language email content into multiple target languages."""
+    if req.template_id not in TEMPLATES:
+        raise HTTPException(status_code=400, detail=f"Unknown template: {req.template_id}")
+    valid_langs = {"en", "zh", "es", "ja"}
+    if req.source_lang not in valid_langs:
+        raise HTTPException(status_code=400, detail=f"Invalid source_lang: {req.source_lang}")
+    invalid = [l for l in req.target_langs if l not in valid_langs]
+    if invalid:
+        raise HTTPException(status_code=400, detail=f"Invalid target_langs: {invalid}")
+    if not req.source_body.strip():
+        raise HTTPException(status_code=400, detail="source_body is empty")
+    try:
+        return translate_from_language(
+            template_id=req.template_id,
+            source_lang=req.source_lang,
+            source_title=req.source_title,
+            source_body=req.source_body,
+            target_langs=req.target_langs,
+            subject=req.subject,
+            audience=req.audience,
+        )
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

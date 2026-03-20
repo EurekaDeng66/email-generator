@@ -350,6 +350,58 @@ function toggleInlinePreview(lang, btn) {
   }
 }
 
+async function handleTranslateFrom(sourceLang) {
+  // Snapshot source lang content from editor
+  const titleEl = document.getElementById(`title-${sourceLang}`);
+  const sourceTitle = titleEl ? titleEl.value.trim() : '';
+  const sourceBody = quillEditors[sourceLang] ? quillEditors[sourceLang].root.innerHTML : '';
+  if (!sourceBody || sourceBody === '<p><br></p>') {
+    setStatus('请先填写源语言正文内容', 'error'); return;
+  }
+  if (!generatedContent[sourceLang]) generatedContent[sourceLang] = {};
+  generatedContent[sourceLang].title = sourceTitle;
+  generatedContent[sourceLang].body  = sourceBody;
+
+  const targetLangs = selectedLangs.filter(l => l !== sourceLang);
+  if (!targetLangs.length) { setStatus('没有其他已选语言可翻译', 'error'); return; }
+
+  const btn = document.getElementById(`translate-from-btn-${sourceLang}`);
+  if (btn) { btn.disabled = true; btn.textContent = '翻译中…'; }
+  setStatus(`正在将 ${sourceLang.toUpperCase()} 同步翻译到 ${targetLangs.map(l=>l.toUpperCase()).join('/')}…`, 'info');
+
+  try {
+    const resp = await fetch('/api/translate_from', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        template_id: document.getElementById('template').value,
+        source_lang: sourceLang,
+        source_title: sourceTitle,
+        source_body: sourceBody,
+        target_langs: targetLangs,
+        subject: document.getElementById('subject').value.trim(),
+        audience: document.getElementById('audience').value.trim(),
+      }),
+    });
+    if (!resp.ok) throw new Error(await resp.text());
+    const result = await resp.json();
+    targetLangs.forEach(lang => {
+      if (!result[lang]) return;
+      if (!generatedContent[lang]) generatedContent[lang] = {};
+      generatedContent[lang].title = result[lang].title || '';
+      generatedContent[lang].body  = result[lang].body  || '';
+      if (quillEditors[lang]) quillEditors[lang].root.innerHTML = generatedContent[lang].body;
+      const tEl = document.getElementById(`title-${lang}`);
+      if (tEl) tEl.value = generatedContent[lang].title;
+      markDirty(lang);
+    });
+    setStatus(`✓ 已同步翻译到 ${targetLangs.map(l=>l.toUpperCase()).join('/')}`, 'success');
+  } catch (e) {
+    setStatus('翻译失败：' + e.message, 'error');
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = '→ 同步翻译'; }
+  }
+}
+
 async function copyText(text, btn) {
   try { await navigator.clipboard.writeText(text); }
   catch { const ta = Object.assign(document.createElement('textarea'), {value:text}); document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove(); }

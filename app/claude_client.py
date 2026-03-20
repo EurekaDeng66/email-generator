@@ -441,6 +441,68 @@ Return ONLY the JSON object, no other text.{history_section}"""
     return json.loads(cleaned)
 
 
+def translate_from_language(
+    template_id: str,
+    source_lang: str,
+    source_title: str,
+    source_body: str,
+    target_langs: list[str],
+    subject: str = "",
+    audience: str = "",
+) -> dict:
+    """Translate/adapt source language email content into multiple target languages.
+
+    Returns {lang: {title, body}} for each target lang.
+    """
+    meta = TEMPLATES[template_id]
+    sender = meta["sender"]
+
+    def _translate_one(lang: str) -> tuple[str, dict]:
+        user_prompt = f"""Translate and culturally adapt the following email into {lang}.
+
+Template: {meta['name']}
+Sender: {sender}
+Email topic/direction: {subject}
+Target audience: {audience}
+
+SOURCE ({source_lang}) — treat this as the authoritative version to translate from:
+Subject line: {source_title}
+Body:
+{source_body}
+
+Requirements:
+- Produce a natural, native-sounding {lang} translation — NOT a word-for-word literal translation
+- Preserve all inline HTML tags (<p>, <strong>, <a href=...>, <br/>, etc.) and their styles
+- Preserve all template variables literally: {{{{expiry_date}}}}, {{{{renew_url}}}}, {{{{unsubscribe_url}}}}, etc.
+- Use the correct sign-off for {sender} in {lang} (follow the system prompt rules)
+- Subject line must be adapted naturally for {lang} readers
+
+Output JSON with ONLY the "{lang}" key:
+{{"{lang}": {{"title": "...", "body": "<p>...</p>"}}}}"""
+
+        response = _get_client().chat.completions.create(
+            model=os.getenv("MODEL", "anthropic/claude-sonnet-4-5"),
+            max_tokens=2048,
+            messages=[
+                {"role": "system", "content": SYSTEM_PROMPT},
+                {"role": "user", "content": user_prompt},
+            ],
+        )
+        raw = response.choices[0].message.content
+        cleaned = _clean_json_response(raw)
+        data = json.loads(cleaned)
+        content = data.get(lang, data)
+        return lang, content
+
+    result = {}
+    with concurrent.futures.ThreadPoolExecutor(max_workers=len(target_langs)) as executor:
+        futures = {executor.submit(_translate_one, lang): lang for lang in target_langs}
+        for future in concurrent.futures.as_completed(futures):
+            lang, content = future.result()
+            result[lang] = content
+    return result
+
+
 def polish_cta_label(label: str) -> str:
     """Polish a CTA button label — make it concise, action-oriented, and marketing-ready."""
     model = os.getenv("MODEL", "anthropic/claude-sonnet-4-5")

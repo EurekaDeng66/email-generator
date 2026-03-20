@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>BlockSec Email Generator</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%23FF7F32'/><rect x='4' y='9' width='24' height='16' rx='2' fill='white'/><polyline points='4,11 16,20 28,11' fill='none' stroke='%23FF7F32' stroke-width='2.5' stroke-linejoin='round'/></svg>">
   <link href="https://cdn.quilljs.com/1.3.7/quill.snow.css" rel="stylesheet">
   <script src="https://cdn.quilljs.com/1.3.7/quill.min.js"></script>
   <style>
@@ -464,7 +465,15 @@
     .tag-tmpl { background: #f0fdf4; color: #166534; }
     .tag-lang { background: #eff6ff; color: #1e40af; }
     .tag-sys { background: #fef3c7; color: #92400e; }
-    .tpl-actions { display: flex; gap: 6px; }
+    .tag-draft { background: #fff7ed; color: #c2410c; }
+    .tag-published { background: #f0fdf4; color: #15803d; }
+    .tpl-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+    /* ── Inline input icon buttons ── */
+    .input-icon-wrap { position: relative; flex: 1; }
+    .input-icon-wrap input { width: 100%; padding-right: 66px; }
+    .input-icon-btns { position: absolute; right: 4px; top: 50%; transform: translateY(-50%); display: flex; gap: 2px; }
+    .iib { width: 26px; height: 26px; border: 1px solid #e0e0e0; background: #f9f9f9; border-radius: 5px; cursor: pointer; font-size: 14px; display: flex; align-items: center; justify-content: center; color: #666; transition: all 0.15s; flex-shrink: 0; }
+    .iib:hover { background: #fff3e8; border-color: #FF7F32; color: #FF7F32; }
 
     /* ── Misc ── */
     .hidden { display: none !important; }
@@ -728,14 +737,20 @@
   <div class="step-panel" id="step-2" data-step="2">
     <div class="step-header">
       <h2>内容审阅 / HTML 输出</h2>
-      <p>审阅 AI 生成的初稿，确认后即可复制邮件标题和完整 HTML</p>
+      <p>在此编辑邮件正文并生成各语言 HTML；支持 AI 生成初稿，也可直接粘贴已有内容</p>
     </div>
 
     <!-- Placeholder: shown before generation -->
-    <div class="placeholder-card" id="step2-placeholder">
-      <div class="ph-icon">✦</div>
-      <strong>在 Step 1 填写邮件信息并点击 Generate</strong><br>
-      AI 生成的 4 语言初稿将在此处显示，供你审阅和修改
+    <div class="placeholder-card" id="step2-placeholder" style="display:flex;flex-direction:column;align-items:center;gap:14px;">
+      <div>
+        <div class="ph-icon">✦</div>
+        <strong>在 Step 1 填写邮件信息并点击 Generate</strong><br>
+        AI 生成的 4 语言初稿将在此处显示，供你审阅和修改
+      </div>
+      <div style="color:#aaa;font-size:12px;">— 或 —</div>
+      <button class="btn btn-secondary btn-sm" onclick="enterManualMode()" style="font-size:13px;padding:7px 18px;">
+        ✏️ 直接输入邮件内容（跳过 AI 生成）
+      </button>
     </div>
 
     <!-- Editor: shown after generation -->
@@ -756,26 +771,33 @@
       <div class="review-panel" id="review-en">
         <div class="review-subject-row">
           <label>Subject</label>
-          <input type="text" id="title-en" placeholder="Email subject line">
-          <button class="btn-ai-field" id="regen-title-en" onclick="handleRegenField('en','title_only')" title="AI 重新生成标题">✦ 标题</button>
+          <div class="input-icon-wrap">
+            <input type="text" id="title-en" placeholder="Email subject line">
+            <div class="input-icon-btns">
+              <button class="iib" id="regen-title-en" onclick="handleRegenField('en','title_only')" title="重新生成标题">↺</button>
+              <button class="iib" id="regen-body-en" onclick="handleRegenField('en','body_only')" title="重新生成正文">↻</button>
+            </div>
+          </div>
         </div>
         <div class="quill-wrap"><div id="quill-en"></div></div>
-        <div style="display:flex;justify-content:flex-end;margin-top:4px;">
-          <button class="btn-ai-field" id="regen-body-en" onclick="handleRegenField('en','body_only')" title="AI 重新生成正文">✦ 正文</button>
-        </div>
         <div class="revision-row">
           <textarea id="revision-en" placeholder="修改意见（标题/正文共用），例如：语气更友好，强调免费额度…"></textarea>
           <button class="btn-regen" id="regen-en" onclick="handleRegenerate('en')" title="重新生成标题+正文">↻</button>
         </div>
         <div class="confirm-row">
           <button class="btn-reviewed" id="reviewed-btn-en" onclick="toggleReviewed('en')">○ 标记已审阅</button>
+          <button class="btn btn-secondary btn-sm" id="translate-from-btn-en" onclick="handleTranslateFrom('en')" title="将此版本翻译到其他语言">→ 同步翻译</button>
           <button class="btn btn-html-dirty" id="html-btn-en" onclick="generateHtml('en')">⬆ 生成 HTML</button>
         </div>
         <div class="output-panel hidden" id="output-en">
           <div class="output-label">✅ HTML 输出</div>
           <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px;">
-            <input type="text" id="output-title-en" readonly style="flex:1;background:#fff;">
-            <button class="btn btn-secondary btn-sm" onclick="copyOutputTitle('en',this)">复制标题</button>
+            <div class="input-icon-wrap">
+              <input type="text" id="output-title-en" readonly style="background:#fff;">
+              <div class="input-icon-btns">
+                <button class="iib" onclick="copyOutputTitle('en',this)" title="复制标题">⎘</button>
+              </div>
+            </div>
           </div>
           <div style="display:flex;gap:8px;align-items:center;">
             <button class="btn btn-primary btn-sm" onclick="copyOutputHtml('en',this)">复制 HTML</button>
@@ -798,26 +820,33 @@
       <div class="review-panel hidden" id="review-zh">
         <div class="review-subject-row">
           <label>Subject</label>
-          <input type="text" id="title-zh" placeholder="邮件标题">
-          <button class="btn-ai-field" id="regen-title-zh" onclick="handleRegenField('zh','title_only')" title="AI 重新生成标题">✦ 标题</button>
+          <div class="input-icon-wrap">
+            <input type="text" id="title-zh" placeholder="邮件标题">
+            <div class="input-icon-btns">
+              <button class="iib" id="regen-title-zh" onclick="handleRegenField('zh','title_only')" title="重新生成标题">↺</button>
+              <button class="iib" id="regen-body-zh" onclick="handleRegenField('zh','body_only')" title="重新生成正文">↻</button>
+            </div>
+          </div>
         </div>
         <div class="quill-wrap"><div id="quill-zh"></div></div>
-        <div style="display:flex;justify-content:flex-end;margin-top:4px;">
-          <button class="btn-ai-field" id="regen-body-zh" onclick="handleRegenField('zh','body_only')" title="AI 重新生成正文">✦ 正文</button>
-        </div>
         <div class="revision-row">
           <textarea id="revision-zh" placeholder="修改意见（标题/正文共用），例如：语气更活泼，加入产品亮点…"></textarea>
           <button class="btn-regen" id="regen-zh" onclick="handleRegenerate('zh')" title="重新生成标题+正文">↻</button>
         </div>
         <div class="confirm-row">
           <button class="btn-reviewed" id="reviewed-btn-zh" onclick="toggleReviewed('zh')">○ 标记已审阅</button>
+          <button class="btn btn-secondary btn-sm" id="translate-from-btn-zh" onclick="handleTranslateFrom('zh')" title="将此版本翻译到其他语言">→ 同步翻译</button>
           <button class="btn btn-html-dirty" id="html-btn-zh" onclick="generateHtml('zh')">⬆ 生成 HTML</button>
         </div>
         <div class="output-panel hidden" id="output-zh">
           <div class="output-label">✅ HTML 输出</div>
           <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px;">
-            <input type="text" id="output-title-zh" readonly style="flex:1;background:#fff;">
-            <button class="btn btn-secondary btn-sm" onclick="copyOutputTitle('zh',this)">复制标题</button>
+            <div class="input-icon-wrap">
+              <input type="text" id="output-title-zh" readonly style="background:#fff;">
+              <div class="input-icon-btns">
+                <button class="iib" onclick="copyOutputTitle('zh',this)" title="复制标题">⎘</button>
+              </div>
+            </div>
           </div>
           <div style="display:flex;gap:8px;align-items:center;">
             <button class="btn btn-primary btn-sm" onclick="copyOutputHtml('zh',this)">复制 HTML</button>
@@ -840,26 +869,33 @@
       <div class="review-panel hidden" id="review-es">
         <div class="review-subject-row">
           <label>Subject</label>
-          <input type="text" id="title-es" placeholder="Asunto del correo">
-          <button class="btn-ai-field" id="regen-title-es" onclick="handleRegenField('es','title_only')" title="AI 重新生成标题">✦ 标题</button>
+          <div class="input-icon-wrap">
+            <input type="text" id="title-es" placeholder="Asunto del correo">
+            <div class="input-icon-btns">
+              <button class="iib" id="regen-title-es" onclick="handleRegenField('es','title_only')" title="重新生成标题">↺</button>
+              <button class="iib" id="regen-body-es" onclick="handleRegenField('es','body_only')" title="重新生成正文">↻</button>
+            </div>
+          </div>
         </div>
         <div class="quill-wrap"><div id="quill-es"></div></div>
-        <div style="display:flex;justify-content:flex-end;margin-top:4px;">
-          <button class="btn-ai-field" id="regen-body-es" onclick="handleRegenField('es','body_only')" title="AI 重新生成正文">✦ 正文</button>
-        </div>
         <div class="revision-row">
           <textarea id="revision-es" placeholder="修改意见（标题/正文共用）…"></textarea>
           <button class="btn-regen" id="regen-es" onclick="handleRegenerate('es')" title="重新生成标题+正文">↻</button>
         </div>
         <div class="confirm-row">
           <button class="btn-reviewed" id="reviewed-btn-es" onclick="toggleReviewed('es')">○ 标记已审阅</button>
+          <button class="btn btn-secondary btn-sm" id="translate-from-btn-es" onclick="handleTranslateFrom('es')" title="将此版本翻译到其他语言">→ 同步翻译</button>
           <button class="btn btn-html-dirty" id="html-btn-es" onclick="generateHtml('es')">⬆ 生成 HTML</button>
         </div>
         <div class="output-panel hidden" id="output-es">
           <div class="output-label">✅ HTML 输出</div>
           <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px;">
-            <input type="text" id="output-title-es" readonly style="flex:1;background:#fff;">
-            <button class="btn btn-secondary btn-sm" onclick="copyOutputTitle('es',this)">复制标题</button>
+            <div class="input-icon-wrap">
+              <input type="text" id="output-title-es" readonly style="background:#fff;">
+              <div class="input-icon-btns">
+                <button class="iib" onclick="copyOutputTitle('es',this)" title="复制标题">⎘</button>
+              </div>
+            </div>
           </div>
           <div style="display:flex;gap:8px;align-items:center;">
             <button class="btn btn-primary btn-sm" onclick="copyOutputHtml('es',this)">复制 HTML</button>
@@ -882,26 +918,33 @@
       <div class="review-panel hidden" id="review-ja">
         <div class="review-subject-row">
           <label>Subject</label>
-          <input type="text" id="title-ja" placeholder="メール件名">
-          <button class="btn-ai-field" id="regen-title-ja" onclick="handleRegenField('ja','title_only')" title="AI 重新生成标题">✦ 标题</button>
+          <div class="input-icon-wrap">
+            <input type="text" id="title-ja" placeholder="メール件名">
+            <div class="input-icon-btns">
+              <button class="iib" id="regen-title-ja" onclick="handleRegenField('ja','title_only')" title="重新生成标题">↺</button>
+              <button class="iib" id="regen-body-ja" onclick="handleRegenField('ja','body_only')" title="重新生成正文">↻</button>
+            </div>
+          </div>
         </div>
         <div class="quill-wrap"><div id="quill-ja"></div></div>
-        <div style="display:flex;justify-content:flex-end;margin-top:4px;">
-          <button class="btn-ai-field" id="regen-body-ja" onclick="handleRegenField('ja','body_only')" title="AI 重新生成正文">✦ 正文</button>
-        </div>
         <div class="revision-row">
           <textarea id="revision-ja" placeholder="修改意见（标题/正文共用）…"></textarea>
           <button class="btn-regen" id="regen-ja" onclick="handleRegenerate('ja')" title="重新生成标题+正文">↻</button>
         </div>
         <div class="confirm-row">
           <button class="btn-reviewed" id="reviewed-btn-ja" onclick="toggleReviewed('ja')">○ 标记已审阅</button>
+          <button class="btn btn-secondary btn-sm" id="translate-from-btn-ja" onclick="handleTranslateFrom('ja')" title="将此版本翻译到其他语言">→ 同步翻译</button>
           <button class="btn btn-html-dirty" id="html-btn-ja" onclick="generateHtml('ja')">⬆ 生成 HTML</button>
         </div>
         <div class="output-panel hidden" id="output-ja">
           <div class="output-label">✅ HTML 输出</div>
           <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px;">
-            <input type="text" id="output-title-ja" readonly style="flex:1;background:#fff;">
-            <button class="btn btn-secondary btn-sm" onclick="copyOutputTitle('ja',this)">复制标题</button>
+            <div class="input-icon-wrap">
+              <input type="text" id="output-title-ja" readonly style="background:#fff;">
+              <div class="input-icon-btns">
+                <button class="iib" onclick="copyOutputTitle('ja',this)" title="复制标题">⎘</button>
+              </div>
+            </div>
           </div>
           <div style="display:flex;gap:8px;align-items:center;">
             <button class="btn btn-primary btn-sm" onclick="copyOutputHtml('ja',this)">复制 HTML</button>
@@ -939,9 +982,10 @@
       <div class="card-title">保存当前邮件</div>
       <div class="lib-save-row">
         <input type="text" id="lib-save-name" placeholder="给这封邮件起个名字">
-        <button class="btn btn-primary btn-sm" onclick="saveToLibrary()">保存</button>
+        <button class="btn btn-secondary btn-sm" onclick="saveToDraft()" title="保存草稿，无需生成 HTML">暂存草稿</button>
+        <button class="btn btn-primary btn-sm" onclick="saveAsTemplate()" title="自动生成所有语言 HTML 后保存为正式模版">存为模版 ✓</button>
       </div>
-      <p class="text-muted" style="margin-top:6px;">保存内容：邮件类型、主题、各语言正文及完整 HTML</p>
+      <p class="text-muted" style="margin-top:6px;">草稿：随时保存进度 · 模版：自动补全所有语言 HTML</p>
     </div>
 
     <div class="section-label">我的模版</div>

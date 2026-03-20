@@ -25,6 +25,35 @@ function updateGenerateBtn() {
   btn.textContent = `✦ 生成 ${selectedLangs.length} 种语言`;
 }
 
+function enterManualMode() {
+  const templateId = document.getElementById('template').value;
+  if (!templateId) {
+    setStatus('请先在 Step 1 选择邮件模版', 'error');
+    scrollToStep(1);
+    return;
+  }
+  selectedLangs = getSelectedLangs();
+  if (selectedLangs.length === 0) selectedLangs = [...LANGS];
+  // Clear all state — user will type/paste their own content
+  generatedContent = {}; assembledHtml = {};
+  htmlReadyLangs = new Set(); dirtyLangs = new Set(); reviewedLangs = new Set();
+  LANGS.forEach(l => {
+    _updateReviewedMark(l);
+    document.getElementById(`output-${l}`).classList.add('hidden');
+    document.getElementById(`preview-wrap-${l}`).classList.add('hidden');
+    if (quillEditors[l]) quillEditors[l].setText('');
+    const titleEl = document.getElementById(`title-${l}`);
+    if (titleEl) titleEl.value = '';
+    _updateHtmlBtn(l);
+  });
+  updateReviewTabVisibility();
+  document.getElementById('step2-placeholder').classList.add('hidden');
+  document.getElementById('step2-editor').classList.remove('hidden');
+  setStatus('编辑器已就绪，请粘贴或输入各语言内容', 'info');
+  setTimeout(clearStatus, 3000);
+  scrollToStep(2);
+}
+
 async function handleGenerate() {
   showFieldsSection(); // ensure fields are visible (e.g. if user typed then generated)
   const templateId   = document.getElementById('template').value;

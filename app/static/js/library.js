@@ -11,28 +11,76 @@ function toggleLibraryDrawer() {
 // ─────────────────────────────────────────────
 function loadLibrary() { try { return JSON.parse(localStorage.getItem(LIB_KEY) || '[]'); } catch { return []; } }
 
-function saveToLibrary() {
-  const name = (document.getElementById('lib-save-name').value || '').trim();
-  if (!name) { alert('Please enter a template name.'); return; }
+function _saveEntry(name, status) {
   const lib = loadLibrary();
   const idx = lib.findIndex(e => e.name === name);
+  const allLangs = LANGS.filter(l => generatedContent[l]?.body || generatedContent[l]?.title);
   const entry = {
-    id: Date.now().toString(), name,
+    id: (idx >= 0 ? lib[idx].id : null) || Date.now().toString(),
+    name, status,
     template_id: document.getElementById('template').value,
     subject:  document.getElementById('subject').value.trim(),
     audience: document.getElementById('audience').value.trim(),
     trigger:  document.getElementById('trigger').value.trim(),
     content:  JSON.parse(JSON.stringify(generatedContent)),
     assembled_html: JSON.parse(JSON.stringify(assembledHtml)),
-    langs: [...htmlReadyLangs],
+    langs: allLangs,
     saved_at: new Date().toLocaleDateString('zh-CN'),
   };
-  if (idx >= 0) { if (!confirm(`Replace "${name}"?`)) return; lib.splice(idx, 1); }
+  if (idx >= 0) { if (!confirm(`Replace "${name}"?`)) return false; lib.splice(idx, 1); }
   lib.unshift(entry);
   localStorage.setItem(LIB_KEY, JSON.stringify(lib));
   serverSave(LIB_KEY);
   document.getElementById('lib-save-name').value = '';
-  setStatus(`Template "${name}" saved!`, 'success');
+  renderLibrary();
+  return true;
+}
+
+function saveToDraft() {
+  const name = (document.getElementById('lib-save-name').value || '').trim();
+  if (!name) { alert('请输入名称'); return; }
+  if (_saveEntry(name, 'draft')) setStatus(`草稿 "${name}" 已保存`, 'success');
+}
+
+async function saveAsTemplate() {
+  const name = (document.getElementById('lib-save-name').value || '').trim();
+  if (!name) { alert('请输入名称'); return; }
+  const pending = selectedLangs.filter(l => generatedContent[l]?.body && !htmlReadyLangs.has(l));
+  if (pending.length) {
+    setStatus('正在生成 HTML…', 'info');
+    pending.forEach(l => {
+      if (quillEditors[l]) {
+        if (!generatedContent[l]) generatedContent[l] = {};
+        generatedContent[l].body = quillEditors[l].root.innerHTML;
+        const titleEl = document.getElementById(`title-${l}`);
+        if (titleEl) generatedContent[l].title = titleEl.value.trim();
+      }
+    });
+    await Promise.all(pending.map(l => assembleForLang(l).then(() => markClean(l))));
+  }
+  if (_saveEntry(name, 'published')) setStatus(`模版 "${name}" 已保存 ✓`, 'success');
+}
+
+async function publishDraft(id) {
+  const lib = loadLibrary();
+  const entry = lib.find(e => e.id === id);
+  if (!entry) return;
+  generatedContent = JSON.parse(JSON.stringify(entry.content || {}));
+  assembledHtml    = JSON.parse(JSON.stringify(entry.assembled_html || {}));
+  htmlReadyLangs   = new Set(Object.keys(assembledHtml).filter(l => assembledHtml[l]));
+  selectedLangs    = entry.langs?.length ? [...entry.langs] : [...LANGS];
+  const pending = selectedLangs.filter(l => generatedContent[l]?.body && !htmlReadyLangs.has(l));
+  if (pending.length) {
+    setStatus('正在生成 HTML…', 'info');
+    await Promise.all(pending.map(l => assembleForLang(l).then(() => markClean(l))));
+  }
+  lib.splice(lib.findIndex(e => e.id === id), 1);
+  const allLangs = LANGS.filter(l => generatedContent[l]?.body || generatedContent[l]?.title);
+  const updated = { ...entry, status: 'published', assembled_html: JSON.parse(JSON.stringify(assembledHtml)), langs: allLangs };
+  lib.unshift(updated);
+  localStorage.setItem(LIB_KEY, JSON.stringify(lib));
+  serverSave(LIB_KEY);
+  setStatus(`"${entry.name}" 已发布为正式模版 ✓`, 'success');
   renderLibrary();
 }
 
@@ -207,14 +255,22 @@ function renderUserTpls() {
   grid.innerHTML = lib.map(e => {
     const hasMet = allMetrics.some(m => m.campaign_id === e.id);
     const metLabel = hasMet ? '<span class="tag" style="background:#d4edda;color:#155724;">📊 有数据</span>' : '';
+    const isDraft = e.status === 'draft';
+    const statusLabel = isDraft
+      ? '<span class="tag tag-draft">草稿</span>'
+      : '<span class="tag tag-published">模版</span>';
     const audience = e.audience ? esc(e.audience) : '—';
     const trigger  = e.trigger  ? esc(e.trigger)  : '—';
     const subject  = e.subject  ? esc(e.subject)  : '—';
+    const publishBtn = isDraft
+      ? `<button class="btn btn-primary btn-sm" onclick="event.stopPropagation();publishDraft('${e.id}')">发布 →</button>`
+      : '';
     return `
-    <div class="tpl-card" onclick="openReviewModal('user','${e.id}')">
+    <div class="tpl-card" onclick="${isDraft ? '' : `openReviewModal('user','${e.id}')`}" style="${isDraft ? 'cursor:default;' : ''}">
       <div class="tpl-card-name">${esc(e.name)}</div>
       <div class="tpl-card-meta">${e.saved_at || ''}</div>
       <div class="tpl-tags">
+        ${statusLabel}
         <span class="tag tag-tmpl">${TMPL_LABELS[e.template_id] || e.template_id}</span>
         ${(e.langs||[]).map(l=>`<span class="tag tag-lang">${l.toUpperCase()}</span>`).join('')}
         ${metLabel}
@@ -227,6 +283,7 @@ function renderUserTpls() {
       <div class="tpl-actions">
         <button class="tpl-expand-toggle" onclick="event.stopPropagation();toggleCardMeta('${e.id}',this)">展开详情 ▾</button>
         <button class="btn btn-secondary btn-sm" onclick="event.stopPropagation();loadFromLibrary('${e.id}')">✏️ 编辑</button>
+        ${publishBtn}
         <button class="btn btn-secondary btn-sm" onclick="event.stopPropagation();openMetricsEntry('${e.id}')">📊 录入数据</button>
         <button class="btn btn-danger btn-sm" onclick="event.stopPropagation();deleteFromLibrary('${e.id}')">删除</button>
       </div>

@@ -5,14 +5,9 @@
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <meta name="x-apple-disable-message-reformatting" />
     <!--[if mso]>
-    <noscript>
-      <xml>
-        <o:OfficeDocumentSettings>
-          <o:PixelsPerInch>96</o:PixelsPerInch>
-        </o:OfficeDocumentSettings>
-      </xml>
-    </noscript>
+    <noscript><xml><o:OfficeDocumentSettings><o:PixelsPerInch>96</o:PixelsPerInch></o:OfficeDocumentSettings></xml></noscript>
     <![endif]-->
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
       body, table, td, p, a { -webkit-text-size-adjust:100%; -ms-text-size-adjust:100%; }
       table, td { mso-table-lspace:0pt; mso-table-rspace:0pt; }
@@ -20,7 +15,7 @@
       @media screen and (max-width:640px) {
         .email-container { width:100% !important; max-width:100% !important; }
         .email-body-td { padding:20px 16px !important; }
-        .sig-title { font-size:14px !important; }
+        .stack-column { display:block !important; width:100% !important; padding:8px 0 !important; text-align:left !important; }
         .footer-slogan { display:none !important; }
       }
     </style>
@@ -28,27 +23,21 @@
   </head>
 
   <body style="margin:0; padding:0; background:#ffffff; word-spacing:normal;">
-    <!-- Outer wrapper: 100% width, centers content -->
     <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0"
            style="background:#ffffff; border-collapse:collapse;">
       <tr>
         <td align="center" valign="top" style="padding:28px 16px;">
-
-          <!-- Email container: fixed 640px for Outlook, max-width for others -->
-          <!--[if mso]>
-          <table role="presentation" align="center" border="0" cellspacing="0" cellpadding="0" width="640">
-          <tr><td>
-          <![endif]-->
+          <!--[if mso]><table role="presentation" align="center" border="0" cellspacing="0" cellpadding="0" width="640"><tr><td><![endif]-->
           <table class="email-container" role="presentation" align="center"
                  width="640" cellspacing="0" cellpadding="0" border="0"
                  style="max-width:640px; width:100%; border-collapse:collapse;">
             <tr>
               <td class="email-body-td"
-                  style="padding:0 12px; font-family:'Microsoft YaHei UI','微软雅黑',Arial,sans-serif; font-size:14px; color:#111827;">
+                  style="padding:0 12px; font-family:'DM Sans',Arial,sans-serif; font-size:14px; color:#111827;">
 
                 <!-- ── Body content (injected by assembler) ── -->
                 <div style="padding:0; color:#111827;
-                            font-family:'Microsoft YaHei UI','微软雅黑',Arial,sans-serif;
+                            font-family:'DM Sans','Microsoft YaHei UI','微软雅黑',Arial,sans-serif;
                             font-size:14px; line-height:1.8;">
 
                   <p style="margin:0 0 0.9em 0;">Hope you're having a great week 😊</p>
@@ -77,66 +66,84 @@
 
                 </div>
 
-                <!-- ── Signature ── -->
+                <!-- ── Signature (card with gradient bar, matching Ruby style) ── -->
                 <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0"
-                       style="border-collapse:collapse; margin-top:8px;">
+                       style="border:1px solid #E5E7EB; border-radius:14px; overflow:hidden;
+                              border-collapse:separate; margin-top:16px;">
+                  <!-- Gradient bar -->
                   <tr>
-                    <td style="padding:8px 0;">
-                      <!-- Name -->
-                      <div class="sig-title"
-                           style="font-family:Arial,sans-serif; color:#111827; font-size:15px;
-                                  font-weight:700; line-height:1.3; margin-bottom:5px;">
-                        Jenna Cheng
-                      </div>
-                      <!-- Title + social icons in one line using inline-block -->
-                      <div style="font-family:Arial,sans-serif; color:#6B7280; font-size:12px;
-                                  font-weight:400; line-height:20px;">
-                        Product Manager | BlockSec
-                        <a href="https://www.linkedin.com/in/jenna-cheng-368556332/"
-                           style="display:inline-block; vertical-align:middle; margin-left:8px; text-decoration:none;">
-                          <img src="https://assets.blocksec.com/image/1770893851684/linkedin_blue2.png"
-                               width="16" height="16" alt="LinkedIn"
-                               style="display:block; border:0;">
-                        </a>
-                        <a href="https://t.me/J_Cheng"
-                           style="display:inline-block; vertical-align:middle; margin-left:6px; text-decoration:none;">
-                          <img src="https://assets.blocksec.com/image/1772075063858/telegram_square.svg"
-                               width="16" height="16" alt="Telegram"
-                               style="display:block; border:0;">
-                        </a>
-                      </div>
+                    <td style="padding:0; height:4px; line-height:4px; font-size:0;">
+                      <div style="height:4px; background:linear-gradient(100deg,#4BBAFF 0%,#FFEAE9 34%,#FF7948 66%,#FFB302 100%);"></div>
+                    </td>
+                  </tr>
+                  <!-- Name + title + social -->
+                  <tr>
+                    <td style="padding:14px 16px;">
+                      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0"
+                             style="border-collapse:collapse;">
+                        <tr>
+                          <!-- Name & title -->
+                          <td class="stack-column" style="padding:0 12px 8px 0; vertical-align:top;">
+                            <div style="font-family:'DM Sans',Inter,Arial,sans-serif; color:#111827;
+                                        font-size:16px; font-weight:700; line-height:1.3; margin-bottom:5px;">
+                              Jenna Cheng
+                            </div>
+                            <div style="font-family:'DM Sans',Inter,Arial,sans-serif; color:#6B7280;
+                                        font-size:12.4px; font-weight:400; line-height:20px;">
+                              Product Manager | BlockSec
+                              <a href="https://www.linkedin.com/in/jenna-cheng-368556332/"
+                                 style="display:inline-block; vertical-align:middle; margin-left:8px; text-decoration:none;">
+                                <img src="https://assets.blocksec.com/image/1770893851684/linkedin_blue2.png"
+                                     width="16" height="16" alt="LinkedIn"
+                                     style="display:block; border:0;">
+                              </a>
+                              <a href="https://t.me/J_Cheng"
+                                 style="display:inline-block; vertical-align:middle; margin-left:6px; text-decoration:none;">
+                                <img src="https://assets.blocksec.com/image/1772075063858/telegram_square.svg"
+                                     width="16" height="16" alt="Telegram"
+                                     style="display:block; border:0;">
+                              </a>
+                            </div>
+                          </td>
+                        </tr>
+                      </table>
                     </td>
                   </tr>
                 </table>
 
                 <!-- ── Footer: logo + slogan ── -->
                 <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0"
-                       style="border-collapse:collapse; margin-top:6px;">
+                       style="border-collapse:collapse; margin-top:12px;">
                   <tr>
-                    <td valign="middle" style="padding:0;">
+                    <td class="stack-column" valign="middle" style="padding:0;">
                       <a href="https://www.blocksec.com" style="display:inline-block; text-decoration:none;">
                         <img src="https://assets.blocksec.com/image/1770893851684/blocksec-combination-logo.png"
-                             alt="BlockSec" width="110"
-                             style="display:block; border:0;">
+                             alt="BlockSec" width="110" style="display:block; border:0;">
                       </a>
                     </td>
-                    <td class="footer-slogan" valign="middle" align="right"
-                        style="font-family:Arial,sans-serif; font-size:11px;
+                    <td class="stack-column footer-slogan" valign="middle" align="right"
+                        style="font-family:'DM Sans',Arial,sans-serif; font-size:11px;
                                color:#9CA3AF; line-height:1.4; padding-left:12px;">
                       Full-Stack Blockchain Security &amp; Compliance Provider
                     </td>
                   </tr>
                 </table>
 
-                <!-- ── Unsubscribe ── -->
+                <!-- ── Unsubscribe (checkbox style) ── -->
                 <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0"
-                       style="border-collapse:collapse; margin-top:14px;">
+                       style="border-collapse:collapse; margin-top:16px; border-top:1px solid #F3F4F6; padding-top:12px;">
                   <tr>
-                    <td align="right"
-                        style="font-family:Arial,sans-serif; font-size:10px;
-                               color:#D1D5DB; line-height:1.2;">
+                    <td style="padding-top:12px;">
                       <a href="{{unsubscribe_url}}"
-                         style="color:#D1D5DB; text-decoration:underline;">Unsubscribe</a>
+                         style="display:inline-block; font-family:'DM Sans',Arial,sans-serif;
+                                font-size:11px; color:#9CA3AF; text-decoration:none; line-height:1.5;">
+                        <span style="display:inline-block; width:12px; height:12px;
+                                     border:1.5px solid #D1D5DB; border-radius:2px;
+                                     vertical-align:middle; margin-right:5px; background:#fff;
+                                     line-height:12px; text-align:center; font-size:9px; color:#9CA3AF;">
+                          &#x2610;
+                        </span>退订此邮件列表 &nbsp;/&nbsp; Unsubscribe
+                      </a>
                     </td>
                   </tr>
                 </table>
@@ -144,10 +151,7 @@
               </td>
             </tr>
           </table>
-          <!--[if mso]>
-          </td></tr></table>
-          <![endif]-->
-
+          <!--[if mso]></td></tr></table><![endif]-->
         </td>
       </tr>
     </table>

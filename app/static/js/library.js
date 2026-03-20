@@ -87,6 +87,13 @@ function loadData(data) {
 
 function renderLibrary() { renderUserTpls(); renderPresetTpls(); }
 
+function toggleCardMeta(id, btn) {
+  const meta = document.getElementById(`meta-${id}`);
+  if (!meta) return;
+  const open = meta.classList.toggle('open');
+  btn.textContent = open ? '收起详情 ▴' : '展开详情 ▾';
+}
+
 const TMPL_LABELS = { ruby_sales: 'Ruby Sales', ruby_kyt: 'Ruby KYT', jenna_marketing: 'Jenna Marketing' };
 
 // ─────────────────────────────────────────────
@@ -200,6 +207,9 @@ function renderUserTpls() {
   grid.innerHTML = lib.map(e => {
     const hasMet = allMetrics.some(m => m.campaign_id === e.id);
     const metLabel = hasMet ? '<span class="tag" style="background:#d4edda;color:#155724;">📊 有数据</span>' : '';
+    const audience = e.audience ? esc(e.audience) : '—';
+    const trigger  = e.trigger  ? esc(e.trigger)  : '—';
+    const subject  = e.subject  ? esc(e.subject)  : '—';
     return `
     <div class="tpl-card" onclick="openReviewModal('user','${e.id}')">
       <div class="tpl-card-name">${esc(e.name)}</div>
@@ -209,7 +219,13 @@ function renderUserTpls() {
         ${(e.langs||[]).map(l=>`<span class="tag tag-lang">${l.toUpperCase()}</span>`).join('')}
         ${metLabel}
       </div>
+      <div class="tpl-expand-meta" id="meta-${e.id}" onclick="event.stopPropagation()">
+        <div><strong>发送方向：</strong>${subject}</div>
+        <div><strong>发送对象：</strong>${audience}</div>
+        <div><strong>触发时机：</strong>${trigger}</div>
+      </div>
       <div class="tpl-actions">
+        <button class="tpl-expand-toggle" onclick="event.stopPropagation();toggleCardMeta('${e.id}',this)">展开详情 ▾</button>
         <button class="btn btn-secondary btn-sm" onclick="event.stopPropagation();loadFromLibrary('${e.id}')">✏️ 编辑</button>
         <button class="btn btn-secondary btn-sm" onclick="event.stopPropagation();openMetricsEntry('${e.id}')">📊 录入数据</button>
         <button class="btn btn-danger btn-sm" onclick="event.stopPropagation();deleteFromLibrary('${e.id}')">删除</button>
@@ -229,7 +245,12 @@ function renderPresetTpls() {
         <span class="tag tag-tmpl">${TMPL_LABELS[p.template_id] || p.template_id}</span>
         ${Object.keys(p.content).map(l=>`<span class="tag tag-lang">${l.toUpperCase()}</span>`).join('')}
       </div>
+      <div class="tpl-expand-meta" id="meta-preset-${id}" onclick="event.stopPropagation()">
+        <div><strong>发送对象：</strong>${esc(p.audience || '—')}</div>
+        <div><strong>触发时机：</strong>${esc(p.trigger || '—')}</div>
+      </div>
       <div class="tpl-actions">
+        <button class="tpl-expand-toggle" onclick="event.stopPropagation();toggleCardMeta('preset-${id}',this)">展开详情 ▾</button>
         <button class="btn btn-secondary btn-sm" onclick="event.stopPropagation();loadPreset('${id}')">✏️ 编辑</button>
       </div>
     </div>`).join('');

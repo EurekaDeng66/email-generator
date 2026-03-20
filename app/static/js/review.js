@@ -222,6 +222,28 @@ function setPreviewView(lang, mode, btn) {
 }
 
 // ─────────────────────────────────────────────
+// COPY HELPERS (review modal)
+// ─────────────────────────────────────────────
+function copyReviewSubject() {
+  const item = reviewList[reviewIndex];
+  const title = item?.data?.content?.[reviewLang]?.title || '';
+  if (!title) { setStatus('当前语言暂无标题', 'error'); return; }
+  navigator.clipboard.writeText(title).then(
+    () => setStatus('✓ 标题已复制', 'success'),
+    () => setStatus('复制失败，请手动复制', 'error')
+  );
+}
+
+function copyReviewHtml() {
+  const html = reviewHtmlCache[reviewLang];
+  if (!html) { setStatus('HTML 尚未渲染，请稍候', 'error'); return; }
+  navigator.clipboard.writeText(html).then(
+    () => setStatus('✓ HTML 已复制', 'success'),
+    () => setStatus('复制失败，请手动复制', 'error')
+  );
+}
+
+// ─────────────────────────────────────────────
 // CTA HOVER TOOLTIP (show UTM link on hover)
 // ─────────────────────────────────────────────
 function injectCtaTooltips(lang) {

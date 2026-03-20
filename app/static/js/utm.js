@@ -82,16 +82,18 @@ function renderUtmTemplates() {
   }
   el.innerHTML = list.map(t => {
     const params = [];
-    if (t.source)   params.push(`source=${t.source}`);
-    if (t.medium)   params.push(`medium=${t.medium}`);
-    if (t.campaign) params.push(`campaign=${t.campaign}`);
-    if (t.content)  params.push(`content=${t.content}`);
-    const paramStr = params.join(' · ') || '(无参数)';
+    if (t.source)   params.push(`utm_source=${encodeURIComponent(t.source)}`);
+    if (t.medium)   params.push(`utm_medium=${encodeURIComponent(t.medium)}`);
+    if (t.campaign) params.push(`utm_campaign=${encodeURIComponent(t.campaign)}`);
+    if (t.content)  params.push(`utm_content=${encodeURIComponent(t.content)}`);
+    const base = t.base || '';
+    const fullUrl = base && params.length
+      ? base + (base.includes('?') ? '&' : '?') + params.join('&')
+      : base || '(无 URL)';
     return `<div class="tpl-card" style="margin-bottom:10px;">
       <div class="tpl-card-name">${esc(t.name)}</div>
-      <div class="tpl-card-meta" style="word-break:break-all;">${esc(t.base || '(无 URL)')}</div>
-      <div style="font-size:10px;color:#888;margin-bottom:8px;">${esc(paramStr)}</div>
-      <div class="tpl-actions">
+      <div class="tpl-card-meta" style="word-break:break-all;font-size:11px;color:#666;">${esc(fullUrl)}</div>
+      <div class="tpl-actions" style="margin-top:8px;">
         <button class="btn btn-secondary btn-sm" onclick="applyUtmTemplate('${t.id}')">应用到 Step 1</button>
         <button class="btn btn-danger btn-sm" onclick="deleteUtmTemplate('${t.id}')">删除</button>
       </div>

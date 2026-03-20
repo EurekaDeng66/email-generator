@@ -7,10 +7,10 @@ TEMPLATES_DIR = os.path.join(os.path.dirname(__file__), "templates")
 
 # Font families per language
 FONT_FAMILIES = {
-    "en": "'DM Sans','Microsoft YaHei UI',Arial,sans-serif",
-    "zh": "'Microsoft YaHei UI','微软雅黑',Arial,sans-serif",
-    "es": "'DM Sans','Microsoft YaHei UI',Arial,sans-serif",
-    "ja": "'Microsoft YaHei UI','Yu Gothic','Meiryo',Arial,sans-serif",
+    "en": "-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif",
+    "zh": "'Microsoft YaHei UI','微软雅黑','PingFang SC',Helvetica,Arial,sans-serif",
+    "es": "-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif",
+    "ja": "'Yu Gothic','Meiryo','Microsoft YaHei UI',Helvetica,Arial,sans-serif",
 }
 
 # Template metadata

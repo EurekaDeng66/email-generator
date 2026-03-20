@@ -63,6 +63,7 @@ async function loadReviewTemplate(idx) {
 
   // Show loading, hide email card
   document.getElementById('reviewLoadingTip').style.display = 'flex';
+  document.getElementById('reviewEmailChrome').classList.add('hidden');
   document.getElementById('reviewEmailChrome').style.display = 'none';
 
   // Load first lang
@@ -84,6 +85,7 @@ async function switchReviewLang(lang) {
   const item = reviewList[reviewIndex];
   updateReviewSubject(item.data, lang);
   document.getElementById('reviewLoadingTip').style.display = 'flex';
+  document.getElementById('reviewEmailChrome').classList.add('hidden');
   document.getElementById('reviewEmailChrome').style.display = 'none';
   await renderReviewLang(item, lang);
 }
@@ -97,6 +99,7 @@ async function renderReviewLang(item, lang) {
     setTimeout(() => injectCtaTooltips_iframe(iframe), 200);
   }
   document.getElementById('reviewLoadingTip').style.display = 'none';
+  document.getElementById('reviewEmailChrome').classList.remove('hidden');
   document.getElementById('reviewEmailChrome').style.display = 'flex';
 }
 

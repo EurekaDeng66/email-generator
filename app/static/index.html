@@ -470,6 +470,47 @@
     .hidden { display: none !important; }
     .text-muted { color: #aaa; font-size: 11px; }
     hr.divider { border: none; border-top: 1px solid #f0f0f0; margin: 20px 0; }
+
+    /* ── Mobile: ≤ 640px ── */
+    @media (max-width: 640px) {
+      body { padding-top: 56px; }
+      .pipeline-nav {
+        height: 56px; padding: 0 12px; gap: 8px; flex-wrap: nowrap;
+      }
+      .pipeline-brand { font-size: 13px; }
+      /* Hide step text labels on mobile, keep circles only */
+      .step-label { display: none; }
+      .step-circle { width: 22px; height: 22px; font-size: 10px; }
+      .pipe-connector { width: 14px; }
+      .pipeline-step { padding: 4px 4px; gap: 0; }
+      /* Compact action buttons */
+      .btn-lib-toggle, .btn-utm-toggle {
+        font-size: 11px; padding: 5px 8px; border-radius: 6px;
+      }
+      /* Container */
+      .container { padding: 20px 12px 60px; }
+      .card { padding: 16px; }
+      .form-grid { grid-template-columns: 1fr; }
+      /* Lang tabs scroll */
+      .lang-tabs { overflow-x: auto; -webkit-overflow-scrolling: touch; flex-wrap: nowrap; }
+      /* Review modal fullscreen on mobile */
+      .review-modal {
+        width: 100%; height: 100%; border-radius: 0;
+        max-height: 100vh;
+      }
+      .review-email-card iframe { width: 100% !important; }
+      #reviewEmailCard { width: 100% !important; }
+      /* Drawers full width */
+      .drawer-panel { width: 100%; }
+      /* Intent textarea */
+      .intent-textarea { min-height: 70px; padding: 12px 14px 48px; }
+    }
+
+    /* ── Mobile: ≤ 400px (very small) ── */
+    @media (max-width: 400px) {
+      .btn-lib-toggle .btn-label-full,
+      .btn-utm-toggle .btn-label-full { display: none; }
+    }
   </style>
 </head>
 <body>
@@ -479,8 +520,8 @@
   <div class="pipeline-brand">BlockSec <span>Email</span></div>
   <div class="pipeline-steps" id="pipelineSteps"></div>
   <div style="display:flex;gap:8px;align-items:center;">
-    <button class="btn-utm-toggle" onclick="toggleUtmDrawer()">🔗 UTM 管理</button>
-    <button class="btn-lib-toggle" onclick="toggleLibraryDrawer()">📚 模版库</button>
+    <button class="btn-utm-toggle" onclick="toggleUtmDrawer()">🔗<span class="btn-label-full"> UTM 管理</span></button>
+    <button class="btn-lib-toggle" onclick="toggleLibraryDrawer()">📚<span class="btn-label-full"> 模版库</span></button>
   </div>
 </nav>
 

@@ -144,6 +144,21 @@
       margin-left: 6px; vertical-align: middle; opacity: 0.8;
     }
 
+    /* ── Example suggestion bar ── */
+    .intent-examples { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; flex-wrap: wrap; }
+    .intent-example-label { font-size: 11px; color: #bbb; white-space: nowrap; }
+    .intent-example-chip {
+      font-size: 12px; color: #999; border: 1px solid #e8e8e8; border-radius: 20px;
+      padding: 3px 10px; cursor: pointer; background: #fafafa; transition: all 0.15s;
+      white-space: nowrap;
+    }
+    .intent-example-chip:hover { border-color: #FF7F32; color: #FF7F32; background: #fff8f4; }
+    .fill-example-link {
+      font-size: 11px; color: #bbb; cursor: pointer; text-decoration: underline dotted;
+      transition: color 0.15s;
+    }
+    .fill-example-link:hover { color: #FF7F32; }
+
     /* ── Clarification chips ── */
     #clarification-area { margin-bottom: 8px; }
     .clarification-box {
@@ -482,21 +497,42 @@
       </div>
     </div>
 
+    <!-- Example suggestions -->
+    <div class="intent-examples">
+      <span class="intent-example-label">试试：</span>
+      <span class="intent-example-chip" onclick="fillIntentExample('welcome')">💌 新用户欢迎邮件</span>
+      <span class="intent-example-chip" onclick="fillIntentExample('crime_report')">📊 犯罪报告推广 KYT</span>
+      <span class="intent-example-chip" onclick="fillIntentExample('inactive')">🔔 14天未活跃召回</span>
+    </div>
+
     <!-- Clarification chips (shown when AI needs more info) -->
     <div id="clarification-area" style="display:none;"></div>
 
     <!-- Fields section (hidden until AI parse or manual) -->
     <div id="fields-section" class="fields-section">
 
+    <!-- AI Rationale card (shown after parse_intent) -->
+    <div id="rationale-card" style="display:none;background:#f0f7ff;border-left:3px solid #8DC8E8;padding:10px 14px;margin:14px 0 0;border-radius:4px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+        <span style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;color:#5a8fa8;">AI 推荐理由</span>
+        <button onclick="document.getElementById('rationale-card').style.display='none'" style="background:none;border:none;color:#aaa;cursor:pointer;font-size:14px;line-height:1;padding:0;">✕</button>
+      </div>
+      <p id="rationale-text" style="margin:0;font-size:13px;line-height:1.55;color:#333;"></p>
+    </div>
+
     <!-- Email config card -->
     <div class="card" style="margin-top:16px;">
+      <div style="display:flex;justify-content:flex-end;margin-bottom:12px;">
+        <span class="fill-example-link" onclick="fillExampleData('welcome')">填入示例数据（新用户欢迎）</span>
+      </div>
       <div class="form-grid">
 
         <div class="form-group">
           <label>邮件模版<span class="req">*</span></label>
-          <select id="template">
+          <select id="template" onchange="updateTemplateHint(this.value)">
             <option value="">加载模版中…</option>
           </select>
+          <div id="template-perf-hint" style="display:none;margin-top:5px;font-size:12px;color:#5a8fa8;"></div>
         </div>
 
         <div class="form-group">
@@ -868,6 +904,58 @@
   </div>
 </div>
 
+<!-- ── Metrics Entry Modal ── -->
+<div id="metricsEntryModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9999;align-items:center;justify-content:center;">
+  <div style="background:#fff;border-radius:10px;padding:24px;width:460px;max-width:95vw;box-shadow:0 8px 32px rgba(0,0,0,.2);">
+    <input type="hidden" id="metricsEntryId">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+      <h3 style="margin:0;font-size:15px;">📊 录入发送数据</h3>
+      <button onclick="closeMetricsEntry()" style="background:none;border:none;font-size:18px;cursor:pointer;color:#888;">✕</button>
+    </div>
+    <p style="margin:0 0 14px;font-size:12px;color:#888;">填入实际发送效果，AI 下次生成时会参考这些数据。打开率 / 点击率填百分比（如 32.5 表示 32.5%）。</p>
+    <table style="width:100%;border-collapse:collapse;font-size:13px;">
+      <thead>
+        <tr style="color:#888;font-size:11px;text-transform:uppercase;">
+          <th style="text-align:left;padding:4px 6px;">语言</th>
+          <th style="padding:4px 6px;">发送量</th>
+          <th style="padding:4px 6px;">打开率 %</th>
+          <th style="padding:4px 6px;">点击率 %</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td style="padding:5px 6px;font-weight:600;">EN</td>
+          <td style="padding:5px 6px;"><input id="me_en_sent" type="number" min="0" placeholder="—" style="width:70px;border:1px solid #ddd;border-radius:4px;padding:3px 6px;font-size:13px;"></td>
+          <td style="padding:5px 6px;"><input id="me_en_open_rate" type="number" min="0" max="100" step="0.1" placeholder="—" style="width:70px;border:1px solid #ddd;border-radius:4px;padding:3px 6px;font-size:13px;"></td>
+          <td style="padding:5px 6px;"><input id="me_en_click_rate" type="number" min="0" max="100" step="0.1" placeholder="—" style="width:70px;border:1px solid #ddd;border-radius:4px;padding:3px 6px;font-size:13px;"></td>
+        </tr>
+        <tr>
+          <td style="padding:5px 6px;font-weight:600;">ZH</td>
+          <td style="padding:5px 6px;"><input id="me_zh_sent" type="number" min="0" placeholder="—" style="width:70px;border:1px solid #ddd;border-radius:4px;padding:3px 6px;font-size:13px;"></td>
+          <td style="padding:5px 6px;"><input id="me_zh_open_rate" type="number" min="0" max="100" step="0.1" placeholder="—" style="width:70px;border:1px solid #ddd;border-radius:4px;padding:3px 6px;font-size:13px;"></td>
+          <td style="padding:5px 6px;"><input id="me_zh_click_rate" type="number" min="0" max="100" step="0.1" placeholder="—" style="width:70px;border:1px solid #ddd;border-radius:4px;padding:3px 6px;font-size:13px;"></td>
+        </tr>
+        <tr>
+          <td style="padding:5px 6px;font-weight:600;">ES</td>
+          <td style="padding:5px 6px;"><input id="me_es_sent" type="number" min="0" placeholder="—" style="width:70px;border:1px solid #ddd;border-radius:4px;padding:3px 6px;font-size:13px;"></td>
+          <td style="padding:5px 6px;"><input id="me_es_open_rate" type="number" min="0" max="100" step="0.1" placeholder="—" style="width:70px;border:1px solid #ddd;border-radius:4px;padding:3px 6px;font-size:13px;"></td>
+          <td style="padding:5px 6px;"><input id="me_es_click_rate" type="number" min="0" max="100" step="0.1" placeholder="—" style="width:70px;border:1px solid #ddd;border-radius:4px;padding:3px 6px;font-size:13px;"></td>
+        </tr>
+        <tr>
+          <td style="padding:5px 6px;font-weight:600;">JA</td>
+          <td style="padding:5px 6px;"><input id="me_ja_sent" type="number" min="0" placeholder="—" style="width:70px;border:1px solid #ddd;border-radius:4px;padding:3px 6px;font-size:13px;"></td>
+          <td style="padding:5px 6px;"><input id="me_ja_open_rate" type="number" min="0" max="100" step="0.1" placeholder="—" style="width:70px;border:1px solid #ddd;border-radius:4px;padding:3px 6px;font-size:13px;"></td>
+          <td style="padding:5px 6px;"><input id="me_ja_click_rate" type="number" min="0" max="100" step="0.1" placeholder="—" style="width:70px;border:1px solid #ddd;border-radius:4px;padding:3px 6px;font-size:13px;"></td>
+        </tr>
+      </tbody>
+    </table>
+    <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:18px;">
+      <button class="btn btn-secondary btn-sm" onclick="closeMetricsEntry()">取消</button>
+      <button class="btn btn-primary btn-sm" onclick="saveMetricsEntry()">保存</button>
+    </div>
+  </div>
+</div>
+
 <!-- ── Review Modal ── -->
 <div class="review-overlay hidden" id="reviewOverlay" onclick="closeReviewModal()"></div>
 <div class="review-modal hidden" id="reviewModal">
@@ -970,11 +1058,23 @@
   </div>
 </div>
 
-<script>
-// ─────────────────────────────────────────────
-// STATE
-// ─────────────────────────────────────────────
-const LANGS = ['zh', 'en', 'es', 'ja'];
+<script src="/static/js/state.js"></script>
+<script src="/static/js/nav.js"></script>
+<script src="/static/js/status.js"></script>
+<script src="/static/js/sync.js"></script>
+<script src="/static/js/presets.js"></script>
+<script src="/static/js/combos.js"></script>
+<script src="/static/js/cta.js"></script>
+<script src="/static/js/intent.js"></script>
+<script src="/static/js/generate.js"></script>
+<script src="/static/js/editor.js"></script>
+<script src="/static/js/library.js"></script>
+<script src="/static/js/review.js"></script>
+<script src="/static/js/utm.js"></script>
+<script src="/static/js/main.js"></script>
+<script type="text/inactive">
+// old inline JS — superseded by static/js/ modules above
+
 const LANG_LABELS = { zh: '中文', en: '英文', es: '西班牙语', ja: '日语' };
 let activeNavStep = 1;    // which step is highlighted in nav
 let stepDoneState = {};   // {1: bool, 2: bool}
@@ -987,11 +1087,12 @@ let quillEditors = {};
 let currentEditorLang = 'en';
 let selectedLangs = [...LANGS]; // languages selected for generation
 
-const CTA_KEY   = 'blocksec_cta_templates';
-const FIELD_KEY = 'blocksec_field_options';
-const LIB_KEY   = 'blocksec_email_library';
-const UTM_KEY   = 'blocksec_utm_templates';
-const STORE_KEYS = [CTA_KEY, FIELD_KEY, LIB_KEY, UTM_KEY];
+const CTA_KEY     = 'blocksec_cta_templates';
+const FIELD_KEY   = 'blocksec_field_options';
+const LIB_KEY     = 'blocksec_email_library';
+const UTM_KEY     = 'blocksec_utm_templates';
+const METRICS_KEY = 'blocksec_campaign_metrics';
+const STORE_KEYS  = [CTA_KEY, FIELD_KEY, LIB_KEY, UTM_KEY, METRICS_KEY];
 
 // ─────────────────────────────────────────────
 // PIPELINE NAV (scroll-based, always visible)
@@ -1102,6 +1203,81 @@ function applyChipAndReparse(option) {
   parseIntentAndFill();
 }
 
+// ── Example data ──────────────────────────────────────────────────
+const EXAMPLES = {
+  welcome: {
+    intent: '给刚注册的 Phalcon Compliance 新用户发一封欢迎邮件，介绍 KYT/KYA 核心功能和每月 3 次免费筛查，CTA 跳到 Compliance App，Ruby 来发',
+    fields: {
+      template_id: 'ruby_kyt',
+      subject: '新用户注册后欢迎，介绍 Phalcon Compliance 核心功能与免费额度',
+      audience: '刚完成注册的 Phalcon Compliance 新用户',
+      trigger: '用户注册完成后立即发送',
+      instructions: '语气温暖友好，突出每月 3 次免费筛查，降低用户启动门槛',
+      cta_destination: 'https://app.blocksec.com/phalcon/compliance',
+      cta_label: '开始免费筛查',
+      utm_content: 'welcome_onboarding',
+    },
+  },
+  crime_report: {
+    intent: '给下载了 2026 BlockSec 加密犯罪报告的交易所合规人员发一封推广 KYT 产品的邮件，CTA 跳到 Compliance App，Ruby 来发',
+    fields: {
+      template_id: 'ruby_kyt',
+      subject: '发送犯罪报告后跟进推广 Phalcon KYT 产品',
+      audience: '下载了 2026 加密犯罪报告的交易所合规负责人',
+      trigger: '报告下载后 1-2 天内发送',
+      instructions: '引用报告中的关键数据建立背景，自然过渡到 KYT 产品价值',
+      cta_destination: 'https://app.blocksec.com/phalcon/compliance',
+      cta_label: '免费体验 KYT 筛查',
+      utm_content: 'crime_report_kyt',
+    },
+  },
+  inactive: {
+    intent: '给 14 天未使用 Phalcon Compliance 的用户发一封召回邮件，提醒剩余免费额度，Jenna 来发',
+    fields: {
+      template_id: 'jenna_marketing',
+      subject: '14 天未活跃用户召回，提醒免费筛查额度',
+      audience: '注册后 14 天内未再次使用的 Phalcon Compliance 用户',
+      trigger: '用户最后一次登录后满 14 天触发',
+      instructions: '语气轻松不强硬，以"免费额度快用完"制造轻度紧迫感',
+      cta_destination: 'https://app.blocksec.com/phalcon/compliance',
+      cta_label: '继续免费筛查',
+      utm_content: '14d_inactive',
+    },
+  },
+};
+
+function fillIntentExample(key) {
+  const ex = EXAMPLES[key];
+  if (!ex) return;
+  document.getElementById('intent-input').value = ex.intent;
+  _hideClarification();
+  parseIntentAndFill();
+}
+
+function fillExampleData(key) {
+  const ex = EXAMPLES[key];
+  if (!ex) return;
+  const f = ex.fields;
+  const sel = document.getElementById('template');
+  if (f.template_id && sel.querySelector(`option[value="${f.template_id}"]`)) sel.value = f.template_id;
+  document.getElementById('subject').value      = f.subject      || '';
+  document.getElementById('audience').value     = f.audience     || '';
+  document.getElementById('trigger').value      = f.trigger      || '';
+  document.getElementById('instructions').value = f.instructions || '';
+  if (f.cta_destination || f.cta_label || f.utm_content) {
+    document.getElementById('ctaToggleBody').classList.add('open');
+    document.getElementById('ctaArrow').classList.add('open');
+    if (f.cta_destination) {
+      const ctaSel = document.getElementById('cta_base');
+      const match = [...ctaSel.options].find(o => o.value === f.cta_destination);
+      if (match) { ctaSel.value = f.cta_destination; onCtaBaseChange(); }
+    }
+    if (f.utm_content) document.getElementById('cta_utm_content').value = f.utm_content;
+    if (f.cta_label)   document.getElementById('cta_label').value = f.cta_label;
+    assembleCTAUrl();
+  }
+}
+
 function toggleCtaSection() {
   const body  = document.getElementById('ctaToggleBody');
   const arrow = document.getElementById('ctaArrow');
@@ -1162,6 +1338,13 @@ async function parseIntentAndFill() {
       if (data.utm_content) document.getElementById('cta_utm_content').value = data.utm_content;
       if (data.cta_label)   document.getElementById('cta_label').value = data.cta_label;
       assembleCTAUrl();
+    }
+    // Show rationale card if AI provided reasoning
+    if (data.rationale) {
+      document.getElementById('rationale-text').textContent = data.rationale;
+      document.getElementById('rationale-card').style.display = 'block';
+    } else {
+      document.getElementById('rationale-card').style.display = 'none';
     }
     if (!data.clarification) {
       showFieldsSection();
@@ -1974,6 +2157,106 @@ function renderLibrary() { renderUserTpls(); renderPresetTpls(); }
 
 const TMPL_LABELS = { ruby_sales: 'Ruby Sales', ruby_kyt: 'Ruby KYT', jenna_marketing: 'Jenna Marketing' };
 
+// ─────────────────────────────────────────────
+// METRICS HELPERS
+// ─────────────────────────────────────────────
+function loadMetrics() {
+  return JSON.parse(localStorage.getItem(METRICS_KEY) || '[]');
+}
+
+function saveMetrics(arr) {
+  localStorage.setItem(METRICS_KEY, JSON.stringify(arr));
+  fetch(`/api/store/${METRICS_KEY}`, {
+    method: 'PUT', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ value: arr }),
+  }).catch(() => {});
+}
+
+function updateTemplateHint(tplId) {
+  const hint = document.getElementById('template-perf-hint');
+  if (!tplId) { hint.style.display = 'none'; return; }
+  const metrics = loadMetrics().filter(m => m.template_id === tplId);
+  if (!metrics.length) { hint.style.display = 'none'; return; }
+  const agg = {};
+  metrics.forEach(m => {
+    Object.entries(m.metrics || {}).forEach(([lang, s]) => {
+      if (!agg[lang]) agg[lang] = { opens: [], clicks: [] };
+      if (s.open_rate != null) agg[lang].opens.push(s.open_rate);
+      if (s.click_rate != null) agg[lang].clicks.push(s.click_rate);
+    });
+  });
+  const parts = Object.entries(agg).map(([lang, s]) => {
+    const o = s.opens.length ? (s.opens.reduce((a,b)=>a+b,0)/s.opens.length*100).toFixed(0)+'%' : '—';
+    const c = s.clicks.length ? (s.clicks.reduce((a,b)=>a+b,0)/s.clicks.length*100).toFixed(0)+'%' : '—';
+    return `${lang.toUpperCase()} 打开${o} 点击${c}`;
+  });
+  hint.textContent = `📊 基于 ${metrics.length} 次发送：${parts.join(' · ')}`;
+  hint.style.display = 'block';
+}
+
+function openMetricsEntry(campaignId) {
+  const modal = document.getElementById('metricsEntryModal');
+  document.getElementById('metricsEntryId').value = campaignId;
+  // Reset fields
+  ['en','zh','es','ja'].forEach(l => {
+    ['sent','open_rate','click_rate'].forEach(f => {
+      const el = document.getElementById(`me_${l}_${f}`);
+      if (el) el.value = '';
+    });
+  });
+  // Pre-fill if already exists
+  const existing = loadMetrics().find(m => m.campaign_id === campaignId);
+  if (existing) {
+    Object.entries(existing.metrics || {}).forEach(([lang, s]) => {
+      if (s.sent != null) { const el = document.getElementById(`me_${lang}_sent`); if (el) el.value = s.sent; }
+      if (s.open_rate != null) { const el = document.getElementById(`me_${lang}_open_rate`); if (el) el.value = (s.open_rate * 100).toFixed(1); }
+      if (s.click_rate != null) { const el = document.getElementById(`me_${lang}_click_rate`); if (el) el.value = (s.click_rate * 100).toFixed(1); }
+    });
+  }
+  modal.style.display = 'flex';
+}
+
+function closeMetricsEntry() {
+  document.getElementById('metricsEntryModal').style.display = 'none';
+}
+
+function saveMetricsEntry() {
+  const campaignId = document.getElementById('metricsEntryId').value;
+  const lib = loadLibrary();
+  const entry = lib.find(e => e.id === campaignId);
+  if (!entry) return;
+
+  const metrics = {};
+  ['en','zh','es','ja'].forEach(l => {
+    const sent = parseFloat(document.getElementById(`me_${l}_sent`)?.value);
+    const open = parseFloat(document.getElementById(`me_${l}_open_rate`)?.value);
+    const click = parseFloat(document.getElementById(`me_${l}_click_rate`)?.value);
+    if (!isNaN(sent) || !isNaN(open) || !isNaN(click)) {
+      metrics[l] = {};
+      if (!isNaN(sent))  metrics[l].sent = sent;
+      if (!isNaN(open))  metrics[l].open_rate  = open / 100;
+      if (!isNaN(click)) metrics[l].click_rate = click / 100;
+    }
+  });
+  if (!Object.keys(metrics).length) { closeMetricsEntry(); return; }
+
+  const all = loadMetrics();
+  const idx = all.findIndex(m => m.campaign_id === campaignId);
+  const record = {
+    campaign_id: campaignId,
+    template_id: entry.template_id,
+    audience: entry.audience || '',
+    trigger: entry.trigger || '',
+    metrics,
+    recorded_at: new Date().toISOString().slice(0, 10),
+  };
+  if (idx >= 0) all[idx] = record; else all.push(record);
+  saveMetrics(all);
+  closeMetricsEntry();
+  updateTemplateHint(document.getElementById('template').value);
+  setStatus('✦ 数据已记录', 'success'); setTimeout(clearStatus, 2000);
+}
+
 function renderUserTpls() {
   const lib  = loadLibrary();
   const grid = document.getElementById('userTplGrid');
@@ -1981,19 +2264,26 @@ function renderUserTpls() {
     grid.innerHTML = '<p class="text-muted" style="padding:4px 0;">暂无模版。在上方输入名称保存当前邮件。</p>';
     return;
   }
-  grid.innerHTML = lib.map(e => `
+  const allMetrics = loadMetrics();
+  grid.innerHTML = lib.map(e => {
+    const hasMet = allMetrics.some(m => m.campaign_id === e.id);
+    const metLabel = hasMet ? '<span class="tag" style="background:#d4edda;color:#155724;">📊 有数据</span>' : '';
+    return `
     <div class="tpl-card" onclick="openReviewModal('user','${e.id}')">
       <div class="tpl-card-name">${esc(e.name)}</div>
       <div class="tpl-card-meta">${e.saved_at || ''}</div>
       <div class="tpl-tags">
         <span class="tag tag-tmpl">${TMPL_LABELS[e.template_id] || e.template_id}</span>
         ${(e.langs||[]).map(l=>`<span class="tag tag-lang">${l.toUpperCase()}</span>`).join('')}
+        ${metLabel}
       </div>
       <div class="tpl-actions">
         <button class="btn btn-secondary btn-sm" onclick="event.stopPropagation();loadFromLibrary('${e.id}')">✏️ 编辑</button>
+        <button class="btn btn-secondary btn-sm" onclick="event.stopPropagation();openMetricsEntry('${e.id}')">📊 录入数据</button>
         <button class="btn btn-danger btn-sm" onclick="event.stopPropagation();deleteFromLibrary('${e.id}')">删除</button>
       </div>
-    </div>`).join('');
+    </div>`;
+  }).join('');
 }
 
 function renderPresetTpls() {
@@ -2034,6 +2324,7 @@ function startNew() {
   const _mBtn = document.getElementById('manualToggleBtn');
   if (_mBtn) _mBtn.textContent = '手动填写 →';
   document.getElementById('intent-input').value = '';
+  document.getElementById('rationale-card').style.display = 'none';
   _hideClarification();
   document.querySelectorAll('label.ai-badge').forEach(l => l.classList.remove('ai-badge'));
   LANGS.forEach(l => {

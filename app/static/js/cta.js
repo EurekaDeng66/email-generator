@@ -64,6 +64,8 @@ function saveCTATemplate() {
   const url  = (document.getElementById('cta_url').value || '').trim();
   const name = (document.getElementById('cta_save_name').value || '').trim();
   if (!url || !name) { alert('请填写 URL 和模版名称'); return; }
+
+  // Save to CTA template list
   const tpls = loadCTATemplates();
   const idx  = tpls.findIndex(t => t.name === name);
   if (idx >= 0) { if (!confirm(`替换 "${name}"？`)) return; tpls[idx].url = url; }
@@ -72,6 +74,33 @@ function saveCTATemplate() {
   serverSave(CTA_KEY);
   document.getElementById('cta_save_name').value = '';
   renderCTATemplates();
+
+  // Sync to UTM template library (upsert by name)
+  const baseVal = document.getElementById('cta_base').value;
+  const utmBase = baseVal === '__custom__'
+    ? (document.getElementById('cta_custom_url').value || '').trim()
+    : baseVal;
+  const utmEntry = {
+    id:       null, // will be assigned below
+    name,
+    base:     utmBase,
+    source:   (document.getElementById('cta_utm_source').value  || '').trim(),
+    medium:   '',
+    campaign: '',
+    content:  (document.getElementById('cta_utm_content').value || '').trim(),
+  };
+  const utmList = loadUtmTemplates();
+  const utmIdx  = utmList.findIndex(t => t.name === name);
+  if (utmIdx >= 0) {
+    utmEntry.id = utmList[utmIdx].id;
+    utmList[utmIdx] = utmEntry;
+  } else {
+    utmEntry.id = Date.now().toString();
+    utmList.unshift(utmEntry);
+  }
+  localStorage.setItem(UTM_KEY, JSON.stringify(utmList));
+  serverSave(UTM_KEY);
+  renderUtmTemplates();
 }
 function deleteCTATemplate(name) {
   localStorage.setItem(CTA_KEY, JSON.stringify(loadCTATemplates().filter(t => t.name !== name)));

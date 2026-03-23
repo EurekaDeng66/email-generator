@@ -132,13 +132,13 @@
     }
     .intent-manual:hover { color: #888; }
     .intent-parse-btn {
-      padding: 7px 16px; background: #FF7F32; color: #fff; border: none;
-      border-radius: 8px; font-size: 12px; font-weight: 700; cursor: pointer;
-      display: flex; align-items: center; gap: 6px; transition: background 0.15s;
+      padding: 9px 18px; background: #FF7F32; color: #fff; border: none;
+      border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer;
+      display: inline-flex; align-items: center; gap: 6px; transition: background 0.15s;
       font-family: inherit;
     }
     .intent-parse-btn:hover { background: #e86e22; }
-    .intent-parse-btn:disabled { background: #f5c9a8; cursor: not-allowed; }
+    .intent-parse-btn:disabled { background: #f5c9a8; cursor: not-allowed; font-size: 13px; }
     /* AI-filled field badge */
     .ai-badge::after {
       content: '✦ AI'; font-size: 9px; font-weight: 700; color: #FF7F32;
@@ -746,8 +746,8 @@
           <input type="checkbox" id="lang-check-ja" value="ja" checked onchange="updateGenerateBtn()"> 日本語
         </label>
       </div>
-      <button class="btn btn-primary btn-lg" id="generateBtn" onclick="handleGenerate()">
-        ✦ 生成 4 种语言
+      <button class="btn btn-primary" id="generateBtn" onclick="handleGenerate()">
+        ✦ 生成邮件内容
       </button>
     </div>
 
@@ -1006,7 +1006,7 @@
       <div class="lib-save-row">
         <input type="text" id="lib-save-name" placeholder="给这封邮件起个名字">
         <button class="btn btn-secondary btn-sm" onclick="saveToDraft()" title="保存草稿，无需生成 HTML">暂存草稿</button>
-        <button class="btn btn-primary btn-sm" onclick="saveAsTemplate()" title="自动生成所有语言 HTML 后保存为正式模版">存为模版 ✓</button>
+        <button class="btn btn-primary" onclick="saveAsTemplate()" title="自动生成所有语言 HTML 后保存为正式模版">保存邮件模版</button>
       </div>
       <p class="text-muted" style="margin-top:6px;">草稿：随时保存进度 · 模版：自动补全所有语言 HTML</p>
     </div>

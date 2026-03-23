@@ -22,7 +22,7 @@ function getSelectedLangs() {
 function updateGenerateBtn() {
   selectedLangs = getSelectedLangs();
   const btn = document.getElementById('generateBtn');
-  btn.textContent = `✦ 生成 ${selectedLangs.length} 种语言`;
+  btn.textContent = `✦ 生成邮件内容`;
 }
 
 function enterManualMode() {
@@ -103,6 +103,6 @@ async function handleGenerate() {
     setStatus(`Error: ${e.message}`, 'error');
   } finally {
     btn.disabled = false;
-    btn.textContent = `✦ 生成 ${selectedLangs.length} 种语言`;
+    btn.textContent = `✦ 生成邮件内容`;
   }
 }

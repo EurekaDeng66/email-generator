@@ -67,7 +67,7 @@ async function handleRegenerate(lang) {
   const trigger    = document.getElementById('trigger').value.trim();
   const ctaUrl     = document.getElementById('cta_url').value.trim();
   const ctaLabel   = document.getElementById('cta_label').value.trim();
-  const variables  = document.getElementById('variables').value.trim();
+  const variables  = (document.getElementById('variables')?.value || '').trim();
   let   instructions = (document.getElementById(`revision-${lang}`).value || '').trim();
   if (ctaLabel && ctaUrl) {
     const note = `CTA button label: "${ctaLabel}" — translate this label naturally into ${lang} for the CTA link text.`;
@@ -123,7 +123,7 @@ async function handleRegenField(lang, scope) {
   const trigger    = document.getElementById('trigger').value.trim();
   const ctaUrl     = document.getElementById('cta_url').value.trim();
   const ctaLabel   = document.getElementById('cta_label').value.trim();
-  const variables  = document.getElementById('variables').value.trim();
+  const variables  = (document.getElementById('variables')?.value || '').trim();
   let   instructions = (document.getElementById(`revision-${lang}`).value || '').trim();
   if (ctaLabel && ctaUrl) {
     const note = `CTA button label: "${ctaLabel}" — translate naturally into ${lang}.`;
@@ -184,7 +184,7 @@ async function handleBatchRegen() {
   const trigger    = document.getElementById('trigger').value.trim();
   const ctaUrl     = document.getElementById('cta_url').value.trim();
   const ctaLabel   = document.getElementById('cta_label').value.trim();
-  const variables  = document.getElementById('variables').value.trim();
+  const variables  = (document.getElementById('variables')?.value || '').trim();
 
   const btn = document.getElementById('batchRegenBtn');
   btn.disabled = true;

@@ -266,6 +266,20 @@
     .btn-danger:hover { background: #fef2f2; }
     .btn-lg { padding: 12px 28px; font-size: 14px; }
     .btn-sm { padding: 5px 11px; font-size: 11px; }
+    .has-tip { position: relative; }
+    .has-tip .tip-bubble {
+      visibility: hidden; opacity: 0;
+      position: absolute; bottom: calc(100% + 8px); left: 50%; transform: translateX(-50%);
+      background: #1e293b; color: #f1f5f9; font-size: 11px; font-weight: 400; line-height: 1.5;
+      white-space: nowrap; padding: 6px 10px; border-radius: 6px;
+      pointer-events: none; transition: opacity 0.15s, visibility 0.15s;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.18); z-index: 100;
+    }
+    .has-tip .tip-bubble::after {
+      content: ''; position: absolute; top: 100%; left: 50%; transform: translateX(-50%);
+      border: 5px solid transparent; border-top-color: #1e293b;
+    }
+    .has-tip:hover .tip-bubble { visibility: visible; opacity: 1; }
     .spinner {
       display: inline-block; width: 13px; height: 13px;
       border: 2px solid rgba(255,255,255,0.35); border-top-color: #fff;
@@ -786,7 +800,7 @@
         </div>
         <div class="confirm-row">
           <button class="btn-reviewed" id="reviewed-btn-en" onclick="toggleReviewed('en')">○ 标记已审阅</button>
-          <button class="btn btn-secondary btn-sm" id="translate-from-btn-en" onclick="handleTranslateFrom('en')" title="将此版本翻译到其他语言">→ 同步翻译</button>
+          <span class="has-tip"><button class="btn btn-secondary btn-sm" id="translate-from-btn-en" onclick="handleTranslateFrom('en')">→ 同步翻译</button><span class="tip-bubble">确定英文邮件内容后，一键同步翻译成其他语言文案</span></span>
           <button class="btn btn-html-dirty" id="html-btn-en" onclick="generateHtml('en')">⬆ 生成 HTML</button>
         </div>
         <div class="output-panel hidden" id="output-en">
@@ -835,7 +849,7 @@
         </div>
         <div class="confirm-row">
           <button class="btn-reviewed" id="reviewed-btn-zh" onclick="toggleReviewed('zh')">○ 标记已审阅</button>
-          <button class="btn btn-secondary btn-sm" id="translate-from-btn-zh" onclick="handleTranslateFrom('zh')" title="将此版本翻译到其他语言">→ 同步翻译</button>
+          <span class="has-tip"><button class="btn btn-secondary btn-sm" id="translate-from-btn-zh" onclick="handleTranslateFrom('zh')">→ 同步翻译</button><span class="tip-bubble">确定中文邮件内容后，一键同步翻译成其他语言文案</span></span>
           <button class="btn btn-html-dirty" id="html-btn-zh" onclick="generateHtml('zh')">⬆ 生成 HTML</button>
         </div>
         <div class="output-panel hidden" id="output-zh">
@@ -884,7 +898,7 @@
         </div>
         <div class="confirm-row">
           <button class="btn-reviewed" id="reviewed-btn-es" onclick="toggleReviewed('es')">○ 标记已审阅</button>
-          <button class="btn btn-secondary btn-sm" id="translate-from-btn-es" onclick="handleTranslateFrom('es')" title="将此版本翻译到其他语言">→ 同步翻译</button>
+          <span class="has-tip"><button class="btn btn-secondary btn-sm" id="translate-from-btn-es" onclick="handleTranslateFrom('es')">→ 同步翻译</button><span class="tip-bubble">确定西班牙语邮件内容后，一键同步翻译成其他语言文案</span></span>
           <button class="btn btn-html-dirty" id="html-btn-es" onclick="generateHtml('es')">⬆ 生成 HTML</button>
         </div>
         <div class="output-panel hidden" id="output-es">
@@ -933,7 +947,7 @@
         </div>
         <div class="confirm-row">
           <button class="btn-reviewed" id="reviewed-btn-ja" onclick="toggleReviewed('ja')">○ 标记已审阅</button>
-          <button class="btn btn-secondary btn-sm" id="translate-from-btn-ja" onclick="handleTranslateFrom('ja')" title="将此版本翻译到其他语言">→ 同步翻译</button>
+          <span class="has-tip"><button class="btn btn-secondary btn-sm" id="translate-from-btn-ja" onclick="handleTranslateFrom('ja')">→ 同步翻译</button><span class="tip-bubble">确定日语邮件内容后，一键同步翻译成其他语言文案</span></span>
           <button class="btn btn-html-dirty" id="html-btn-ja" onclick="generateHtml('ja')">⬆ 生成 HTML</button>
         </div>
         <div class="output-panel hidden" id="output-ja">

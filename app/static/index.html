@@ -1154,7 +1154,11 @@
   </div>
   <div class="drawer-body">
     <div class="card">
-      <div class="card-title">新建 UTM 模版</div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+        <div class="card-title" id="utm-form-title" style="margin-bottom:0;">新建 UTM 模版</div>
+        <button id="utm-cancel-edit-btn" onclick="cancelUtmEdit()" style="display:none;font-size:11px;color:#888;background:none;border:none;cursor:pointer;text-decoration:underline;">取消编辑</button>
+      </div>
+      <input type="hidden" id="utm-editing-id" value="">
       <div class="form-group" style="margin-bottom:10px;">
         <label>模版名称</label>
         <input type="text" id="utm-tpl-name" placeholder="例如：Welcome 邮件 UTM">
@@ -1185,7 +1189,7 @@
         <label>预览</label>
         <input type="text" id="utm-tpl-preview" readonly style="background:#f8f8f8;font-size:11px;color:#666;">
       </div>
-      <button class="btn btn-primary btn-sm" onclick="saveUtmTemplate()">保存 UTM 模版</button>
+      <button class="btn btn-primary btn-sm" id="utm-save-btn" onclick="saveUtmTemplate()">保存 UTM 模版</button>
     </div>
     <div class="section-label">已保存的 UTM 模版</div>
     <div id="utmTplList"></div>

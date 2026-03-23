@@ -26,23 +26,75 @@ function assembleUtmPreview() {
 function saveUtmTemplate() {
   const name = (document.getElementById('utm-tpl-name').value || '').trim();
   if (!name) { alert('请输入模版名称'); return; }
-  const tpl = {
-    id: Date.now().toString(), name,
-    base: (document.getElementById('utm-tpl-base').value || '').trim(),
-    source: (document.getElementById('utm-tpl-source').value || '').trim(),
-    medium: (document.getElementById('utm-tpl-medium').value || '').trim(),
-    campaign: (document.getElementById('utm-tpl-campaign').value || '').trim(),
-    content: (document.getElementById('utm-tpl-content').value || '').trim(),
-  };
+  const editingId = document.getElementById('utm-editing-id').value;
   const list = loadUtmTemplates();
-  const idx = list.findIndex(t => t.name === name);
-  if (idx >= 0) { if (!confirm(`替换 "${name}"？`)) return; list.splice(idx, 1); }
-  list.unshift(tpl);
-  localStorage.setItem(UTM_KEY, JSON.stringify(list));
-  serverSave(UTM_KEY);
-  ['utm-tpl-name','utm-tpl-base','utm-tpl-source','utm-tpl-medium','utm-tpl-campaign','utm-tpl-content','utm-tpl-preview'].forEach(id => document.getElementById(id).value = '');
-  setStatus(`UTM 模版 "${name}" 已保存`, 'success');
+
+  if (editingId) {
+    // Update existing entry
+    const idx = list.findIndex(t => t.id === editingId);
+    if (idx >= 0) {
+      list[idx] = {
+        ...list[idx], name,
+        base:     (document.getElementById('utm-tpl-base').value     || '').trim(),
+        source:   (document.getElementById('utm-tpl-source').value   || '').trim(),
+        medium:   (document.getElementById('utm-tpl-medium').value   || '').trim(),
+        campaign: (document.getElementById('utm-tpl-campaign').value || '').trim(),
+        content:  (document.getElementById('utm-tpl-content').value  || '').trim(),
+      };
+    }
+    localStorage.setItem(UTM_KEY, JSON.stringify(list));
+    serverSave(UTM_KEY);
+    setStatus(`UTM 模版 "${name}" 已更新`, 'success');
+  } else {
+    // Create new entry
+    const tpl = {
+      id: Date.now().toString(), name,
+      base:     (document.getElementById('utm-tpl-base').value     || '').trim(),
+      source:   (document.getElementById('utm-tpl-source').value   || '').trim(),
+      medium:   (document.getElementById('utm-tpl-medium').value   || '').trim(),
+      campaign: (document.getElementById('utm-tpl-campaign').value || '').trim(),
+      content:  (document.getElementById('utm-tpl-content').value  || '').trim(),
+    };
+    const dupIdx = list.findIndex(t => t.name === name);
+    if (dupIdx >= 0) { if (!confirm(`替换 "${name}"？`)) return; list.splice(dupIdx, 1); }
+    list.unshift(tpl);
+    localStorage.setItem(UTM_KEY, JSON.stringify(list));
+    serverSave(UTM_KEY);
+    setStatus(`UTM 模版 "${name}" 已保存`, 'success');
+  }
+
+  _resetUtmForm();
   renderUtmTemplates();
+}
+
+function editUtmTemplate(id) {
+  const tpl = loadUtmTemplates().find(t => t.id === id);
+  if (!tpl) return;
+  document.getElementById('utm-editing-id').value   = id;
+  document.getElementById('utm-tpl-name').value     = tpl.name     || '';
+  document.getElementById('utm-tpl-base').value     = tpl.base     || '';
+  document.getElementById('utm-tpl-source').value   = tpl.source   || '';
+  document.getElementById('utm-tpl-medium').value   = tpl.medium   || '';
+  document.getElementById('utm-tpl-campaign').value = tpl.campaign || '';
+  document.getElementById('utm-tpl-content').value  = tpl.content  || '';
+  assembleUtmPreview();
+  document.getElementById('utm-form-title').textContent = '编辑 UTM 模版';
+  document.getElementById('utm-save-btn').textContent   = '更新 UTM 模版';
+  document.getElementById('utm-cancel-edit-btn').style.display = '';
+  document.getElementById('utm-tpl-name').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+function cancelUtmEdit() {
+  _resetUtmForm();
+}
+
+function _resetUtmForm() {
+  document.getElementById('utm-editing-id').value = '';
+  ['utm-tpl-name','utm-tpl-base','utm-tpl-source','utm-tpl-medium','utm-tpl-campaign','utm-tpl-content','utm-tpl-preview']
+    .forEach(id => { document.getElementById(id).value = ''; });
+  document.getElementById('utm-form-title').textContent         = '新建 UTM 模版';
+  document.getElementById('utm-save-btn').textContent           = '保存 UTM 模版';
+  document.getElementById('utm-cancel-edit-btn').style.display  = 'none';
 }
 
 function deleteUtmTemplate(id) {
@@ -95,6 +147,7 @@ function renderUtmTemplates() {
       <div class="tpl-card-meta" style="word-break:break-all;font-size:11px;color:#666;">${esc(fullUrl)}</div>
       <div class="tpl-actions" style="margin-top:8px;">
         <button class="btn btn-secondary btn-sm" onclick="applyUtmTemplate('${t.id}')">应用到 Step 1</button>
+        <button class="btn btn-secondary btn-sm" onclick="editUtmTemplate('${t.id}')">✏️ 编辑</button>
         <button class="btn btn-danger btn-sm" onclick="deleteUtmTemplate('${t.id}')">删除</button>
       </div>
     </div>`;

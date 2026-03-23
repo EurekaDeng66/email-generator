@@ -442,7 +442,7 @@ CTA: {cta_instruction}
 Additional instructions: {instructions or "None"}{(
     f"""
 Personalization variables available for use: {variables}
-Use these variables naturally where contextually appropriate (e.g., {{{{name}}}} in greetings like "Hi {{{{name}}}},"). Keep them as literal placeholders — do NOT substitute real values."""
+Use these variables naturally where contextually appropriate (e.g., {{{{name}}}} in greetings like "Hi {{{{name}}}},"). Keep them as literal placeholders - do NOT substitute real values."""
 ) if variables.strip() else ""}
 
 The other language versions (for reference/consistency):

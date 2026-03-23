@@ -421,7 +421,7 @@ function startNew() {
     document.getElementById(`output-${l}`).classList.add('hidden');
     document.getElementById(`preview-wrap-${l}`).classList.add('hidden');
   });
-  ['subject','audience','trigger','instructions','cta_url'].forEach(id => {
+  ['subject','audience','trigger','instructions','variables','cta_url'].forEach(id => {
     const el = document.getElementById(id); if (el) el.value = '';
   });
   // Reset language checkboxes

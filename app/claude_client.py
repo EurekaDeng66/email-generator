@@ -274,6 +274,7 @@ def _generate_one_language(
     instructions: str,
     cta_url: str,
     historical_context: str = "",
+    variables: str = "",
 ) -> tuple[str, dict]:
     """Generate email content for a single language. Returns (lang, content_dict)."""
     meta = TEMPLATES[template_id]
@@ -286,6 +287,13 @@ def _generate_one_language(
         f"Style it with the orange link style from the HTML rules."
     ) if cta_url else "No specific CTA URL provided — include a relevant CTA if appropriate."
 
+    variables_section = (
+        f"\nPersonalization variables available for use: {variables}\n"
+        "Use these variables naturally where contextually appropriate "
+        "(e.g., {{name}} in greetings like \"Hi {{name}},\"). "
+        "Keep them as literal placeholders — do NOT substitute real values."
+    ) if variables.strip() else ""
+
     user_prompt = f"""Generate email content for the following:
 
 Template: {meta['name']}
@@ -295,7 +303,7 @@ Target audience: {audience}
 Trigger/timing context: {trigger}
 Has unsubscribe link: {"Yes (preserve {{{{unsubscribe_url}}}} in footer area)" if has_unsub else "No"}
 CTA: {cta_instruction}
-Additional instructions: {instructions or "None"}
+Additional instructions: {instructions or "None"}{variables_section}
 Language to generate: {lang}
 
 Output JSON with ONLY the "{lang}" key:
@@ -336,6 +344,7 @@ def generate_emails(
     languages: list[str] | None = None,
     cta_url: str = "",
     historical_context: str = "",
+    variables: str = "",
 ) -> dict:
     """Generate multi-language email content in parallel using Claude API."""
     if languages is None:
@@ -347,7 +356,7 @@ def generate_emails(
             executor.submit(
                 _generate_one_language,
                 lang, template_id, subject, audience, trigger, instructions, cta_url,
-                historical_context,
+                historical_context, variables,
             ): lang
             for lang in languages
         }
@@ -368,6 +377,7 @@ def regenerate_single_language(
     instructions: str = "",
     cta_url: str = "",
     scope: str = "both",
+    variables: str = "",
 ) -> dict:
     """Regenerate content for a single language, using others as context.
 
@@ -421,7 +431,11 @@ Email topic/direction (创作方向, NOT the literal subject): {subject}
 Target audience: {audience}
 Trigger/timing: {trigger}
 CTA: {cta_instruction}
-Additional instructions: {instructions or "None"}
+Additional instructions: {instructions or "None"}{(
+    f"""
+Personalization variables available for use: {variables}
+Use these variables naturally where contextually appropriate (e.g., {{{{name}}}} in greetings like "Hi {{{{name}}}},"). Keep them as literal placeholders — do NOT substitute real values."""
+) if variables.strip() else ""}
 
 The other language versions (for reference/consistency):
 {context_str}

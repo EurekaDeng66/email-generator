@@ -63,6 +63,7 @@ async function handleGenerate() {
   const ctaUrl       = document.getElementById('cta_url').value.trim();
   const ctaLabel     = document.getElementById('cta_label').value.trim();
   let   instructions = document.getElementById('instructions').value.trim();
+  const variables    = document.getElementById('variables').value.trim();
   if (ctaLabel && ctaUrl) {
     const note = `CTA button label: "${ctaLabel}" — translate this label naturally into each language for the CTA link text.`;
     instructions = instructions ? `${instructions}\n${note}` : note;
@@ -82,7 +83,7 @@ async function handleGenerate() {
   try {
     const resp = await fetch('/api/generate', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ template_id: templateId, subject, audience, trigger, instructions, cta_url: ctaUrl, languages: selectedLangs }),
+      body: JSON.stringify({ template_id: templateId, subject, audience, trigger, instructions, cta_url: ctaUrl, languages: selectedLangs, variables }),
     });
     if (!resp.ok) { const e = await resp.json(); throw new Error(e.detail || resp.statusText); }
     generatedContent = await resp.json();

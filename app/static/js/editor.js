@@ -67,6 +67,7 @@ async function handleRegenerate(lang) {
   const trigger    = document.getElementById('trigger').value.trim();
   const ctaUrl     = document.getElementById('cta_url').value.trim();
   const ctaLabel   = document.getElementById('cta_label').value.trim();
+  const variables  = document.getElementById('variables').value.trim();
   let   instructions = (document.getElementById(`revision-${lang}`).value || '').trim();
   if (ctaLabel && ctaUrl) {
     const note = `CTA button label: "${ctaLabel}" — translate this label naturally into ${lang} for the CTA link text.`;
@@ -91,7 +92,7 @@ async function handleRegenerate(lang) {
       body: JSON.stringify({
         template_id: templateId, subject, audience, trigger,
         language: lang, existing_content: existing,
-        instructions, cta_url: ctaUrl,
+        instructions, cta_url: ctaUrl, variables,
       }),
     });
     if (!resp.ok) { const e = await resp.json(); throw new Error(e.detail); }
@@ -122,6 +123,7 @@ async function handleRegenField(lang, scope) {
   const trigger    = document.getElementById('trigger').value.trim();
   const ctaUrl     = document.getElementById('cta_url').value.trim();
   const ctaLabel   = document.getElementById('cta_label').value.trim();
+  const variables  = document.getElementById('variables').value.trim();
   let   instructions = (document.getElementById(`revision-${lang}`).value || '').trim();
   if (ctaLabel && ctaUrl) {
     const note = `CTA button label: "${ctaLabel}" — translate naturally into ${lang}.`;
@@ -147,7 +149,7 @@ async function handleRegenField(lang, scope) {
       body: JSON.stringify({
         template_id: templateId, subject, audience, trigger,
         language: lang, existing_content: existing,
-        instructions, cta_url: ctaUrl, scope,
+        instructions, cta_url: ctaUrl, scope, variables,
       }),
     });
     if (!resp.ok) { const e = await resp.json(); throw new Error(e.detail); }
@@ -182,6 +184,7 @@ async function handleBatchRegen() {
   const trigger    = document.getElementById('trigger').value.trim();
   const ctaUrl     = document.getElementById('cta_url').value.trim();
   const ctaLabel   = document.getElementById('cta_label').value.trim();
+  const variables  = document.getElementById('variables').value.trim();
 
   const btn = document.getElementById('batchRegenBtn');
   btn.disabled = true;
@@ -207,7 +210,7 @@ async function handleBatchRegen() {
       body: JSON.stringify({
         template_id: templateId, subject, audience, trigger,
         language: lang, existing_content: existing,
-        instructions, cta_url: ctaUrl, scope: 'both',
+        instructions, cta_url: ctaUrl, scope: 'both', variables,
       }),
     }).then(r => r.ok ? r.json() : r.json().then(e => Promise.reject(e.detail)));
   }));

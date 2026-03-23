@@ -95,6 +95,7 @@ class GenerateRequest(BaseModel):
     instructions: str = ""
     cta_url: str = ""
     languages: list[str] | None = None
+    variables: str = ""
 
 
 class RegenerateRequest(BaseModel):
@@ -107,6 +108,7 @@ class RegenerateRequest(BaseModel):
     instructions: str = ""
     cta_url: str = ""
     scope: str = "both"  # 'both' | 'title_only' | 'body_only'
+    variables: str = ""
 
 
 @router.get("/templates")
@@ -134,6 +136,7 @@ def generate(req: GenerateRequest):
             cta_url=req.cta_url,
             languages=req.languages,
             historical_context=historical_context,
+            variables=req.variables,
         )
         return result
     except Exception as e:
@@ -158,6 +161,7 @@ def regenerate(req: RegenerateRequest):
             instructions=req.instructions,
             cta_url=req.cta_url,
             scope=req.scope,
+            variables=req.variables,
         )
         return result
     except Exception as e:

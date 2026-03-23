@@ -656,6 +656,18 @@
           <textarea id="instructions" placeholder="例如：语气轻松一些，提到 3 个核心优势，末尾加 FAQ 链接"></textarea>
         </div>
 
+        <div class="form-group full" id="variables-group">
+          <label>个性化变量 <span class="text-muted">(选填)</span></label>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px;">
+            <span class="intent-example-chip" onclick="appendVariable('{{name}}')">{{name}}</span>
+            <span class="intent-example-chip" onclick="appendVariable('{{remain_quota}}')">{{remain_quota}}</span>
+            <span class="intent-example-chip" onclick="appendVariable('{{expiry_date}}')">{{expiry_date}}</span>
+            <span class="intent-example-chip" onclick="appendVariable('{{risk_type}}')">{{risk_type}}</span>
+          </div>
+          <input type="text" id="variables" placeholder="例如：{{name}}, {{remain_quota}}（逗号分隔）">
+          <div style="font-size:11px;color:#aaa;margin-top:4px;">定义邮件中的个性化变量，AI 会在合适位置自动使用（如问候语 "Hi {{name}},"）</div>
+        </div>
+
       </div>
 
       <!-- CTA section inside same card -->
@@ -1383,6 +1395,13 @@ const EXAMPLES = {
     },
   },
 };
+
+function appendVariable(v) {
+  const el = document.getElementById('variables');
+  const cur = el.value.trim();
+  if (cur.includes(v)) return; // already present
+  el.value = cur ? `${cur}, ${v}` : v;
+}
 
 function fillIntentExample(key) {
   const ex = EXAMPLES[key];

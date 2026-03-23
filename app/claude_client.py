@@ -5,6 +5,11 @@ import os
 import re
 import concurrent.futures
 from openai import OpenAI
+try:
+    from json_repair import repair_json as _repair_json
+    _HAS_JSON_REPAIR = True
+except ImportError:
+    _HAS_JSON_REPAIR = False
 from .html_assembler import TEMPLATES
 
 _client = None
@@ -231,31 +236,34 @@ def _safe_parse_json(raw: str, expected_lang: str = None) -> dict:
     except json.JSONDecodeError:
         pass
 
-    # Pass 2: repair unescaped HTML attribute quotes then retry
+    # Pass 2: repair HTML attribute quotes then retry
     try:
         return json.loads(_repair_html_quotes(cleaned))
     except json.JSONDecodeError:
         pass
 
-    # Pass 3: position-based extraction (handles any remaining quote issues)
-    title_m = re.search(r'"title"\s*:\s*"', cleaned)
-    body_m  = re.search(r'"body"\s*:\s*"',  cleaned)
+    # Pass 2.5: json_repair library (handles virtually all LLM JSON malformations)
+    if _HAS_JSON_REPAIR:
+        try:
+            return json.loads(_repair_json(cleaned))
+        except Exception:
+            pass
 
-    if not (title_m and body_m):
+    # Pass 3: position-based extraction — last resort
+    # Extract title using proper JSON string regex (handles most escape sequences)
+    title_m = re.search(r'"title"\s*:\s*"((?:[^"\\]|\\.)*)"', cleaned)
+    body_start_m = re.search(r'"body"\s*:\s*"', cleaned)
+
+    if not body_start_m:
         raise ValueError(f"Cannot parse LLM JSON response: {cleaned[:300]}")
 
-    if title_m.start() < body_m.start():
-        # Normal order: title then body
-        title_val = cleaned[title_m.end():body_m.start()]
-        title_val = re.sub(r'\s*"\s*,?\s*$', '', title_val)
-        body_val  = cleaned[body_m.end():]
-        body_val  = re.sub(r'"\s*\}\s*\}?\s*$', '', body_val)
-    else:
-        # Reversed order: body then title
-        body_val  = cleaned[body_m.end():title_m.start()]
-        body_val  = re.sub(r'\s*"\s*,?\s*$', '', body_val)
-        title_val = cleaned[title_m.end():]
-        title_val = re.sub(r'"\s*\}\s*\}?\s*$', '', title_val)
+    title_val = title_m.group(1) if title_m else ""
+
+    # Body: take everything from after the opening " to the last "}}" at the end
+    body_start = body_start_m.end()
+    body_raw = cleaned[body_start:]
+    # Strip the closing JSON delimiters: trailing `"` + `}` + optional `}`
+    body_val = re.sub(r'"\s*\}+\s*$', '', body_raw)
 
     lang = expected_lang
     if not lang:

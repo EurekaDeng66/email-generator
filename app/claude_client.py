@@ -205,35 +205,57 @@ def _clean_json_response(text: str) -> str:
     return text.strip()
 
 
-def _safe_parse_json(raw: str, expected_lang: str = None) -> dict:
-    """Parse JSON from LLM response, with fallback for HTML-in-JSON issues.
+def _repair_html_quotes(text: str) -> str:
+    """Escape unescaped HTML attribute quotes inside JSON string values.
 
-    LLMs sometimes return JSON where HTML attribute quotes (e.g. style="...")
-    are not properly escaped, breaking json.loads(). This function falls back
-    to position-based extraction when standard parsing fails.
+    In HTML, attributes use style="...", href="..." etc. When the LLM embeds
+    HTML in a JSON string without escaping, those internal quotes break JSON
+    parsing. This repairs them before we attempt json.loads again.
     """
+    # Replace unescaped =" (HTML attribute opening) with =\\"
+    # This pattern never appears in valid JSON structure (JSON uses :" not =")
+    fixed = re.sub(r'(?<!\\)="', r'=\\"', text)
+    # Replace unescaped closing quote before HTML tag end: " followed by > or space+attr
+    fixed = re.sub(r'(?<!\\)"(?=\s*/?>)', r'\\"', fixed)
+    fixed = re.sub(r'(?<!\\)"(?=\s+[\w-]+=)', r'\\"', fixed)
+    return fixed
+
+
+def _safe_parse_json(raw: str, expected_lang: str = None) -> dict:
+    """Parse JSON from LLM response, with multi-level fallback for HTML-in-JSON issues."""
     cleaned = _clean_json_response(raw)
+
+    # Pass 1: standard parse
     try:
         return json.loads(cleaned)
     except json.JSONDecodeError:
         pass
 
-    # Fallback: extract title and body by locating key boundaries
+    # Pass 2: repair unescaped HTML attribute quotes then retry
+    try:
+        return json.loads(_repair_html_quotes(cleaned))
+    except json.JSONDecodeError:
+        pass
+
+    # Pass 3: position-based extraction (handles any remaining quote issues)
     title_m = re.search(r'"title"\s*:\s*"', cleaned)
-    body_m = re.search(r'"body"\s*:\s*"', cleaned)
+    body_m  = re.search(r'"body"\s*:\s*"',  cleaned)
 
     if not (title_m and body_m):
         raise ValueError(f"Cannot parse LLM JSON response: {cleaned[:300]}")
 
-    # Title: from after `"title": "` up to `", "body"` (strip trailing `",`)
-    title_start = title_m.end()
-    title_val = cleaned[title_start:body_m.start()]
-    title_val = re.sub(r'\s*"\s*,?\s*$', '', title_val)
-
-    # Body: from after `"body": "` to end, strip trailing `"}}` or `"}`
-    body_start = body_m.end()
-    body_val = cleaned[body_start:]
-    body_val = re.sub(r'"\s*\}\s*\}?\s*$', '', body_val)
+    if title_m.start() < body_m.start():
+        # Normal order: title then body
+        title_val = cleaned[title_m.end():body_m.start()]
+        title_val = re.sub(r'\s*"\s*,?\s*$', '', title_val)
+        body_val  = cleaned[body_m.end():]
+        body_val  = re.sub(r'"\s*\}\s*\}?\s*$', '', body_val)
+    else:
+        # Reversed order: body then title
+        body_val  = cleaned[body_m.end():title_m.start()]
+        body_val  = re.sub(r'\s*"\s*,?\s*$', '', body_val)
+        title_val = cleaned[title_m.end():]
+        title_val = re.sub(r'"\s*\}\s*\}?\s*$', '', title_val)
 
     lang = expected_lang
     if not lang:

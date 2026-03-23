@@ -138,9 +138,8 @@ async function handleRegenField(lang, scope) {
 
   const btnId = scope === 'title_only' ? `regen-title-${lang}` : `regen-body-${lang}`;
   const btn = document.getElementById(btnId);
-  const origText = btn.textContent;
   btn.disabled = true;
-  btn.textContent = scope === 'title_only' ? '…标题' : '…正文';
+  btn.classList.add('loading');
 
   try {
     const resp = await fetch('/api/regenerate', {
@@ -170,7 +169,7 @@ async function handleRegenField(lang, scope) {
     setStatus(`重新生成失败: ${e.message}`, 'error');
   } finally {
     btn.disabled = false;
-    btn.textContent = origText;
+    btn.classList.remove('loading');
   }
 }
 

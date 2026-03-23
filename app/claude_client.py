@@ -205,6 +205,44 @@ def _clean_json_response(text: str) -> str:
     return text.strip()
 
 
+def _safe_parse_json(raw: str, expected_lang: str = None) -> dict:
+    """Parse JSON from LLM response, with fallback for HTML-in-JSON issues.
+
+    LLMs sometimes return JSON where HTML attribute quotes (e.g. style="...")
+    are not properly escaped, breaking json.loads(). This function falls back
+    to position-based extraction when standard parsing fails.
+    """
+    cleaned = _clean_json_response(raw)
+    try:
+        return json.loads(cleaned)
+    except json.JSONDecodeError:
+        pass
+
+    # Fallback: extract title and body by locating key boundaries
+    title_m = re.search(r'"title"\s*:\s*"', cleaned)
+    body_m = re.search(r'"body"\s*:\s*"', cleaned)
+
+    if not (title_m and body_m):
+        raise ValueError(f"Cannot parse LLM JSON response: {cleaned[:300]}")
+
+    # Title: from after `"title": "` up to `", "body"` (strip trailing `",`)
+    title_start = title_m.end()
+    title_val = cleaned[title_start:body_m.start()]
+    title_val = re.sub(r'\s*"\s*,?\s*$', '', title_val)
+
+    # Body: from after `"body": "` to end, strip trailing `"}}` or `"}`
+    body_start = body_m.end()
+    body_val = cleaned[body_start:]
+    body_val = re.sub(r'"\s*\}\s*\}?\s*$', '', body_val)
+
+    lang = expected_lang
+    if not lang:
+        lang_m = re.search(r'"(\w{2})"\s*:', cleaned)
+        lang = lang_m.group(1) if lang_m else "unknown"
+
+    return {lang: {"title": title_val, "body": body_val}}
+
+
 def _generate_one_language(
     lang: str,
     template_id: str,
@@ -261,8 +299,7 @@ Output JSON with ONLY the "{lang}" key:
     )
 
     raw = response.choices[0].message.content
-    cleaned = _clean_json_response(raw)
-    data = json.loads(cleaned)
+    data = _safe_parse_json(raw, expected_lang=lang)
     # Accept both {lang: {...}} and bare {...} responses
     content = data.get(lang, data)
     return lang, content
@@ -381,8 +418,7 @@ Output JSON with only the "{language}" key:
     )
 
     raw = response.choices[0].message.content
-    cleaned = _clean_json_response(raw)
-    return json.loads(cleaned)
+    return _safe_parse_json(raw, expected_lang=language)
 
 
 def parse_intent(description: str, historical_context: str = "") -> dict:
@@ -438,7 +474,7 @@ Return ONLY the JSON object, no other text.{history_section}"""
     )
     raw = response.choices[0].message.content
     cleaned = _clean_json_response(raw)
-    return json.loads(cleaned)
+    return json.loads(cleaned)  # parse_intent returns structured config, not HTML
 
 
 def translate_from_language(
@@ -489,8 +525,7 @@ Output JSON with ONLY the "{lang}" key:
             ],
         )
         raw = response.choices[0].message.content
-        cleaned = _clean_json_response(raw)
-        data = json.loads(cleaned)
+        data = _safe_parse_json(raw, expected_lang=lang)
         content = data.get(lang, data)
         return lang, content
 

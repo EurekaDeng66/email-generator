@@ -17,10 +17,10 @@ _client = None
 def _get_client():
     global _client
     if _client is None:
-        base_url = os.getenv("ANTHROPIC_BASE_URL", "https://openrouter.ai/api/v1")
-        api_key = os.getenv("ANTHROPIC_AUTH_TOKEN") or os.getenv("OPENROUTER_API_KEY")
+        base_url = os.getenv("ANTHROPIC_BASE_URL")
+        api_key = os.getenv("ANTHROPIC_AUTH_TOKEN")
         _client = OpenAI(
-            base_url=base_url.rstrip("/") + "/v1" if not base_url.endswith("/v1") else base_url,
+            base_url=base_url.rstrip("/") + "/v1" if base_url and not base_url.endswith("/v1") else base_url,
             api_key=api_key,
         )
     return _client

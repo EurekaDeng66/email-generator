@@ -431,6 +431,13 @@ def regenerate_single_language(
         task = f"Regenerate BOTH the subject/title and body for the {language} version."
         output_hint = f'{{"{language}": {{"title": "...", "body": "<p>...</p>"}}}}'
 
+    variables_section = (
+        f"\nPersonalization variables available for use: {variables}\n"
+        "Use these variables naturally where contextually appropriate "
+        "(e.g., {{name}} in greetings like \"Hi {{name}},\"). "
+        "Keep them as literal placeholders - do NOT substitute real values."
+    ) if variables.strip() else ""
+
     user_prompt = f"""{task}
 
 Template: {meta['name']}
@@ -439,11 +446,7 @@ Email topic/direction (创作方向, NOT the literal subject): {subject}
 Target audience: {audience}
 Trigger/timing: {trigger}
 CTA: {cta_instruction}
-Additional instructions: {instructions or "None"}{(
-    f"""
-Personalization variables available for use: {variables}
-Use these variables naturally where contextually appropriate (e.g., {{{{name}}}} in greetings like "Hi {{{{name}}}},"). Keep them as literal placeholders - do NOT substitute real values."""
-) if variables.strip() else ""}
+Additional instructions: {instructions or "None"}{variables_section}
 
 The other language versions (for reference/consistency):
 {context_str}

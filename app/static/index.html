@@ -354,7 +354,16 @@
     .output-panel {
       margin-top: 14px; padding: 16px; background: #f0fdf4;
       border-radius: 8px; border: 1px solid #bbf7d0;
+      position: relative;
     }
+    .btn-save-tpl {
+      position: absolute; bottom: 14px; right: 14px;
+    }
+    .btn-save-tpl-fresh  { background:#fff; border:1.5px solid #e0e0e0; color:#444; }
+    .btn-save-tpl-fresh:hover  { border-color:#aaa; }
+    .btn-save-tpl-update { background:#FF7F32; color:#fff; border:none; }
+    .btn-save-tpl-update:hover { background:#e86e22; }
+    .btn-save-tpl-synced { background:#f0fdf4; border:1.5px solid #bbf7d0; color:#166534; cursor:not-allowed; }
     .output-label {
       font-size: 11px; font-weight: 700; color: #166534;
       text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px;
@@ -816,8 +825,8 @@
           <div style="display:flex;gap:8px;align-items:center;">
             <button class="btn btn-primary btn-sm" onclick="copyOutputHtml('en',this)">复制 HTML</button>
             <button class="btn btn-secondary btn-sm" onclick="toggleInlinePreview('en',this)">预览邮件 ▾</button>
-            <button class="btn btn-secondary btn-sm" onclick="toggleLibraryDrawer()">保存为模版</button>
           </div>
+          <button class="btn btn-sm btn-save-tpl btn-save-tpl-fresh" id="save-tpl-btn-en" onclick="saveOrUpdateTemplate('en')">保存为模版</button>
           <div class="hidden" id="preview-wrap-en">
             <div class="preview-view-bar">
               <button class="view-toggle active" onclick="setPreviewView('en','web',this)">🖥 Web</button>
@@ -865,8 +874,8 @@
           <div style="display:flex;gap:8px;align-items:center;">
             <button class="btn btn-primary btn-sm" onclick="copyOutputHtml('zh',this)">复制 HTML</button>
             <button class="btn btn-secondary btn-sm" onclick="toggleInlinePreview('zh',this)">预览邮件 ▾</button>
-            <button class="btn btn-secondary btn-sm" onclick="toggleLibraryDrawer()">保存为模版</button>
           </div>
+          <button class="btn btn-sm btn-save-tpl btn-save-tpl-fresh" id="save-tpl-btn-zh" onclick="saveOrUpdateTemplate('zh')">保存为模版</button>
           <div class="hidden" id="preview-wrap-zh">
             <div class="preview-view-bar">
               <button class="view-toggle active" onclick="setPreviewView('zh','web',this)">🖥 Web</button>
@@ -914,8 +923,8 @@
           <div style="display:flex;gap:8px;align-items:center;">
             <button class="btn btn-primary btn-sm" onclick="copyOutputHtml('es',this)">复制 HTML</button>
             <button class="btn btn-secondary btn-sm" onclick="toggleInlinePreview('es',this)">预览邮件 ▾</button>
-            <button class="btn btn-secondary btn-sm" onclick="toggleLibraryDrawer()">保存为模版</button>
           </div>
+          <button class="btn btn-sm btn-save-tpl btn-save-tpl-fresh" id="save-tpl-btn-es" onclick="saveOrUpdateTemplate('es')">保存为模版</button>
           <div class="hidden" id="preview-wrap-es">
             <div class="preview-view-bar">
               <button class="view-toggle active" onclick="setPreviewView('es','web',this)">🖥 Web</button>
@@ -963,8 +972,8 @@
           <div style="display:flex;gap:8px;align-items:center;">
             <button class="btn btn-primary btn-sm" onclick="copyOutputHtml('ja',this)">复制 HTML</button>
             <button class="btn btn-secondary btn-sm" onclick="toggleInlinePreview('ja',this)">预览邮件 ▾</button>
-            <button class="btn btn-secondary btn-sm" onclick="toggleLibraryDrawer()">保存为模版</button>
           </div>
+          <button class="btn btn-sm btn-save-tpl btn-save-tpl-fresh" id="save-tpl-btn-ja" onclick="saveOrUpdateTemplate('ja')">保存为模版</button>
           <div class="hidden" id="preview-wrap-ja">
             <div class="preview-view-bar">
               <button class="view-toggle active" onclick="setPreviewView('ja','web',this)">🖥 Web</button>

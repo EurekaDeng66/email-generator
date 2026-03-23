@@ -93,7 +93,80 @@ function deleteFromLibrary(id) {
 
 function loadFromLibrary(id) {
   const entry = loadLibrary().find(e => e.id === id);
-  if (entry) loadData(entry);
+  if (!entry) return;
+  currentLibraryId = id;
+  libraryDirtyLangs = new Set();
+  loadData(entry);
+  LANGS.forEach(_updateSaveTplBtn);
+}
+
+function _updateSaveTplBtn(lang) {
+  const btn = document.getElementById(`save-tpl-btn-${lang}`);
+  if (!btn) return;
+  if (!currentLibraryId) {
+    btn.textContent = '保存为模版';
+    btn.disabled = false;
+    btn.className = 'btn btn-sm btn-save-tpl btn-save-tpl-fresh';
+    btn.onclick = () => saveOrUpdateTemplate(lang);
+  } else if (libraryDirtyLangs.has(lang)) {
+    btn.textContent = '↑ 更新模版';
+    btn.disabled = false;
+    btn.className = 'btn btn-sm btn-save-tpl btn-save-tpl-update';
+    btn.onclick = () => saveOrUpdateTemplate(lang);
+  } else {
+    btn.textContent = '✓ 模版已是最新';
+    btn.disabled = true;
+    btn.className = 'btn btn-sm btn-save-tpl btn-save-tpl-synced';
+    btn.onclick = null;
+  }
+}
+
+async function saveOrUpdateTemplate(lang) {
+  if (!currentLibraryId) {
+    toggleLibraryDrawer();
+    return;
+  }
+  const btn = document.getElementById(`save-tpl-btn-${lang}`);
+  const origText = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = '保存中…';
+
+  // Assemble HTML for all dirty selected langs before saving
+  const toAssemble = selectedLangs.filter(l => dirtyLangs.has(l) && generatedContent[l]?.body);
+  if (toAssemble.length) {
+    toAssemble.forEach(l => {
+      if (quillEditors[l]) {
+        if (!generatedContent[l]) generatedContent[l] = {};
+        generatedContent[l].body = quillEditors[l].root.innerHTML;
+        const titleEl = document.getElementById(`title-${l}`);
+        if (titleEl) generatedContent[l].title = titleEl.value.trim();
+      }
+    });
+    await Promise.all(toAssemble.map(l => assembleForLang(l).then(() => { markClean(l); showInlineOutput(l); })));
+  }
+
+  const lib = loadLibrary();
+  const idx = lib.findIndex(e => e.id === currentLibraryId);
+  if (idx < 0) {
+    setStatus('模版未找到，请重新保存', 'error');
+    btn.disabled = false; btn.textContent = origText;
+    return;
+  }
+  const allLangs = LANGS.filter(l => generatedContent[l]?.body || generatedContent[l]?.title);
+  lib[idx] = {
+    ...lib[idx],
+    content: JSON.parse(JSON.stringify(generatedContent)),
+    assembled_html: JSON.parse(JSON.stringify(assembledHtml)),
+    langs: allLangs,
+    saved_at: new Date().toLocaleDateString('zh-CN'),
+  };
+  localStorage.setItem(LIB_KEY, JSON.stringify(lib));
+  serverSave(LIB_KEY);
+  libraryDirtyLangs.clear();
+  setStatus(`模版已更新 ✓`, 'success');
+  setTimeout(clearStatus, 2000);
+  renderLibrary();
+  LANGS.forEach(_updateSaveTplBtn);
 }
 
 function loadData(data) {
@@ -316,6 +389,7 @@ function renderPresetTpls() {
 function loadPreset(id) {
   const p = PRESET_EMAILS[id];
   if (!p) return;
+  currentLibraryId = null; libraryDirtyLangs = new Set();
   const data = {
     template_id: p.template_id, subject: p.subject,
     audience: p.audience, trigger: p.trigger,
@@ -323,9 +397,11 @@ function loadPreset(id) {
   };
   LANGS.forEach(l => { data.content[l] = p.content[l] || { title: '', body: '' }; });
   loadData(data);
+  LANGS.forEach(_updateSaveTplBtn);
 }
 
 function startNew() {
+  currentLibraryId = null; libraryDirtyLangs = new Set();
   generatedContent = {}; assembledHtml = {};
   htmlReadyLangs = new Set(); dirtyLangs = new Set(); reviewedLangs = new Set(); LANGS.forEach(_updateReviewedMark);
   stepDoneState = {};

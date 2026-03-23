@@ -265,6 +265,11 @@ function markDirty(lang) {
   reviewedLangs.delete(lang);
   _updateReviewedMark(lang);
   _updateHtmlBtn(lang);
+  // Track library dirty state
+  if (currentLibraryId) {
+    libraryDirtyLangs.add(lang);
+    _updateSaveTplBtn(lang);
+  }
 }
 
 function markClean(lang) {

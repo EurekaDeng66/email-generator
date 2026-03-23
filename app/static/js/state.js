@@ -13,6 +13,8 @@ let dirtyLangs     = new Set();  // langs with unsaved edits since last HTML gen
 let quillEditors = {};
 let currentEditorLang = 'en';
 let selectedLangs = [...LANGS]; // languages selected for generation
+let currentLibraryId = null;    // id of the library entry currently being edited (null = new)
+let libraryDirtyLangs = new Set(); // langs modified since last library load/save
 
 const CTA_KEY     = 'blocksec_cta_templates';
 const FIELD_KEY   = 'blocksec_field_options';

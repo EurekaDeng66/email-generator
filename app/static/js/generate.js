@@ -88,6 +88,8 @@ async function handleGenerate() {
     generatedContent = await resp.json();
     htmlReadyLangs = new Set(); dirtyLangs = new Set(); reviewedLangs = new Set(); LANGS.forEach(_updateReviewedMark);
     assembledHtml = {};
+    currentLibraryId = null; libraryDirtyLangs = new Set();
+    LANGS.forEach(_updateSaveTplBtn);
     // Hide all output panels
     LANGS.forEach(l => document.getElementById(`output-${l}`).classList.add('hidden'));
     clearStatus();

@@ -334,6 +334,7 @@
     .btn-ai-field:hover { border-color: #FF7F32; background: #fff8f4; }
     .btn-ai-field:disabled { color: #ccc; border-color: #eee; cursor: not-allowed; }
     .confirm-row { display: flex; align-items: center; justify-content: space-between; padding-top: 2px; }
+    [id^="confirm-row-"] { margin-top: 8px; padding: 6px 0; }
     .btn-html-dirty { background: #FF7F32; color: #fff; border: none; }
     .btn-html-dirty:hover { background: #e86e22; }
     .btn-html-clean { background: #f0fdf4; border: 1.5px solid #bbf7d0; color: #166534; cursor: not-allowed; }
@@ -352,6 +353,13 @@
     .ql-toolbar.ql-snow { border-color: #e0e0e0; border-radius: 8px 8px 0 0; background: #fafafa; }
     .ql-editor { min-height: 200px; font-size: 13.5px; line-height: 1.75; font-family: inherit; }
     .ql-editor p { margin: 0 0 0.9em 0; }
+
+    /* ── Gmail draft row ── */
+    .gmail-draft-row { display:flex; gap:8px; margin-top:10px; align-items:center; }
+    .gmail-to-input { flex:1; padding:6px 10px; border:1px solid #ddd; border-radius:6px; font-size:13px; }
+    .btn-gmail { padding:6px 14px; background:#4285f4; color:#fff; border:none; border-radius:6px; cursor:pointer; font-size:13px; white-space:nowrap; }
+    .btn-gmail:hover { background:#2b6de0; }
+    .btn-gmail:disabled { opacity:.6; cursor:not-allowed; }
 
     /* ── Inline output panel (inside Step 2 per-language) ── */
     .output-panel {
@@ -818,11 +826,6 @@
           </div>
         </div>
         <div class="quill-wrap"><div id="quill-en"></div></div>
-        <div class="confirm-row">
-          <button class="btn-reviewed" id="reviewed-btn-en" onclick="toggleReviewed('en')">○ 标记已审阅</button>
-          <span class="has-tip"><button class="btn btn-secondary btn-sm" id="translate-from-btn-en" onclick="handleTranslateFrom('en')">→ 同步翻译</button><span class="tip-bubble">确定英文邮件内容后，一键同步翻译成其他语言文案</span></span>
-          <button class="btn btn-html-dirty" id="html-btn-en" onclick="generateHtml('en')">⬆ 生成 HTML</button>
-        </div>
         <div class="output-panel hidden" id="output-en">
           <div class="output-label">✅ HTML 输出</div>
           <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px;">
@@ -837,6 +840,10 @@
             <button class="btn btn-primary btn-sm" onclick="copyOutputHtml('en',this)">复制 HTML</button>
             <button class="btn btn-secondary btn-sm" onclick="toggleInlinePreview('en',this)">预览邮件 ▾</button>
           </div>
+          <div class="gmail-draft-row">
+            <input type="text" id="gmail-to-en" class="gmail-to-input" placeholder="收件人（可选，留空仅保存草稿）" />
+            <button class="btn-gmail" id="gmail-btn-en" onclick="handleSaveDraft('en')">📧 保存草稿</button>
+          </div>
           <button class="btn btn-sm btn-save-tpl btn-save-tpl-fresh" id="save-tpl-btn-en" onclick="saveOrUpdateTemplate('en')">保存为模版</button>
           <div class="hidden" id="preview-wrap-en">
             <div class="preview-view-bar">
@@ -849,6 +856,11 @@
           </div>
         </div>
       </div>
+      <div id="confirm-row-en" class="confirm-row" style="display:none;">
+        <button class="btn-reviewed" id="reviewed-btn-en" onclick="toggleReviewed('en')">○ 标记已审阅</button>
+        <span class="has-tip"><button class="btn btn-secondary btn-sm" id="translate-from-btn-en" onclick="handleTranslateFrom('en')">→ 同步翻译</button><span class="tip-bubble">确定英文邮件内容后，一键同步翻译成其他语言文案</span></span>
+        <button class="btn btn-html-dirty" id="html-btn-en" onclick="generateHtml('en')">⬆ 生成 HTML</button>
+      </div>
 
       <!-- ZH -->
       <div class="review-panel hidden" id="review-zh">
@@ -859,10 +871,9 @@
           </div>
         </div>
         <div class="quill-wrap"><div id="quill-zh"></div></div>
-        <div class="confirm-row">
-          <button class="btn-reviewed" id="reviewed-btn-zh" onclick="toggleReviewed('zh')">○ 标记已审阅</button>
-          <span class="has-tip"><button class="btn btn-secondary btn-sm" id="translate-from-btn-zh" onclick="handleTranslateFrom('zh')">→ 同步翻译</button><span class="tip-bubble">确定中文邮件内容后，一键同步翻译成其他语言文案</span></span>
-          <button class="btn btn-html-dirty" id="html-btn-zh" onclick="generateHtml('zh')">⬆ 生成 HTML</button>
+        <div class="revision-global-row" id="globalRevisionRow" style="display:none;">
+          <textarea id="revision-global" placeholder="修改意见：描述需要改动的内容，AI 会自动判断改哪些语言和字段。例如：英文正文更简洁有真人感；同步所有语言标题为"xxx""></textarea>
+          <button class="btn-regen" id="smartRegenBtn" onclick="handleSmartRegen()">↻ 重新生成</button>
         </div>
         <div class="output-panel hidden" id="output-zh">
           <div class="output-label">✅ HTML 输出</div>
@@ -878,6 +889,10 @@
             <button class="btn btn-primary btn-sm" onclick="copyOutputHtml('zh',this)">复制 HTML</button>
             <button class="btn btn-secondary btn-sm" onclick="toggleInlinePreview('zh',this)">预览邮件 ▾</button>
           </div>
+          <div class="gmail-draft-row">
+            <input type="text" id="gmail-to-zh" class="gmail-to-input" placeholder="收件人（可选，留空仅保存草稿）" />
+            <button class="btn-gmail" id="gmail-btn-zh" onclick="handleSaveDraft('zh')">📧 保存草稿</button>
+          </div>
           <button class="btn btn-sm btn-save-tpl btn-save-tpl-fresh" id="save-tpl-btn-zh" onclick="saveOrUpdateTemplate('zh')">保存为模版</button>
           <div class="hidden" id="preview-wrap-zh">
             <div class="preview-view-bar">
@@ -890,6 +905,11 @@
           </div>
         </div>
       </div>
+      <div id="confirm-row-zh" class="confirm-row">
+        <button class="btn-reviewed" id="reviewed-btn-zh" onclick="toggleReviewed('zh')">○ 标记已审阅</button>
+        <span class="has-tip"><button class="btn btn-secondary btn-sm" id="translate-from-btn-zh" onclick="handleTranslateFrom('zh')">→ 同步翻译</button><span class="tip-bubble">确定中文邮件内容后，一键同步翻译成其他语言文案</span></span>
+        <button class="btn btn-html-dirty" id="html-btn-zh" onclick="generateHtml('zh')">⬆ 生成 HTML</button>
+      </div>
 
       <!-- ES -->
       <div class="review-panel hidden" id="review-es">
@@ -900,11 +920,6 @@
           </div>
         </div>
         <div class="quill-wrap"><div id="quill-es"></div></div>
-        <div class="confirm-row">
-          <button class="btn-reviewed" id="reviewed-btn-es" onclick="toggleReviewed('es')">○ 标记已审阅</button>
-          <span class="has-tip"><button class="btn btn-secondary btn-sm" id="translate-from-btn-es" onclick="handleTranslateFrom('es')">→ 同步翻译</button><span class="tip-bubble">确定西班牙语邮件内容后，一键同步翻译成其他语言文案</span></span>
-          <button class="btn btn-html-dirty" id="html-btn-es" onclick="generateHtml('es')">⬆ 生成 HTML</button>
-        </div>
         <div class="output-panel hidden" id="output-es">
           <div class="output-label">✅ HTML 输出</div>
           <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px;">
@@ -919,6 +934,10 @@
             <button class="btn btn-primary btn-sm" onclick="copyOutputHtml('es',this)">复制 HTML</button>
             <button class="btn btn-secondary btn-sm" onclick="toggleInlinePreview('es',this)">预览邮件 ▾</button>
           </div>
+          <div class="gmail-draft-row">
+            <input type="text" id="gmail-to-es" class="gmail-to-input" placeholder="收件人（可选，留空仅保存草稿）" />
+            <button class="btn-gmail" id="gmail-btn-es" onclick="handleSaveDraft('es')">📧 保存草稿</button>
+          </div>
           <button class="btn btn-sm btn-save-tpl btn-save-tpl-fresh" id="save-tpl-btn-es" onclick="saveOrUpdateTemplate('es')">保存为模版</button>
           <div class="hidden" id="preview-wrap-es">
             <div class="preview-view-bar">
@@ -931,6 +950,11 @@
           </div>
         </div>
       </div>
+      <div id="confirm-row-es" class="confirm-row" style="display:none;">
+        <button class="btn-reviewed" id="reviewed-btn-es" onclick="toggleReviewed('es')">○ 标记已审阅</button>
+        <span class="has-tip"><button class="btn btn-secondary btn-sm" id="translate-from-btn-es" onclick="handleTranslateFrom('es')">→ 同步翻译</button><span class="tip-bubble">确定西班牙语邮件内容后，一键同步翻译成其他语言文案</span></span>
+        <button class="btn btn-html-dirty" id="html-btn-es" onclick="generateHtml('es')">⬆ 生成 HTML</button>
+      </div>
 
       <!-- JA -->
       <div class="review-panel hidden" id="review-ja">
@@ -941,11 +965,6 @@
           </div>
         </div>
         <div class="quill-wrap"><div id="quill-ja"></div></div>
-        <div class="confirm-row">
-          <button class="btn-reviewed" id="reviewed-btn-ja" onclick="toggleReviewed('ja')">○ 标记已审阅</button>
-          <span class="has-tip"><button class="btn btn-secondary btn-sm" id="translate-from-btn-ja" onclick="handleTranslateFrom('ja')">→ 同步翻译</button><span class="tip-bubble">确定日语邮件内容后，一键同步翻译成其他语言文案</span></span>
-          <button class="btn btn-html-dirty" id="html-btn-ja" onclick="generateHtml('ja')">⬆ 生成 HTML</button>
-        </div>
         <div class="output-panel hidden" id="output-ja">
           <div class="output-label">✅ HTML 输出</div>
           <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px;">
@@ -960,6 +979,10 @@
             <button class="btn btn-primary btn-sm" onclick="copyOutputHtml('ja',this)">复制 HTML</button>
             <button class="btn btn-secondary btn-sm" onclick="toggleInlinePreview('ja',this)">预览邮件 ▾</button>
           </div>
+          <div class="gmail-draft-row">
+            <input type="text" id="gmail-to-ja" class="gmail-to-input" placeholder="收件人（可选，留空仅保存草稿）" />
+            <button class="btn-gmail" id="gmail-btn-ja" onclick="handleSaveDraft('ja')">📧 保存草稿</button>
+          </div>
           <button class="btn btn-sm btn-save-tpl btn-save-tpl-fresh" id="save-tpl-btn-ja" onclick="saveOrUpdateTemplate('ja')">保存为模版</button>
           <div class="hidden" id="preview-wrap-ja">
             <div class="preview-view-bar">
@@ -972,12 +995,12 @@
           </div>
         </div>
       </div>
-    </div>
-      <!-- Global Revision -->
-      <div class="revision-global-row" id="globalRevisionRow" style="display:none;">
-        <textarea id="revision-global" placeholder="修改意见：描述需要改动的内容，AI 会自动判断改哪些语言和字段。例如：英文正文更简洁有真人感；同步所有语言标题为"xxx""></textarea>
-        <button class="btn-regen" id="smartRegenBtn" onclick="handleSmartRegen()">↻ 重新生成</button>
+      <div id="confirm-row-ja" class="confirm-row" style="display:none;">
+        <button class="btn-reviewed" id="reviewed-btn-ja" onclick="toggleReviewed('ja')">○ 标记已审阅</button>
+        <span class="has-tip"><button class="btn btn-secondary btn-sm" id="translate-from-btn-ja" onclick="handleTranslateFrom('ja')">→ 同步翻译</button><span class="tip-bubble">确定日语邮件内容后，一键同步翻译成其他语言文案</span></span>
+        <button class="btn btn-html-dirty" id="html-btn-ja" onclick="generateHtml('ja')">⬆ 生成 HTML</button>
       </div>
+    </div>
     </div><!-- end #step2-editor -->
 
   </div>
@@ -1012,6 +1035,29 @@
     <div style="margin-top:16px;">
       <button class="btn btn-primary btn-sm" onclick="startNew();toggleLibraryDrawer();">✦ 创建新邮件</button>
     </div>
+  </div>
+</div>
+
+<!-- ── Draft Preview Modal ── -->
+<div id="draftPreviewOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9990;" onclick="closeDraftPreview()"></div>
+<div id="draftPreviewModal" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#fff;border-radius:10px;width:660px;max-width:95vw;max-height:88vh;overflow:hidden;flex-direction:column;box-shadow:0 8px 32px rgba(0,0,0,.25);z-index:9991;">
+  <div style="display:flex;justify-content:space-between;align-items:center;padding:16px 20px;border-bottom:1px solid #eee;">
+    <strong id="draftPreviewName" style="font-size:15px;"></strong>
+    <button onclick="closeDraftPreview()" style="border:none;background:none;font-size:20px;cursor:pointer;color:#aaa;padding:0;line-height:1;">✕</button>
+  </div>
+  <div style="overflow-y:auto;flex:1;padding:20px;">
+    <div class="lang-tabs" id="draftPreviewTabs" style="margin-bottom:16px;"></div>
+    <div id="draftPreviewTitle" style="font-size:13px;font-weight:600;color:#444;margin-bottom:6px;"></div>
+    <div id="draftPreviewBody" style="border:1px solid #e8e8e8;border-radius:6px;padding:14px;background:#fafafa;font-size:13px;line-height:1.7;overflow-y:auto;max-height:260px;"></div>
+    <div style="margin-top:16px;">
+      <label style="font-size:13px;font-weight:600;color:#555;display:block;margin-bottom:6px;">审阅意见</label>
+      <textarea id="draftReviewNotes" rows="3" style="width:100%;box-sizing:border-box;padding:8px 10px;border:1px solid #ddd;border-radius:6px;font-size:13px;resize:vertical;" placeholder="填写审阅意见，点击"进入编辑"后将自动填入修改意见框"></textarea>
+    </div>
+  </div>
+  <div style="display:flex;justify-content:flex-end;gap:8px;padding:12px 20px;border-top:1px solid #eee;">
+    <button class="btn btn-secondary btn-sm" onclick="saveDraftReviewNotes()">💾 保存意见</button>
+    <button class="btn btn-primary btn-sm" onclick="editDraftFromPreview()">✏️ 进入编辑</button>
+    <button class="btn btn-secondary btn-sm" onclick="closeDraftPreview()">关闭</button>
   </div>
 </div>
 

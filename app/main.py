@@ -35,10 +35,12 @@ def verify_auth(credentials: HTTPBasicCredentials = Depends(security)):
 from .generate import router as generate_router
 from .assemble import router as assemble_router
 from .store import router as store_router
+from .gmail import router as gmail_router
 
 app.include_router(generate_router, dependencies=[Depends(verify_auth)])
 app.include_router(assemble_router, dependencies=[Depends(verify_auth)])
 app.include_router(store_router, dependencies=[Depends(verify_auth)])
+app.include_router(gmail_router, dependencies=[Depends(verify_auth)])
 
 # Serve static files
 static_dir = os.path.join(os.path.dirname(__file__), "static")

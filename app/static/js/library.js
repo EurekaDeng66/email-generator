@@ -14,9 +14,11 @@ function loadLibrary() { try { return JSON.parse(localStorage.getItem(LIB_KEY) |
 function _saveEntry(name, status) {
   const lib = loadLibrary();
   const idx = lib.findIndex(e => e.name === name);
+  const existing = idx >= 0 ? lib[idx] : {};
   const allLangs = LANGS.filter(l => generatedContent[l]?.body || generatedContent[l]?.title);
   const entry = {
-    id: (idx >= 0 ? lib[idx].id : null) || Date.now().toString(),
+    ...existing,
+    id: existing.id || Date.now().toString(),
     name, status,
     template_id: document.getElementById('template').value,
     subject:  document.getElementById('subject').value.trim(),
@@ -26,6 +28,7 @@ function _saveEntry(name, status) {
     assembled_html: JSON.parse(JSON.stringify(assembledHtml)),
     langs: allLangs,
     saved_at: new Date().toLocaleDateString('zh-CN'),
+    // revision_notes preserved from existing if not overwritten
   };
   if (idx >= 0) { if (!confirm(`Replace "${name}"?`)) return false; lib.splice(idx, 1); }
   lib.unshift(entry);
@@ -181,6 +184,11 @@ function loadData(data) {
   generatedContent = JSON.parse(JSON.stringify(data.content || {}));
   assembledHtml    = JSON.parse(JSON.stringify(data.assembled_html || {}));
   htmlReadyLangs = new Set(); dirtyLangs = new Set(); reviewedLangs = new Set(); LANGS.forEach(_updateReviewedMark);
+  // Fill revision notes if entry has them
+  const revNotes = document.getElementById('revision-global');
+  if (revNotes) revNotes.value = data.revision_notes || '';
+  const revRow = document.getElementById('globalRevisionRow');
+  if (revRow) revRow.style.display = 'flex';
   // Update language checkboxes to match loaded data
   selectedLangs = Object.keys(data.content || {}).filter(l => data.content[l] && (data.content[l].title || data.content[l].body));
   if (selectedLangs.length === 0) selectedLangs = [...LANGS];
@@ -338,6 +346,9 @@ function renderUserTpls() {
     const publishBtn = isDraft
       ? `<button class="btn btn-primary btn-sm" onclick="event.stopPropagation();publishDraft('${e.id}')">发布 →</button>`
       : '';
+    const previewBtn = isDraft
+      ? `<button class="btn btn-secondary btn-sm" onclick="event.stopPropagation();previewDraft('${e.id}')">👁 预览</button>`
+      : '';
     return `
     <div class="tpl-card" onclick="${isDraft ? '' : `openReviewModal('user','${e.id}')`}" style="${isDraft ? 'cursor:default;' : ''}">
       <div class="tpl-card-name">${esc(e.name)}</div>
@@ -355,6 +366,7 @@ function renderUserTpls() {
       </div>
       <div class="tpl-actions">
         <button class="tpl-expand-toggle" onclick="event.stopPropagation();toggleCardMeta('${e.id}',this)">展开详情 ▾</button>
+        ${previewBtn}
         <button class="btn btn-secondary btn-sm" onclick="event.stopPropagation();loadFromLibrary('${e.id}')">✏️ 编辑</button>
         ${publishBtn}
         <button class="btn btn-secondary btn-sm" onclick="event.stopPropagation();openMetricsEntry('${e.id}')">📊 录入数据</button>
@@ -413,10 +425,13 @@ function startNew() {
   document.getElementById('rationale-card').style.display = 'none';
   _hideClarification();
   document.querySelectorAll('label.ai-badge').forEach(l => l.classList.remove('ai-badge'));
+  const revRow2 = document.getElementById('globalRevisionRow');
+  const revGlobal = document.getElementById('revision-global');
+  if (revGlobal) revGlobal.value = '';
+  if (revRow2) revRow2.style.display = 'none';
   LANGS.forEach(l => {
     if (quillEditors[l]) quillEditors[l].setText('');
     document.getElementById(`title-${l}`).value = '';
-    document.getElementById(`revision-${l}`).value = '';
     htmlReadyLangs.delete(l); dirtyLangs.delete(l); _updateHtmlBtn(l);
     document.getElementById(`output-${l}`).classList.add('hidden');
     document.getElementById(`preview-wrap-${l}`).classList.add('hidden');
@@ -433,4 +448,78 @@ function startNew() {
   document.getElementById('step2-editor').classList.add('hidden');
   renderPipelineNav();
   scrollToStep(1);
+}
+
+// ─────────────────────────────────────────────
+// DRAFT PREVIEW MODAL
+// ─────────────────────────────────────────────
+let _draftPreviewEntry = null;
+let _draftPreviewLang = 'zh';
+
+function previewDraft(entryId) {
+  const entry = loadLibrary().find(e => e.id === entryId);
+  if (!entry) return;
+  _draftPreviewEntry = entry;
+
+  document.getElementById('draftPreviewName').textContent = entry.name;
+  document.getElementById('draftReviewNotes').value = entry.revision_notes || '';
+
+  // Build lang tabs
+  const langs = entry.langs?.length ? entry.langs : LANGS;
+  _draftPreviewLang = langs[0] || 'zh';
+  const tabsEl = document.getElementById('draftPreviewTabs');
+  tabsEl.innerHTML = langs.map(l =>
+    `<div class="lang-tab${l === _draftPreviewLang ? ' active' : ''}" onclick="_switchDraftPreviewLang('${l}')">${l.toUpperCase()}</div>`
+  ).join('');
+
+  _renderDraftPreviewContent();
+
+  document.getElementById('draftPreviewOverlay').style.display = 'block';
+  document.getElementById('draftPreviewModal').style.display = 'flex';
+}
+
+function _switchDraftPreviewLang(lang) {
+  _draftPreviewLang = lang;
+  document.querySelectorAll('#draftPreviewTabs .lang-tab').forEach(t =>
+    t.classList.toggle('active', t.textContent.toLowerCase() === lang));
+  _renderDraftPreviewContent();
+}
+
+function _renderDraftPreviewContent() {
+  if (!_draftPreviewEntry) return;
+  const content = (_draftPreviewEntry.content || {})[_draftPreviewLang] || {};
+  document.getElementById('draftPreviewTitle').textContent = content.title || '（无标题）';
+  document.getElementById('draftPreviewBody').innerHTML = content.body || '<em style="color:#aaa">（无正文）</em>';
+}
+
+function closeDraftPreview() {
+  document.getElementById('draftPreviewOverlay').style.display = 'none';
+  document.getElementById('draftPreviewModal').style.display = 'none';
+  _draftPreviewEntry = null;
+}
+
+function saveDraftReviewNotes() {
+  if (!_draftPreviewEntry) return;
+  const notes = document.getElementById('draftReviewNotes').value.trim();
+  const lib = loadLibrary();
+  const idx = lib.findIndex(e => e.id === _draftPreviewEntry.id);
+  if (idx < 0) return;
+  lib[idx].revision_notes = notes;
+  _draftPreviewEntry = lib[idx];
+  localStorage.setItem(LIB_KEY, JSON.stringify(lib));
+  serverSave(LIB_KEY);
+  setStatus('审阅意见已保存', 'success');
+  setTimeout(clearStatus, 1500);
+}
+
+function editDraftFromPreview() {
+  if (!_draftPreviewEntry) return;
+  // Save notes first
+  saveDraftReviewNotes();
+  // Load the entry into the editor
+  closeDraftPreview();
+  currentLibraryId = _draftPreviewEntry?.id || null;
+  libraryDirtyLangs = new Set();
+  loadData(_draftPreviewEntry);
+  LANGS.forEach(_updateSaveTplBtn);
 }

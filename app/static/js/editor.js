@@ -43,10 +43,24 @@ function populateQuillEditors() {
 
 function switchReviewTab(lang) {
   currentEditorLang = lang;
+  // Toggle tab active state
   document.querySelectorAll('#reviewTabs .lang-tab').forEach(t =>
     t.classList.toggle('active', t.dataset.lang === lang));
-  LANGS.forEach(l =>
-    document.getElementById(`review-${l}`).classList.toggle('hidden', l !== lang));
+  // Toggle review panels
+  LANGS.forEach(l => {
+    document.getElementById(`review-${l}`).classList.toggle('hidden', l !== lang);
+    // Show/hide confirm-row per active tab
+    const cr = document.getElementById(`confirm-row-${l}`);
+    if (cr) cr.style.display = l === lang ? '' : 'none';
+  });
+  // Move globalRevisionRow into the active review-panel (before output-panel)
+  const revRow = document.getElementById('globalRevisionRow');
+  if (revRow) {
+    const panel = document.getElementById(`review-${lang}`);
+    const outputPanel = document.getElementById(`output-${lang}`);
+    if (outputPanel) panel.insertBefore(revRow, outputPanel);
+    else panel.appendChild(revRow);
+  }
 }
 
 function updateReviewTabVisibility() {
@@ -460,6 +474,29 @@ async function handleSmartRegen() {
   } finally {
     btn.disabled = false;
     btn.textContent = '↻ 重新生成';
+  }
+}
+
+async function handleSaveDraft(lang) {
+  const html    = assembledHtml[lang];
+  const subject = (document.getElementById(`output-title-${lang}`)?.value || '').trim();
+  const to      = (document.getElementById(`gmail-to-${lang}`)?.value || '').trim();
+  if (!html) { setStatus('请先生成 HTML', 'error'); return; }
+
+  const btn = document.getElementById(`gmail-btn-${lang}`);
+  btn.disabled = true; btn.textContent = '保存中…';
+  try {
+    const resp = await fetch('/api/gmail/draft', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ to, subject, html, language: lang }),
+    });
+    if (!resp.ok) throw new Error((await resp.json()).detail);
+    const { link } = await resp.json();
+    setStatus(`✓ Gmail 草稿已保存 — <a href="${link}" target="_blank" style="color:#1d4ed8">打开草稿</a>`, 'success');
+  } catch (e) {
+    setStatus('保存草稿失败: ' + e.message, 'error');
+  } finally {
+    btn.disabled = false; btn.textContent = '📧 保存草稿';
   }
 }
 

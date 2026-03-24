@@ -603,3 +603,52 @@ def polish_cta_label(label: str) -> str:
         ],
     )
     return response.choices[0].message.content.strip().strip('"\'')
+
+
+def smart_regenerate(template_id: str, subject: str, audience: str, trigger: str,
+                     existing_content: dict, instructions: str,
+                     cta_url: str = "", variables: str = "") -> dict:
+    """Regenerate only the fields specified by the revision instruction across all languages."""
+    meta = TEMPLATES[template_id]
+
+    content_block = ""
+    for lang, fields in existing_content.items():
+        content_block += f"\n[{lang}]\nTitle: {fields.get('title', '')}\nBody: {fields.get('body', '')}\n"
+
+    variables_section = (
+        f"\nPersonalization variables available: {variables}\n"
+        "Keep them as literal placeholders - do NOT substitute real values."
+    ) if variables.strip() else ""
+
+    cta_note = f"\nCTA URL: {cta_url}" if cta_url else ""
+
+    user_prompt = f"""You are editing existing multi-language email content based on a revision instruction.
+
+REVISION INSTRUCTION: {instructions}
+
+CURRENT CONTENT:
+{content_block}
+Email context: {subject} | Audience: {audience} | Trigger: {trigger} | Sender: {meta['sender']}{cta_note}{variables_section}
+
+RULES:
+- Only return fields that need to change based on the instruction
+- Do NOT include fields that should stay the same
+- Return valid JSON: {{"lang": {{"title": "...", "body": "<p>...</p>"}}}}
+- Omit a language entirely if nothing changes for it
+- Omit "title" or "body" key if that field does not need to change
+- Body must be valid HTML (use <p>, <b>, <a> tags)
+- Keep placeholders like {{{{name}}}} as-is
+
+Output ONLY the JSON, no markdown fences."""
+
+    model = os.getenv("MODEL", "anthropic/claude-sonnet-4-5")
+    response = _get_client().chat.completions.create(
+        model=model,
+        temperature=0.7,
+        messages=[
+            {"role": "system", "content": SYSTEM_PROMPT},
+            {"role": "user", "content": user_prompt},
+        ],
+    )
+    raw = response.choices[0].message.content.strip()
+    return _safe_parse_json(raw)

@@ -316,6 +316,9 @@
     .quill-wrap { border-radius: 8px; overflow: hidden; }
     .revision-row { display: flex; gap: 8px; align-items: flex-start; }
     .revision-row textarea { flex: 1; min-height: 52px; }
+    .revision-global-row { display: flex; gap: 8px; align-items: flex-start; margin-top: 16px; padding-top: 16px; border-top: 1.5px dashed #e8e8e8; }
+    .revision-global-row textarea { flex: 1; min-height: 60px; font-size: 13px; }
+    #smartRegenBtn { width: auto; padding: 0 14px; font-size: 13px; white-space: nowrap; }
     .btn-regen {
       flex-shrink: 0; width: 36px; height: 36px; border-radius: 8px;
       background: #f5f5f5; border: 1.5px solid #e0e0e0; cursor: pointer;
@@ -804,7 +807,6 @@
           <div class="lang-tab" data-lang="es" onclick="switchReviewTab('es')">西班牙语 <span class="tab-badge"></span><span class="tab-check">✓</span></div>
           <div class="lang-tab" data-lang="ja" onclick="switchReviewTab('ja')">日语 <span class="tab-badge"></span><span class="tab-check">✓</span></div>
         </div>
-        <button class="btn btn-secondary btn-sm" id="batchRegenBtn" onclick="handleBatchRegen()" style="flex-shrink:0;margin-left:12px;">↻ 批量重新生成</button>
       </div>
 
       <!-- EN -->
@@ -813,19 +815,9 @@
           <label>Subject</label>
           <div class="input-icon-wrap">
             <input type="text" id="title-en" placeholder="Email subject line">
-            <div class="input-icon-btns">
-              <button class="iib" id="regen-title-en" onclick="handleRegenField('en','title_only')" title="重新生成标题">↺</button>
-            </div>
           </div>
         </div>
-        <div class="quill-header">
-          <button class="quill-regen-btn" id="regen-body-en" onclick="handleRegenField('en','body_only')">↻ 重新生成正文</button>
-        </div>
         <div class="quill-wrap"><div id="quill-en"></div></div>
-        <div class="revision-row">
-          <textarea id="revision-en" placeholder="修改意见（标题/正文共用），例如：语气更友好，强调免费额度…"></textarea>
-          <button class="btn-regen" id="regen-en" onclick="handleRegenerate('en')" title="重新生成标题+正文">↻</button>
-        </div>
         <div class="confirm-row">
           <button class="btn-reviewed" id="reviewed-btn-en" onclick="toggleReviewed('en')">○ 标记已审阅</button>
           <span class="has-tip"><button class="btn btn-secondary btn-sm" id="translate-from-btn-en" onclick="handleTranslateFrom('en')">→ 同步翻译</button><span class="tip-bubble">确定英文邮件内容后，一键同步翻译成其他语言文案</span></span>
@@ -864,19 +856,9 @@
           <label>Subject</label>
           <div class="input-icon-wrap">
             <input type="text" id="title-zh" placeholder="邮件标题">
-            <div class="input-icon-btns">
-              <button class="iib" id="regen-title-zh" onclick="handleRegenField('zh','title_only')" title="重新生成标题">↺</button>
-            </div>
           </div>
         </div>
-        <div class="quill-header">
-          <button class="quill-regen-btn" id="regen-body-zh" onclick="handleRegenField('zh','body_only')">↻ 重新生成正文</button>
-        </div>
         <div class="quill-wrap"><div id="quill-zh"></div></div>
-        <div class="revision-row">
-          <textarea id="revision-zh" placeholder="修改意见（标题/正文共用），例如：语气更活泼，加入产品亮点…"></textarea>
-          <button class="btn-regen" id="regen-zh" onclick="handleRegenerate('zh')" title="重新生成标题+正文">↻</button>
-        </div>
         <div class="confirm-row">
           <button class="btn-reviewed" id="reviewed-btn-zh" onclick="toggleReviewed('zh')">○ 标记已审阅</button>
           <span class="has-tip"><button class="btn btn-secondary btn-sm" id="translate-from-btn-zh" onclick="handleTranslateFrom('zh')">→ 同步翻译</button><span class="tip-bubble">确定中文邮件内容后，一键同步翻译成其他语言文案</span></span>
@@ -915,19 +897,9 @@
           <label>Subject</label>
           <div class="input-icon-wrap">
             <input type="text" id="title-es" placeholder="Asunto del correo">
-            <div class="input-icon-btns">
-              <button class="iib" id="regen-title-es" onclick="handleRegenField('es','title_only')" title="重新生成标题">↺</button>
-            </div>
           </div>
         </div>
-        <div class="quill-header">
-          <button class="quill-regen-btn" id="regen-body-es" onclick="handleRegenField('es','body_only')">↻ 重新生成正文</button>
-        </div>
         <div class="quill-wrap"><div id="quill-es"></div></div>
-        <div class="revision-row">
-          <textarea id="revision-es" placeholder="修改意见（标题/正文共用）…"></textarea>
-          <button class="btn-regen" id="regen-es" onclick="handleRegenerate('es')" title="重新生成标题+正文">↻</button>
-        </div>
         <div class="confirm-row">
           <button class="btn-reviewed" id="reviewed-btn-es" onclick="toggleReviewed('es')">○ 标记已审阅</button>
           <span class="has-tip"><button class="btn btn-secondary btn-sm" id="translate-from-btn-es" onclick="handleTranslateFrom('es')">→ 同步翻译</button><span class="tip-bubble">确定西班牙语邮件内容后，一键同步翻译成其他语言文案</span></span>
@@ -966,19 +938,9 @@
           <label>Subject</label>
           <div class="input-icon-wrap">
             <input type="text" id="title-ja" placeholder="メール件名">
-            <div class="input-icon-btns">
-              <button class="iib" id="regen-title-ja" onclick="handleRegenField('ja','title_only')" title="重新生成标题">↺</button>
-            </div>
           </div>
         </div>
-        <div class="quill-header">
-          <button class="quill-regen-btn" id="regen-body-ja" onclick="handleRegenField('ja','body_only')">↻ 重新生成正文</button>
-        </div>
         <div class="quill-wrap"><div id="quill-ja"></div></div>
-        <div class="revision-row">
-          <textarea id="revision-ja" placeholder="修改意见（标题/正文共用）…"></textarea>
-          <button class="btn-regen" id="regen-ja" onclick="handleRegenerate('ja')" title="重新生成标题+正文">↻</button>
-        </div>
         <div class="confirm-row">
           <button class="btn-reviewed" id="reviewed-btn-ja" onclick="toggleReviewed('ja')">○ 标记已审阅</button>
           <span class="has-tip"><button class="btn btn-secondary btn-sm" id="translate-from-btn-ja" onclick="handleTranslateFrom('ja')">→ 同步翻译</button><span class="tip-bubble">确定日语邮件内容后，一键同步翻译成其他语言文案</span></span>
@@ -1011,6 +973,11 @@
         </div>
       </div>
     </div>
+      <!-- Global Revision -->
+      <div class="revision-global-row" id="globalRevisionRow" style="display:none;">
+        <textarea id="revision-global" placeholder="修改意见：描述需要改动的内容，AI 会自动判断改哪些语言和字段。例如：英文正文更简洁有真人感；同步所有语言标题为"xxx""></textarea>
+        <button class="btn-regen" id="smartRegenBtn" onclick="handleSmartRegen()">↻ 重新生成</button>
+      </div>
     </div><!-- end #step2-editor -->
 
   </div>
@@ -2484,10 +2451,11 @@ function startNew() {
   document.getElementById('rationale-card').style.display = 'none';
   _hideClarification();
   document.querySelectorAll('label.ai-badge').forEach(l => l.classList.remove('ai-badge'));
+  document.getElementById('revision-global').value = '';
+  document.getElementById('globalRevisionRow').style.display = 'none';
   LANGS.forEach(l => {
     if (quillEditors[l]) quillEditors[l].setText('');
     document.getElementById(`title-${l}`).value = '';
-    document.getElementById(`revision-${l}`).value = '';
     htmlReadyLangs.delete(l); dirtyLangs.delete(l); _updateHtmlBtn(l);
     document.getElementById(`output-${l}`).classList.add('hidden');
     document.getElementById(`preview-wrap-${l}`).classList.add('hidden');

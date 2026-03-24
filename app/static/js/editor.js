@@ -409,6 +409,60 @@ async function handleTranslateFrom(sourceLang) {
   }
 }
 
+async function handleSmartRegen() {
+  const instruction = document.getElementById('revision-global').value.trim();
+  if (!instruction) return;
+
+  const btn = document.getElementById('smartRegenBtn');
+  btn.disabled = true;
+  btn.textContent = '生成中…';
+
+  const existing_content = {};
+  for (const lang of LANGS) {
+    existing_content[lang] = {
+      title: document.getElementById(`title-${lang}`)?.value || '',
+      body: quillEditors[lang] ? quillEditors[lang].root.innerHTML : (generatedContent[lang]?.body || '')
+    };
+  }
+
+  try {
+    const resp = await fetch('/api/smart_regen', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        template_id: document.getElementById('template').value,
+        subject: document.getElementById('subject').value.trim(),
+        audience: document.getElementById('audience').value.trim(),
+        trigger: document.getElementById('trigger').value.trim(),
+        instructions: instruction,
+        cta_url: document.getElementById('cta_url')?.value.trim() || '',
+        variables: document.getElementById('variables')?.value.trim() || '',
+        existing_content
+      })
+    });
+    if (!resp.ok) throw new Error(await resp.text());
+    const result = await resp.json();
+
+    for (const [lang, fields] of Object.entries(result)) {
+      if (fields.title !== undefined) {
+        const el = document.getElementById(`title-${lang}`);
+        if (el) el.value = fields.title;
+      }
+      if (fields.body !== undefined && quillEditors[lang]) {
+        quillEditors[lang].clipboard.dangerouslyPasteHTML(fields.body);
+      }
+      dirtyLangs.add(lang);
+      _updateHtmlBtn(lang);
+    }
+    document.getElementById('revision-global').value = '';
+  } catch (e) {
+    alert('重新生成失败：' + e.message);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '↻ 重新生成';
+  }
+}
+
 async function copyText(text, btn) {
   try { await navigator.clipboard.writeText(text); }
   catch { const ta = Object.assign(document.createElement('textarea'), {value:text}); document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove(); }

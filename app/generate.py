@@ -2,7 +2,7 @@
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
-from .claude_client import generate_emails, regenerate_single_language, polish_cta_label, parse_intent, translate_from_language
+from .claude_client import generate_emails, regenerate_single_language, polish_cta_label, parse_intent, translate_from_language, smart_regenerate
 from .html_assembler import TEMPLATES
 from .store import read_store
 
@@ -161,6 +161,37 @@ def regenerate(req: RegenerateRequest):
             instructions=req.instructions,
             cta_url=req.cta_url,
             scope=req.scope,
+            variables=req.variables,
+        )
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+class SmartRegenRequest(BaseModel):
+    template_id: str
+    subject: str
+    audience: str
+    trigger: str
+    existing_content: dict
+    instructions: str
+    cta_url: str = ""
+    variables: str = ""
+
+
+@router.post("/smart_regen")
+def smart_regen(req: SmartRegenRequest):
+    if req.template_id not in TEMPLATES:
+        raise HTTPException(status_code=400, detail=f"Unknown template: {req.template_id}")
+    try:
+        result = smart_regenerate(
+            template_id=req.template_id,
+            subject=req.subject,
+            audience=req.audience,
+            trigger=req.trigger,
+            existing_content=req.existing_content,
+            instructions=req.instructions,
+            cta_url=req.cta_url,
             variables=req.variables,
         )
         return result

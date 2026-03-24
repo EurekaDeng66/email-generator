@@ -97,6 +97,7 @@ async function handleGenerate() {
     // Show Step 2 editor, hide placeholder
     document.getElementById('step2-placeholder').classList.add('hidden');
     document.getElementById('step2-editor').classList.remove('hidden');
+    document.getElementById('globalRevisionRow').style.display = 'flex';
     populateQuillEditors();
     markStepDone(1);
     scrollToStep(2);

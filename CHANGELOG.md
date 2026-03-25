@@ -2,6 +2,34 @@
 
 ---
 
+## [2026-03-25] — Gmail 草稿集成 · 审阅流程优化
+
+### 新功能
+
+**Gmail 草稿一键保存**
+- output-panel 新增「📧 保存草稿」按钮 + 收件人输入框（可选，留空仅存草稿）
+- 后端新增 `POST /api/gmail/draft` 接口，使用 OAuth 2.0 refresh token 鉴权
+- 新建 `app/gmail.py` 路由模块，无 Gmail 凭证时优雅降级返回 503
+- 依赖新增：`google-auth`、`google-auth-httplib2`、`google-api-python-client`
+
+**草稿模版预览 + 审阅意见**
+- 模版库草稿条目新增「👁 预览」按钮，弹出多语言预览 modal
+- modal 底部支持填写审阅意见，「💾 保存意见」仅更新 `revision_notes` 字段
+- 「✏️ 进入编辑」加载草稿内容并将审阅意见回写至全局修改意见框
+
+### 改进
+
+**UI 布局重构（Step 2 审阅区）**
+- 修改意见框（`globalRevisionRow`）移入白色 review-panel 内，随 tab 切换物理移动
+- 「标记已审阅」「同步翻译」「生成 HTML」操作栏移至白色框外，视觉层级更清晰
+
+### Bug 修复
+- **「更新模版」与「保存草稿」重叠**：`btn-save-tpl` 由 `position: absolute` 改为普通流 + `margin-left: auto`，消除两元素在 output-panel 底部的重叠
+- **`startNew()` 空指针**：移除对已不存在的 per-language `revision-` textarea 的引用，改为统一重置 `#revision-global`
+- **`_saveEntry()` 覆盖 `revision_notes`**：改用 spread 合并，保存时不丢失已填写的审阅意见
+
+---
+
 ## [2026-03-23]
 
 ### 新功能

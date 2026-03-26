@@ -62,6 +62,7 @@ async function handleGenerate() {
   const trigger      = document.getElementById('trigger').value.trim();
   const ctaUrl       = document.getElementById('cta_url').value.trim();
   const ctaLabel     = document.getElementById('cta_label').value.trim();
+  const ctaStyle     = document.querySelector('input[name="cta_style"]:checked')?.value || 'button';
   let   instructions = document.getElementById('instructions').value.trim();
   const variables    = document.getElementById('variables').value.trim();
   if (ctaLabel && ctaUrl) {
@@ -83,7 +84,7 @@ async function handleGenerate() {
   try {
     const resp = await fetch('/api/generate', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ template_id: templateId, subject, audience, trigger, instructions, cta_url: ctaUrl, languages: selectedLangs, variables }),
+      body: JSON.stringify({ template_id: templateId, subject, audience, trigger, instructions, cta_url: ctaUrl, cta_style: ctaStyle, languages: selectedLangs, variables }),
     });
     if (!resp.ok) { const e = await resp.json(); throw new Error(e.detail || resp.statusText); }
     generatedContent = await resp.json();

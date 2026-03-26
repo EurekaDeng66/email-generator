@@ -9,6 +9,20 @@ const QUILL_TOOLBAR = [
   ['clean'],
 ];
 
+function insertCtaAtCursor(lang) {
+  const url   = document.getElementById('cta_url')?.value.trim();
+  const label = document.getElementById('cta_label')?.value.trim();
+  if (!url || !label) { alert('请先填写 CTA 链接和按钮名称'); return; }
+  const style = document.querySelector('input[name="cta_style"]:checked')?.value || 'button';
+  const html  = style === 'button'
+    ? `<table width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td align="center" style="padding:16px 0;"><a href="${url}" target="_blank" style="display:inline-flex;align-items:center;gap:8px;padding:10px 24px;background:#ffffff;border:2px solid #FF7F32;border-radius:6px;color:#FF7F32;font-weight:600;font-size:14px;text-decoration:none;">${label} <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3 8h10M9 4l4 4-4 4" stroke="#FF7F32" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></a></td></tr></table>`
+    : `<p><a href="${url}" target="_blank">${label}</a></p>`;
+  const quill = quillEditors[lang];
+  if (!quill) return;
+  const range = quill.getSelection(true);
+  quill.clipboard.dangerouslyPasteHTML(range.index, html, 'user');
+}
+
 function initQuillEditors() {
   LANGS.forEach(lang => {
     quillEditors[lang] = new Quill(`#quill-${lang}`, {
@@ -81,6 +95,7 @@ async function handleRegenerate(lang) {
   const trigger    = document.getElementById('trigger').value.trim();
   const ctaUrl     = document.getElementById('cta_url').value.trim();
   const ctaLabel   = document.getElementById('cta_label').value.trim();
+  const ctaStyle   = document.querySelector('input[name="cta_style"]:checked')?.value || 'button';
   const variables  = (document.getElementById('variables')?.value || '').trim();
   let   instructions = (document.getElementById(`revision-${lang}`).value || '').trim();
   if (ctaLabel && ctaUrl) {
@@ -106,7 +121,7 @@ async function handleRegenerate(lang) {
       body: JSON.stringify({
         template_id: templateId, subject, audience, trigger,
         language: lang, existing_content: existing,
-        instructions, cta_url: ctaUrl, variables,
+        instructions, cta_url: ctaUrl, cta_style: ctaStyle, variables,
       }),
     });
     if (!resp.ok) { const e = await resp.json(); throw new Error(e.detail); }

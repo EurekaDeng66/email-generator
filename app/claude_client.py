@@ -48,11 +48,12 @@ Output ONLY valid JSON (no markdown fences, no extra text). Structure:
 - Use ONLY inline-styled HTML compatible with email clients
 - Paragraphs: <p style="margin:0 0 0.9em 0;">text</p>
 - Bold: <strong>text</strong>
-- CTA links (primary action): <a href="URL" target="_blank" style="color:#ff8700; text-decoration:underline; font-weight:600;">text →</a>
+- Standalone CTA buttons (primary action, on their own line): use this exact structure — a <table> wrapper for email client compatibility:
+  <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin:4px 0 8px 0;"><tr><td><a href="URL" target="_blank" style="display:inline-flex; align-items:center; gap:4px; padding:8px 12px; background:#ffffff; box-shadow:0px 2px 8px 2px rgba(255,119,35,0.06); border-radius:8px; border:1px solid #FDAE22; text-decoration:none;"><span style="color:#FF7723; font-size:14px; font-family:'DM Sans',Inter,Arial,sans-serif; font-weight:600; line-height:20px;">LABEL</span><svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M7.5 15L12.5 10L7.5 5" stroke="#FDAE22" stroke-width="1.66667" stroke-linecap="round" stroke-linejoin="round"/></svg></a></td></tr></table>
+- Inline CTA links (embedded in a sentence): <a href="URL" target="_blank" style="color:#ff8700; text-decoration:underline; font-weight:600;">text</a>
 - Regular links (resources, docs, community): <a href="URL" target="_blank" style="color:#2563EB; text-decoration:none;">text</a>
 - Line breaks: <br/>
 - NO <div>, NO CSS classes, NO external styles, NO <style> blocks
-- CTA buttons should be simple text links with the orange style, NOT button elements
 
 ## Senders & Sign-offs
 Two senders are used. Match the sign-off to the sender:
